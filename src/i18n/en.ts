@@ -1,6 +1,7 @@
 const en: Record<string, string> = {
   // Header
   "app.name": "Medical Field Nation",
+  "app.brand_name": "Medical Field Nation",
   "app.tagline": "Professional Field Medical Services",
 
   // Navigation

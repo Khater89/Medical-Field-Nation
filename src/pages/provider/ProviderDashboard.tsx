@@ -508,6 +508,7 @@ const ProviderDashboard = () => {
           <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
             <img src={mfnLogo} alt="MFN" className="h-8" />
             <div>
+              <p className="text-[10px] font-semibold text-primary tracking-wide">{t("app.brand_name")}</p>
               <h1 className="text-sm font-bold text-foreground">{t("provider.dashboard.title")}</h1>
               <p className="text-[10px] text-muted-foreground">{profile?.full_name || user?.email}</p>
             </div>
@@ -813,7 +814,14 @@ const ProviderDashboard = () => {
             <Card>
               <CardContent className="py-4 space-y-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-bold">{t("provider.profile.availability")}</h3>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-sm font-bold">{t("provider.profile.availability")}</h3>
+                    {coordinatorPhone && (
+                      <a href={`tel:${coordinatorPhone}`} title={t("provider.dashboard.coordinator_phone")}>
+                        <Phone className="h-4 w-4 text-success hover:text-primary transition-colors cursor-pointer" />
+                      </a>
+                    )}
+                  </div>
                   <Switch checked={availableNow} onCheckedChange={setAvailableNow} />
                 </div>
                 <div>

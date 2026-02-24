@@ -1,6 +1,7 @@
 const ar: Record<string, string> = {
   // Header
   "app.name": "Medical Field Nation",
+  "app.brand_name": "أمة الحقل الطبي",
   "app.tagline": "خدمات طبية ميدانية احترافية",
 
   // Navigation
