@@ -178,6 +178,7 @@
     -webkit-text-fill-color: transparent;
     background-clip: text;
     animation: brand-shimmer 4s linear infinite;
+    padding-inline: 0.05em;
   }
 
   @keyframes brand-shimmer {
