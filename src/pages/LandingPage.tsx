@@ -105,6 +105,15 @@ const LandingPage = () => {
             {t("landing.feature4")}
           </motion.div>
 
+          {/* brand name */}
+          <motion.p
+            variants={fadeUp}
+            transition={{ duration: 0.5 }}
+            className="text-sm sm:text-base font-bold tracking-widest uppercase text-primary"
+          >
+            {t("app.brand_name")}
+          </motion.p>
+
           {/* headline */}
           <motion.h1
             variants={fadeUp}
