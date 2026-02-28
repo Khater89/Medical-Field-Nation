@@ -6,7 +6,6 @@ import { CalendarCheck, Users, PlusCircle, LogOut, RefreshCw } from "lucide-reac
 import mfnLogo from "@/assets/mfn-logo.png";
 import CSBookingsTab from "@/components/cs/CSBookingsTab";
 import CSProviderDirectory from "@/components/cs/CSProviderDirectory";
-import CSNewBookingForm from "@/components/cs/CSNewBookingForm";
 import SyncMonitorTab from "@/components/admin/SyncMonitorTab";
 
 const CSDashboard = () => {
@@ -30,7 +29,7 @@ const CSDashboard = () => {
             </div>
           </Link>
           <div className="flex items-center gap-1">
-            <Button variant="outline" size="sm" className="gap-1.5" onClick={() => navigate("/book")}>
+            <Button variant="outline" size="sm" className="gap-1.5" onClick={() => navigate("/booking")}>
               <PlusCircle className="h-4 w-4" /> حجز جديد
             </Button>
             <Button variant="ghost" size="sm" onClick={handleSignOut} className="gap-1.5">
@@ -42,15 +41,12 @@ const CSDashboard = () => {
 
       <main className="container py-6 px-4">
         <Tabs defaultValue="bookings" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="bookings" className="gap-1.5 text-xs">
               <CalendarCheck className="h-4 w-4" /> الحجوزات
             </TabsTrigger>
             <TabsTrigger value="providers" className="gap-1.5 text-xs">
               <Users className="h-4 w-4" /> المزوّدون
-            </TabsTrigger>
-            <TabsTrigger value="new-booking" className="gap-1.5 text-xs">
-              <PlusCircle className="h-4 w-4" /> حجز جديد
             </TabsTrigger>
             <TabsTrigger value="sync" className="gap-1.5 text-xs">
               <RefreshCw className="h-4 w-4" /> المزامنة
@@ -59,7 +55,6 @@ const CSDashboard = () => {
 
           <TabsContent value="bookings"><CSBookingsTab /></TabsContent>
           <TabsContent value="providers"><CSProviderDirectory /></TabsContent>
-          <TabsContent value="new-booking"><CSNewBookingForm /></TabsContent>
           <TabsContent value="sync"><SyncMonitorTab /></TabsContent>
         </Tabs>
       </main>

@@ -7,59 +7,42 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import {
   CalendarDays, MapPin, Search, Filter, Phone,
-  MessageCircle, UserCheck, Loader2, Ban,
+  MessageCircle, UserCheck, Loader2, Ban, CalendarIcon, X,
 } from "lucide-react";
+import { format, isSameDay } from "date-fns";
+import { cn } from "@/lib/utils";
 import CSAssignmentDialog from "./CSAssignmentDialog";
-
-/* ── Types ── */
-
-export interface BookingRow {
-  id: string;
-  booking_number: string | null;
-  customer_display_name: string | null;
-  city: string;
-  client_address_text: string | null;
-  client_lat: number | null;
-  client_lng: number | null;
-  scheduled_at: string;
-  status: string;
-  payment_method: string;
-  subtotal: number;
-  platform_fee: number;
-  provider_payout: number;
-  agreed_price: number | null;
-  internal_note: string | null;
-  notes: string | null;
-  assigned_provider_id: string | null;
-  assigned_by: string | null;
-  assigned_at: string | null;
-  accepted_at: string | null;
-  service_id: string;
-  customer_name?: string | null;
-  customer_phone?: string | null;
-}
+import BookingDetailsDrawer, { type BookingRow } from "@/components/admin/BookingDetailsDrawer";
 
 const STATUS_LABELS: Record<string, string> = {
   NEW: "جديد",
   ASSIGNED: "معيّن",
   ACCEPTED: "مقبول",
+  IN_PROGRESS: "قيد التنفيذ",
   COMPLETED: "مكتمل",
   CANCELLED: "ملغي",
+  REJECTED: "مرفوض",
 };
 
 const STATUS_COLORS: Record<string, string> = {
   NEW: "bg-info/10 text-info border-info/30",
   ASSIGNED: "bg-warning/10 text-warning border-warning/30",
   ACCEPTED: "bg-success/10 text-success border-success/30",
+  IN_PROGRESS: "bg-primary/10 text-primary border-primary/30",
   COMPLETED: "bg-success/10 text-success border-success/30",
   CANCELLED: "bg-destructive/10 text-destructive border-destructive/30",
+  REJECTED: "bg-destructive/10 text-destructive border-destructive/30",
 };
+
+const FILTER_STATUSES = ["ALL", "NEW", "ASSIGNED", "ACCEPTED", "IN_PROGRESS", "COMPLETED", "CANCELLED", "REJECTED"];
 
 const CSBookingsTab = () => {
   const { toast } = useToast();
@@ -68,9 +51,15 @@ const CSBookingsTab = () => {
   const [servicePrices, setServicePrices] = useState<Record<string, number>>({});
   const [serviceCategories, setServiceCategories] = useState<Record<string, string>>({});
   const [providerNames, setProviderNames] = useState<Record<string, string>>({});
+  const [providerPhones, setProviderPhones] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState("ALL");
+  const [providerFilter, setProviderFilter] = useState("ALL");
+  const [dateFilter, setDateFilter] = useState<Date | undefined>(undefined);
   const [searchQuery, setSearchQuery] = useState("");
+
+  // Detail drawer
+  const [selectedBooking, setSelectedBooking] = useState<BookingRow | null>(null);
 
   // Assignment dialog
   const [assignBooking, setAssignBooking] = useState<BookingRow | null>(null);
@@ -85,7 +74,7 @@ const CSBookingsTab = () => {
       supabase.from("bookings").select("*").order("created_at", { ascending: false }),
       supabase.from("booking_contacts").select("*"),
       supabase.from("services").select("id, name, base_price, category"),
-      supabase.from("profiles").select("user_id, full_name"),
+      supabase.from("profiles").select("user_id, full_name, phone"),
     ]);
 
     const contactMap: Record<string, any> = {};
@@ -111,16 +100,37 @@ const CSBookingsTab = () => {
     setServiceCategories(catMap);
 
     const pMap: Record<string, string> = {};
-    (profilesRes.data || []).forEach((p: any) => { pMap[p.user_id] = p.full_name || "بدون اسم"; });
+    const phMap: Record<string, string> = {};
+    (profilesRes.data || []).forEach((p: any) => { pMap[p.user_id] = p.full_name || "بدون اسم"; phMap[p.user_id] = p.phone || ""; });
     setProviderNames(pMap);
+    setProviderPhones(phMap);
 
     setLoading(false);
   }, []);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
+  // Realtime subscription
+  useEffect(() => {
+    const channel = supabase
+      .channel("cs-bookings-realtime")
+      .on("postgres_changes", { event: "*", schema: "public", table: "bookings" }, () => {
+        fetchData();
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [fetchData]);
+
+  // Build unique providers list for filter
+  const assignedProviders = Array.from(
+    new Set(bookings.filter(b => b.assigned_provider_id).map(b => b.assigned_provider_id!))
+  );
+
   const filteredBookings = bookings.filter((b) => {
     if (statusFilter !== "ALL" && b.status !== statusFilter) return false;
+    if (providerFilter !== "ALL" && b.assigned_provider_id !== providerFilter) return false;
+    if (dateFilter && !isSameDay(new Date(b.scheduled_at), dateFilter)) return false;
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       return (
@@ -171,7 +181,7 @@ const CSBookingsTab = () => {
     <div className="space-y-4">
       {/* Filters */}
       <div className="flex gap-2 flex-wrap">
-        <div className="relative flex-1 min-w-[200px]">
+        <div className="relative flex-1 min-w-[180px]">
           <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="بحث بالاسم أو الهاتف أو المدينة أو رقم الحجز..."
@@ -181,20 +191,55 @@ const CSBookingsTab = () => {
           />
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[140px]">
+          <SelectTrigger className="w-[130px]">
             <Filter className="h-4 w-4 ml-1" />
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="ALL">الكل</SelectItem>
-            <SelectItem value="NEW">جديد</SelectItem>
-            <SelectItem value="ASSIGNED">معيّن</SelectItem>
-            <SelectItem value="ACCEPTED">مقبول</SelectItem>
-            <SelectItem value="COMPLETED">مكتمل</SelectItem>
-            <SelectItem value="CANCELLED">ملغي</SelectItem>
+            {FILTER_STATUSES.map((s) => (
+              <SelectItem key={s} value={s}>
+                {s === "ALL" ? "الكل" : STATUS_LABELS[s] || s}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
+
+        {/* Provider filter */}
+        <Select value={providerFilter} onValueChange={setProviderFilter}>
+          <SelectTrigger className="w-[150px]">
+            <UserCheck className="h-4 w-4 ml-1" />
+            <SelectValue placeholder="المزوّد" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="ALL">كل المزوّدين</SelectItem>
+            {assignedProviders.map((pid) => (
+              <SelectItem key={pid} value={pid}>
+                {providerNames[pid] || "مزوّد"}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        {/* Date filter */}
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline" className={cn("w-[150px] justify-start text-right font-normal text-xs", !dateFilter && "text-muted-foreground")}>
+              <CalendarIcon className="h-4 w-4 ml-1" />
+              {dateFilter ? format(dateFilter, "yyyy-MM-dd") : "تاريخ"}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            <Calendar mode="single" selected={dateFilter} onSelect={setDateFilter} className={cn("p-3 pointer-events-auto")} />
+          </PopoverContent>
+        </Popover>
+        {dateFilter && (
+          <Button variant="ghost" size="icon" className="h-10 w-10" onClick={() => setDateFilter(undefined)}>
+            <X className="h-4 w-4" />
+          </Button>
+        )}
       </div>
+
+      <p className="text-xs text-muted-foreground">{filteredBookings.length} حجز من أصل {bookings.length}</p>
 
       {/* Bookings List */}
       {filteredBookings.length === 0 ? (
@@ -205,7 +250,11 @@ const CSBookingsTab = () => {
             const isEmergency = (serviceCategories[b.service_id] || "").toLowerCase() === "emergency" ||
               (serviceNames[b.service_id] || "").includes("طوارئ");
             return (
-            <Card key={b.id} className={isEmergency ? "border-destructive border-2 bg-destructive/5" : ""}>
+            <Card
+              key={b.id}
+              className={cn("cursor-pointer hover:border-primary/50 transition-colors", isEmergency && "border-destructive border-2 bg-destructive/5")}
+              onClick={() => setSelectedBooking(b)}
+            >
               <CardContent className="py-4 px-4 space-y-2">
                 <div className="flex items-start justify-between">
                   <div>
@@ -237,55 +286,29 @@ const CSBookingsTab = () => {
                   )}
                 </div>
 
-                {b.client_address_text && (
-                  <p className="text-xs text-muted-foreground flex items-center gap-1">
-                    <MapPin className="h-3 w-3 shrink-0" /> {b.client_address_text}
-                  </p>
-                )}
-                {b.notes && <p className="text-xs bg-muted rounded p-2">{b.notes}</p>}
-                {b.internal_note && (
-                  <p className="text-xs bg-warning/10 border border-warning/20 rounded p-2 text-warning-foreground">
-                    📝 ملاحظة داخلية: {b.internal_note}
-                  </p>
-                )}
-
-                {/* Assignment info */}
                 {b.assigned_provider_id && (
                   <div className="text-xs text-muted-foreground flex items-center gap-2">
                     <UserCheck className="h-3 w-3" />
                     مُسند إلى: <span className="font-medium">{providerNames[b.assigned_provider_id] || "مزوّد"}</span>
-                    {b.assigned_by && <span>({b.assigned_by})</span>}
                   </div>
                 )}
 
-                {/* Actions */}
-                <div className="flex gap-2 flex-wrap">
+                {/* Quick Actions */}
+                <div className="flex gap-2 flex-wrap" onClick={(e) => e.stopPropagation()}>
                   {(b.status === "NEW" || b.status === "ASSIGNED") && (
-                    <Button
-                      size="sm"
-                      className="gap-1 h-7 text-xs"
-                      onClick={() => setAssignBooking(b)}
-                    >
+                    <Button size="sm" className="gap-1 h-7 text-xs" onClick={() => setAssignBooking(b)}>
                       <UserCheck className="h-3 w-3" />
-                      {b.assigned_provider_id ? "إعادة تعيين" : "تعيين مزوّد وتسعير"}
+                      {b.assigned_provider_id ? "إعادة تعيين" : "تعيين مزوّد"}
                     </Button>
                   )}
-
                   {b.status !== "COMPLETED" && b.status !== "CANCELLED" && (
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      className="gap-1 h-7 text-xs"
-                      onClick={() => setCancelBooking(b)}
-                    >
+                    <Button size="sm" variant="destructive" className="gap-1 h-7 text-xs" onClick={() => setCancelBooking(b)}>
                       <Ban className="h-3 w-3" /> إلغاء
                     </Button>
                   )}
-
                   <a
                     href={`https://wa.me/${(b.customer_phone || "").replace(/^0/, "962")}?text=${encodeURIComponent(`مرحباً ${b.customer_name || ""}، نحن من فريق MFN.`)}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    target="_blank" rel="noopener noreferrer"
                   >
                     <Button size="sm" variant="outline" className="gap-1 h-7 text-xs">
                       <MessageCircle className="h-3 w-3" /> واتساب
@@ -298,6 +321,34 @@ const CSBookingsTab = () => {
           })}
         </div>
       )}
+
+      {/* Booking Details Drawer */}
+      <BookingDetailsDrawer
+        booking={selectedBooking}
+        open={!!selectedBooking}
+        onOpenChange={(open) => { if (!open) setSelectedBooking(null); }}
+        serviceName={selectedBooking ? serviceNames[selectedBooking.service_id] || "خدمة" : ""}
+        servicePrice={selectedBooking ? servicePrices[selectedBooking.service_id] ?? null : null}
+        providerName={selectedBooking?.assigned_provider_id ? providerNames[selectedBooking.assigned_provider_id] || null : null}
+        providerPhone={selectedBooking?.assigned_provider_id ? providerPhones[selectedBooking.assigned_provider_id] || null : null}
+        onStatusChange={() => { setSelectedBooking(null); fetchData(); }}
+        onDataRefresh={async () => {
+          await fetchData();
+          if (selectedBooking) {
+            const updated = (await supabase.from("bookings").select("*").eq("id", selectedBooking.id).single()).data;
+            if (updated) {
+              const contactRes = await supabase.from("booking_contacts").select("*").eq("booking_id", updated.id).single();
+              const contact = contactRes.data;
+              setSelectedBooking({
+                ...updated,
+                customer_name: contact?.customer_name || updated.customer_display_name || "",
+                customer_phone: contact?.customer_phone || "",
+                client_address_text: contact?.client_address_text || null,
+              } as BookingRow);
+            }
+          }
+        }}
+      />
 
       {/* Assignment Dialog */}
       {assignBooking && (
@@ -330,14 +381,8 @@ const CSBookingsTab = () => {
             />
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => { setCancelBooking(null); setCancelReason(""); }}>
-              تراجع
-            </Button>
-            <Button
-              variant="destructive"
-              disabled={!cancelReason.trim() || cancelling}
-              onClick={handleCancel}
-            >
+            <Button variant="outline" onClick={() => { setCancelBooking(null); setCancelReason(""); }}>تراجع</Button>
+            <Button variant="destructive" disabled={!cancelReason.trim() || cancelling} onClick={handleCancel}>
               {cancelling ? <><Loader2 className="h-4 w-4 animate-spin me-1" />جاري الإلغاء...</> : "تأكيد الإلغاء"}
             </Button>
           </DialogFooter>

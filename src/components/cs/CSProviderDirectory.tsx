@@ -10,29 +10,8 @@ import {
   Search, Stethoscope, ShieldAlert, Mail,
 } from "lucide-react";
 import CSSuspensionDialog from "./CSSuspensionDialog";
-
-/* ── Types ── */
-
-interface ProviderRow {
-  user_id: string;
-  full_name: string | null;
-  phone: string | null;
-  email: string | null;
-  city: string | null;
-  role_type: string | null;
-  provider_status: string;
-  available_now: boolean;
-  profile_completed: boolean;
-  experience_years: number | null;
-  tools: string[] | null;
-  specialties: string[] | null;
-  radius_km: number | null;
-  address_text: string | null;
-  lat: number | null;
-  lng: number | null;
-  last_active_at: string | null;
-  languages: string[] | null;
-}
+import ProviderDetailsDrawer, { type ProviderProfile } from "@/components/admin/ProviderDetailsDrawer";
+import { useToast } from "@/hooks/use-toast";
 
 const ROLE_TYPE_LABELS: Record<string, string> = {
   doctor: "طبيب",
@@ -42,14 +21,18 @@ const ROLE_TYPE_LABELS: Record<string, string> = {
 };
 
 const CSProviderDirectory = () => {
-  const [providers, setProviders] = useState<ProviderRow[]>([]);
+  const { toast } = useToast();
+  const [providers, setProviders] = useState<ProviderProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("ALL");
   const [availableFilter, setAvailableFilter] = useState("ALL");
 
+  // Detail drawer
+  const [selectedProvider, setSelectedProvider] = useState<ProviderProfile | null>(null);
+
   // Suspension dialog state
-  const [suspensionTarget, setSuspensionTarget] = useState<ProviderRow | null>(null);
+  const [suspensionTarget, setSuspensionTarget] = useState<ProviderProfile | null>(null);
 
   useEffect(() => {
     fetchProviders();
@@ -74,7 +57,7 @@ const CSProviderDirectory = () => {
       .in("user_id", providerIds)
       .order("created_at", { ascending: false });
 
-    // Fetch emails via edge function (CS has access now)
+    // Fetch emails via edge function
     let emailMap: Record<string, string> = {};
     try {
       const { data: emailData } = await supabase.functions.invoke("admin-manage-admins", {
@@ -83,10 +66,17 @@ const CSProviderDirectory = () => {
       if (emailData?.emails) emailMap = emailData.emails;
     } catch (_) { /* non-critical */ }
 
-    const enriched = ((data as unknown as ProviderRow[]) || []).map((p) => ({
+    // Fetch balances
+    const providerRoleSet = new Set(providerIds);
+    const enriched: ProviderProfile[] = ((data as any[]) || []).map((p) => ({
       ...p,
       email: emailMap[p.user_id] || null,
+      hasProviderRole: providerRoleSet.has(p.user_id),
+      balance: 0,
+      profile_completed: p.profile_completed ?? false,
+      available_now: p.available_now ?? false,
     }));
+
     setProviders(enriched);
     setLoading(false);
   };
@@ -106,6 +96,21 @@ const CSProviderDirectory = () => {
     }
     return true;
   });
+
+  // Handlers for ProviderDetailsDrawer actions (CS can only request suspension)
+  const handleApprove = async () => {
+    toast({ title: "غير مسموح", description: "فقط المسؤول يمكنه اعتماد المزودين", variant: "destructive" });
+  };
+  const handleSuspend = (userId: string) => {
+    const p = providers.find(pr => pr.user_id === userId);
+    if (p) {
+      setSelectedProvider(null);
+      setSuspensionTarget(p);
+    }
+  };
+  const handleSettlement = async () => {
+    toast({ title: "غير مسموح", description: "فقط المسؤول يمكنه إجراء التسويات", variant: "destructive" });
+  };
 
   if (loading) return <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
 
@@ -154,7 +159,11 @@ const CSProviderDirectory = () => {
       ) : (
         <div className="grid gap-3">
           {filtered.map((p) => (
-            <Card key={p.user_id}>
+            <Card
+              key={p.user_id}
+              className="cursor-pointer hover:border-primary/50 transition-colors"
+              onClick={() => setSelectedProvider(p)}
+            >
               <CardContent className="py-4 px-4 space-y-2">
                 <div className="flex items-start justify-between">
                   <div>
@@ -179,27 +188,10 @@ const CSProviderDirectory = () => {
                     {p.available_now && (
                       <Badge variant="outline" className="bg-success/10 text-success border-success/30">متاح</Badge>
                     )}
-                    {/* Request Suspension button for CS */}
-                    {p.provider_status === "approved" && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="h-7 px-2 text-warning border-warning/30 hover:bg-warning/10 hover:text-warning gap-1"
-                        onClick={(e) => { e.stopPropagation(); setSuspensionTarget(p); }}
-                      >
-                        <ShieldAlert className="h-3.5 w-3.5" />
-                        <span className="text-[10px]">طلب إيقاف</span>
-                      </Button>
-                    )}
                   </div>
                 </div>
 
                 <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
-                  {p.email && (
-                    <span className="flex items-center gap-1">
-                      <Mail className="h-3 w-3" /> <span dir="ltr">{p.email}</span>
-                    </span>
-                  )}
                   {p.phone && (
                     <span className="flex items-center gap-1">
                       <Phone className="h-3 w-3" /> <span dir="ltr">{p.phone}</span>
@@ -215,17 +207,11 @@ const CSProviderDirectory = () => {
                       <MapPin className="h-3 w-3" /> نطاق {p.radius_km} كم
                     </span>
                   )}
-                  {p.lat && p.lng && (
-                    <span className="flex items-center gap-1">
-                      <Navigation className="h-3 w-3" /> موقع مسجل
-                    </span>
-                  )}
                   {!p.profile_completed && (
                     <span className="text-warning">الملف غير مكتمل</span>
                   )}
                 </div>
 
-                {/* Specialties */}
                 {p.specialties && p.specialties.length > 0 && (
                   <div className="flex flex-wrap gap-1">
                     <Stethoscope className="h-3 w-3 text-muted-foreground mt-0.5" />
@@ -234,32 +220,21 @@ const CSProviderDirectory = () => {
                     ))}
                   </div>
                 )}
-
-                {/* Tools */}
-                {p.tools && p.tools.length > 0 && (
-                  <div className="flex flex-wrap gap-1">
-                    {p.tools.map((t) => (
-                      <Badge key={t} variant="outline" className="text-[10px]">{t}</Badge>
-                    ))}
-                  </div>
-                )}
-
-                {p.address_text && (
-                  <p className="text-xs text-muted-foreground flex items-center gap-1">
-                    <MapPin className="h-3 w-3" /> {p.address_text}
-                  </p>
-                )}
-
-                {p.last_active_at && (
-                  <p className="text-[10px] text-muted-foreground">
-                    آخر نشاط: {new Date(p.last_active_at).toLocaleDateString("ar-JO", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
-                  </p>
-                )}
               </CardContent>
             </Card>
           ))}
         </div>
       )}
+
+      {/* Provider Details Drawer */}
+      <ProviderDetailsDrawer
+        provider={selectedProvider}
+        open={!!selectedProvider}
+        onOpenChange={(open) => { if (!open) setSelectedProvider(null); }}
+        onApprove={handleApprove}
+        onSuspend={handleSuspend}
+        onSettlement={handleSettlement}
+      />
 
       {/* Suspension Request Dialog */}
       {suspensionTarget && (
