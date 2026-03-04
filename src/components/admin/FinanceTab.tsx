@@ -5,12 +5,16 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
   Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription,
 } from "@/components/ui/sheet";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
+} from "@/components/ui/dialog";
 import {
   Loader2, Search, TrendingUp, AlertTriangle, Wallet, DollarSign,
   ArrowDownCircle, ArrowUpCircle, CalendarDays,
@@ -33,6 +37,7 @@ interface LedgerEntry {
   created_at: string;
   booking_id: string | null;
   booking_number?: string | null;
+  cliq_reference?: string | null;
 }
 
 const FinanceTab = () => {
@@ -49,15 +54,18 @@ const FinanceTab = () => {
   const [ledger, setLedger] = useState<LedgerEntry[]>([]);
   const [ledgerLoading, setLedgerLoading] = useState(false);
 
+  // Settlement modal
+  const [settlementOpen, setSettlementOpen] = useState(false);
+  const [cliqReference, setCliqReference] = useState("");
+  const [settlementLoading, setSettlementLoading] = useState(false);
+
   const fetchData = async () => {
     setLoading(true);
 
-    // Get all providers (exclude anyone who also has admin or cs role)
     const { data: roles } = await supabase.from("user_roles").select("user_id").eq("role", "provider");
     const providerIds = (roles || []).map((r) => r.user_id);
     if (providerIds.length === 0) { setLoading(false); return; }
 
-    // Filter out admin/cs users
     const { data: staffRoles } = await supabase.from("user_roles").select("user_id").in("role", ["admin", "cs"]);
     const staffIds = new Set((staffRoles || []).map((r) => r.user_id));
     const pureProviderIds = providerIds.filter((id) => !staffIds.has(id));
@@ -68,7 +76,6 @@ const FinanceTab = () => {
       .select("user_id, full_name, phone, city, role_type")
       .in("user_id", pureProviderIds);
 
-    // Get balances
     const enriched: ProviderDebt[] = [];
     let debt = 0;
     for (const p of (profiles || [])) {
@@ -81,7 +88,6 @@ const FinanceTab = () => {
     setProviders(enriched);
     setTotalDebt(debt);
 
-    // Today's earnings (completed bookings today)
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
     const { data: completedToday } = await supabase
@@ -115,7 +121,6 @@ const FinanceTab = () => {
       .eq("provider_id", provider.user_id)
       .order("created_at", { ascending: false });
 
-    // Enrich with booking numbers
     const bookingIds = (entries || []).filter((e) => e.booking_id).map((e) => e.booking_id!);
     let bookingMap: Record<string, string> = {};
     if (bookingIds.length > 0) {
@@ -128,27 +133,52 @@ const FinanceTab = () => {
       }
     }
 
-    setLedger((entries || []).map((e) => ({
+    setLedger((entries || []).map((e: any) => ({
       ...e,
       booking_number: e.booking_id ? bookingMap[e.booking_id] || null : null,
     })));
     setLedgerLoading(false);
   };
 
-  const recordSettlement = async () => {
-    if (!selectedProvider) return;
-    const amount = prompt(t("provider.details.settlement_prompt"));
-    if (!amount || isNaN(Number(amount)) || Number(amount) <= 0) return;
+  const amountDue = selectedProvider ? Math.abs(Math.min(0, selectedProvider.balance)) : 0;
+
+  const openSettlementModal = () => {
+    setCliqReference("");
+    setSettlementOpen(true);
+  };
+
+  const confirmSettlement = async () => {
+    if (!selectedProvider || amountDue <= 0 || !cliqReference.trim()) return;
+    setSettlementLoading(true);
+
     const { error } = await supabase.from("provider_wallet_ledger").insert({
-      provider_id: selectedProvider.user_id, amount: Number(amount), reason: "settlement",
+      provider_id: selectedProvider.user_id,
+      amount: amountDue,
+      reason: "settlement",
+      cliq_reference: cliqReference.trim(),
+      settled_at: new Date().toISOString(),
     });
+
     if (error) {
       toast({ title: t("common.error"), description: error.message, variant: "destructive" });
     } else {
+      // Send admin notification
+      await supabase.from("staff_notifications").insert({
+        title: `تسوية: ${selectedProvider.full_name || "مزوّد"}`,
+        body: `تمت تسوية ${formatCurrency(amountDue)} — CliQ: ${cliqReference.trim()}`,
+        target_role: "admin",
+        provider_id: selectedProvider.user_id,
+      });
+
       toast({ title: t("provider.details.settlement_success") });
-      openProviderLedger(selectedProvider);
+      setSettlementOpen(false);
+      // Refresh data
+      const updatedProvider = { ...selectedProvider, balance: selectedProvider.balance + amountDue };
+      setSelectedProvider(updatedProvider);
+      openProviderLedger(updatedProvider);
       fetchData();
     }
+    setSettlementLoading(false);
   };
 
   const filtered = providers.filter((p) => {
@@ -270,10 +300,12 @@ const FinanceTab = () => {
                 </CardContent>
               </Card>
 
-              {/* Settlement button */}
-              <Button variant="outline" className="w-full gap-1.5" onClick={recordSettlement}>
-                <DollarSign className="h-4 w-4" /> {t("provider.details.settlement")}
-              </Button>
+              {/* Settlement button - only show if there's debt */}
+              {amountDue > 0 && (
+                <Button variant="outline" className="w-full gap-1.5" onClick={openSettlementModal}>
+                  <DollarSign className="h-4 w-4" /> {t("provider.details.settlement")}
+                </Button>
+              )}
 
               {/* Ledger entries */}
               {ledgerLoading ? (
@@ -290,7 +322,7 @@ const FinanceTab = () => {
                         <ArrowUpCircle className="h-5 w-5 text-success shrink-0" />
                       )}
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-1.5 flex-wrap">
                           <Badge variant="outline" className="text-[10px]">
                             {entry.reason === "platform_fee" ? t("finance.reason.platform_fee") :
                              entry.reason === "settlement" ? t("provider.wallet.settlement") :
@@ -298,6 +330,9 @@ const FinanceTab = () => {
                           </Badge>
                           {entry.booking_number && (
                             <span className="text-[10px] text-muted-foreground" dir="ltr">{entry.booking_number}</span>
+                          )}
+                          {entry.cliq_reference && (
+                            <span className="text-[10px] text-muted-foreground" dir="ltr">CliQ: {entry.cliq_reference}</span>
                           )}
                         </div>
                         <p className="text-[10px] text-muted-foreground mt-0.5">
@@ -316,6 +351,56 @@ const FinanceTab = () => {
           )}
         </SheetContent>
       </Sheet>
+
+      {/* Settlement Modal */}
+      <Dialog open={settlementOpen} onOpenChange={setSettlementOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t("provider.details.settlement")}</DialogTitle>
+            <DialogDescription>
+              {selectedProvider?.full_name || "—"}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            {/* Amount due - read only */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">المبلغ المستحق للمنصة</Label>
+              <div className="flex h-10 w-full items-center rounded-md border border-input bg-muted px-3 text-sm font-bold text-destructive">
+                {formatCurrency(amountDue)}
+              </div>
+            </div>
+
+            {/* CliQ reference - required */}
+            <div className="space-y-2">
+              <Label htmlFor="cliq-ref" className="text-sm font-medium">
+                رقم حوالة CliQ <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="cliq-ref"
+                placeholder="أدخل رقم حوالة CliQ"
+                value={cliqReference}
+                onChange={(e) => setCliqReference(e.target.value)}
+                dir="ltr"
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSettlementOpen(false)}>
+              إلغاء
+            </Button>
+            <Button
+              onClick={confirmSettlement}
+              disabled={!cliqReference.trim() || settlementLoading || amountDue <= 0}
+              className="gap-1.5"
+            >
+              {settlementLoading && <Loader2 className="h-4 w-4 animate-spin" />}
+              تأكيد التسوية
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

@@ -469,26 +469,32 @@ export type Database = {
         Row: {
           amount: number
           booking_id: string | null
+          cliq_reference: string | null
           created_at: string
           id: string
           provider_id: string
           reason: string
+          settled_at: string | null
         }
         Insert: {
           amount: number
           booking_id?: string | null
+          cliq_reference?: string | null
           created_at?: string
           id?: string
           provider_id: string
           reason: string
+          settled_at?: string | null
         }
         Update: {
           amount?: number
           booking_id?: string | null
+          cliq_reference?: string | null
           created_at?: string
           id?: string
           provider_id?: string
           reason?: string
+          settled_at?: string | null
         }
         Relationships: [
           {
