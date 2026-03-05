@@ -136,6 +136,9 @@ export type Database = {
           accepted_at: string | null
           actual_duration_minutes: number | null
           agreed_price: number | null
+          ai_service_match: string | null
+          ai_summary: string | null
+          ai_tools_list: string[] | null
           area_public: string | null
           assigned_at: string | null
           assigned_by: string | null
@@ -145,6 +148,7 @@ export type Database = {
           check_in_at: string | null
           check_out_at: string | null
           city: string
+          client_disclaimer_accepted_at: string | null
           client_lat: number | null
           client_lng: number | null
           close_out_at: string | null
@@ -182,11 +186,16 @@ export type Database = {
           stripe_session_id: string | null
           stripe_transfer_id: string | null
           subtotal: number
+          voice_transcript: string | null
+          voice_url: string | null
         }
         Insert: {
           accepted_at?: string | null
           actual_duration_minutes?: number | null
           agreed_price?: number | null
+          ai_service_match?: string | null
+          ai_summary?: string | null
+          ai_tools_list?: string[] | null
           area_public?: string | null
           assigned_at?: string | null
           assigned_by?: string | null
@@ -196,6 +205,7 @@ export type Database = {
           check_in_at?: string | null
           check_out_at?: string | null
           city: string
+          client_disclaimer_accepted_at?: string | null
           client_lat?: number | null
           client_lng?: number | null
           close_out_at?: string | null
@@ -233,11 +243,16 @@ export type Database = {
           stripe_session_id?: string | null
           stripe_transfer_id?: string | null
           subtotal?: number
+          voice_transcript?: string | null
+          voice_url?: string | null
         }
         Update: {
           accepted_at?: string | null
           actual_duration_minutes?: number | null
           agreed_price?: number | null
+          ai_service_match?: string | null
+          ai_summary?: string | null
+          ai_tools_list?: string[] | null
           area_public?: string | null
           assigned_at?: string | null
           assigned_by?: string | null
@@ -247,6 +262,7 @@ export type Database = {
           check_in_at?: string | null
           check_out_at?: string | null
           city?: string
+          client_disclaimer_accepted_at?: string | null
           client_lat?: number | null
           client_lng?: number | null
           close_out_at?: string | null
@@ -284,6 +300,8 @@ export type Database = {
           stripe_session_id?: string | null
           stripe_transfer_id?: string | null
           subtotal?: number
+          voice_transcript?: string | null
+          voice_url?: string | null
         }
         Relationships: []
       }
@@ -403,6 +421,7 @@ export type Database = {
           lng: number | null
           phone: string | null
           profile_completed: boolean | null
+          provider_agreement_accepted_at: string | null
           provider_status: string
           radius_km: number | null
           role_type: string | null
@@ -428,6 +447,7 @@ export type Database = {
           lng?: number | null
           phone?: string | null
           profile_completed?: boolean | null
+          provider_agreement_accepted_at?: string | null
           provider_status?: string
           radius_km?: number | null
           role_type?: string | null
@@ -453,6 +473,7 @@ export type Database = {
           lng?: number | null
           phone?: string | null
           profile_completed?: boolean | null
+          provider_agreement_accepted_at?: string | null
           provider_status?: string
           radius_km?: number | null
           role_type?: string | null

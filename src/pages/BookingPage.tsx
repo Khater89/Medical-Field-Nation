@@ -13,6 +13,7 @@ import BookingConfirmation from "@/components/booking/BookingConfirmation";
 import BookingSummary from "@/components/booking/BookingSummary";
 import SuccessView from "@/components/booking/SuccessView";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowRight, ArrowLeft, Send, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -44,6 +45,7 @@ const BookingPage = () => {
   const [submitted, setSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [bookingNumber, setBookingNumber] = useState<string>("");
+  const [disclaimerAccepted, setDisclaimerAccepted] = useState(false);
 
   useEffect(() => {
     if (categories.length > 0 && !category) {
@@ -194,7 +196,25 @@ const BookingPage = () => {
                 {step === 2 && <PatientForm data={patient} onChange={setPatient} />}
 
                 {step === 3 && selectedService && (
-                  <BookingConfirmation service={selectedService} patient={patient} />
+                  <div className="space-y-4">
+                    <BookingConfirmation service={selectedService} patient={patient} />
+                    {/* Disclaimer Checkbox */}
+                    <div className="rounded-xl border-2 border-warning/30 bg-warning/5 p-4 space-y-3">
+                      <div className="flex items-start gap-3">
+                        <Checkbox
+                          id="disclaimer"
+                          checked={disclaimerAccepted}
+                          onCheckedChange={(checked) => setDisclaimerAccepted(checked === true)}
+                          className="mt-1"
+                        />
+                        <label htmlFor="disclaimer" className="text-sm leading-relaxed cursor-pointer">
+                          {isRTL
+                            ? "أوافق أن المنصة وسيط للتنسيق فقط ولا تقدم تشخيصًا أو علاجًا، والمسؤولية المهنية تقع على مزود الخدمة المرخّص."
+                            : "I agree that the platform is a coordination intermediary only and does not provide diagnosis or treatment. Professional responsibility lies with the licensed service provider."}
+                        </label>
+                      </div>
+                    </div>
+                  </div>
                 )}
               </motion.div>
             </AnimatePresence>
@@ -222,7 +242,7 @@ const BookingPage = () => {
               ) : (
                 <Button
                   onClick={handleSubmit}
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || !disclaimerAccepted}
                   className="gap-2 flex-1 rounded-xl h-11 font-semibold"
                 >
                   {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}

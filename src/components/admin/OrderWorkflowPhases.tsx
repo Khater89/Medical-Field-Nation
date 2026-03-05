@@ -283,6 +283,27 @@ const OrderWorkflowPhases = ({ booking, serviceName, servicePrice, onWorkflowCha
         });
       }
 
+      // Webhook outbox: order_assigned event
+      await supabase.from("booking_outbox").insert({
+        booking_id: booking.id,
+        destination: "webhook",
+        payload: {
+          event: "order_assigned",
+          booking_id: booking.id,
+          booking_number: booking.booking_number,
+          service_name: serviceName,
+          city: booking.city,
+          scheduled_at: booking.scheduled_at,
+          client_price: clientPrice,
+          provider_share: providerShare,
+          platform_profit: clientPrice - providerShare,
+          assigned_provider_id: selectedProvider,
+          customer_phone: booking.customer_phone,
+          customer_name: booking.customer_name || booking.customer_display_name,
+        },
+        status: "pending",
+      } as any);
+
       toast.success("تم الإسناد بنجاح ✅", {
         description: "يرجى متابعة قبول المزود للطلب",
         duration: 8000,

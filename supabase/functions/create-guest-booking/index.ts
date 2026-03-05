@@ -175,6 +175,38 @@ Deno.serve(async (req) => {
       console.error("Outbox insert error (non-blocking):", outboxError);
     }
 
+    // ── Webhook outbox: order_created event for n8n ──
+    const webhookPayload = {
+      event: "order_created",
+      booking_id: data.id,
+      booking_number: data.booking_number,
+      service_id,
+      city: city.trim(),
+      scheduled_at: new Date(scheduled_at).toISOString(),
+      customer_name: customer_name.trim(),
+      customer_phone: customer_phone.trim(),
+      created_at: new Date().toISOString(),
+    };
+
+    await supabaseAdmin.from("booking_outbox").insert({
+      booking_id: data.id,
+      destination: "webhook",
+      payload: webhookPayload,
+      status: "pending",
+    }).then(({ error: whErr }) => {
+      if (whErr) console.error("Webhook outbox error (non-blocking):", whErr);
+    });
+
+    // ── Admin notification for new booking ──
+    await supabaseAdmin.from("staff_notifications").insert({
+      title: `📥 طلب جديد: ${data.booking_number}`,
+      body: `${service_id} — ${city.trim()} — ${customer_phone.trim()}`,
+      target_role: "admin",
+      booking_id: data.id,
+    }).then(({ error: nErr }) => {
+      if (nErr) console.error("Notification insert error (non-blocking):", nErr);
+    });
+
     return new Response(
       JSON.stringify({
         success: true,

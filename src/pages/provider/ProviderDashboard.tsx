@@ -114,6 +114,15 @@ const ProviderDashboard = () => {
   const [otpInput, setOtpInput] = useState("");
   const [otpError, setOtpError] = useState("");
 
+  // Provider agreement state
+  const [agreementAccepted, setAgreementAccepted] = useState(false);
+  const [showAgreement, setShowAgreement] = useState(false);
+  const [agreementLoading, setAgreementLoading] = useState(false);
+
+  // Debt limit
+  const [debtLimit, setDebtLimit] = useState(-20);
+  const [isOnHold, setIsOnHold] = useState(false);
+
   // Profile editing state
   const [availableNow, setAvailableNow] = useState(false);
   const [specialties, setSpecialties] = useState<string[]>([]);
@@ -130,6 +139,9 @@ const ProviderDashboard = () => {
       setTools(profile.tools || []);
       setRadiusKm(profile.radius_km || 20);
       setAddressText(profile.address_text || "");
+      // Check if provider has accepted agreement
+      setAgreementAccepted(!!(profile as any).provider_agreement_accepted_at);
+      setShowAgreement(!(profile as any).provider_agreement_accepted_at);
     }
   }, [profile]);
 
@@ -154,10 +166,14 @@ const ProviderDashboard = () => {
       supabase.from("platform_settings").select("*").eq("id", 1).maybeSingle(),
     ]);
     setLedger((ledgerRes.data as LedgerEntry[]) || []);
-    setBalance(balanceRes.data || 0);
+    const bal = balanceRes.data || 0;
+    setBalance(bal);
     if (settingsRes.data) {
       setCoordinatorPhone((settingsRes.data as any).coordinator_phone || null);
       setCoordinatorPhone2((settingsRes.data as any).coordinator_phone_2 || null);
+      const limit = (settingsRes.data as any).provider_debt_limit ?? -20;
+      setDebtLimit(limit);
+      setIsOnHold(bal < limit);
     }
     setLoading(false);
   };
@@ -165,6 +181,24 @@ const ProviderDashboard = () => {
   useEffect(() => { fetchData(); }, [user]);
 
   const isProfileReady = profile?.provider_status === "approved" && profile?.profile_completed;
+
+  /* ── Provider Agreement Acceptance ── */
+  const acceptAgreement = async () => {
+    if (!user) return;
+    setAgreementLoading(true);
+    const now = new Date().toISOString();
+    const { error } = await supabase.from("profiles").update({
+      provider_agreement_accepted_at: now,
+    } as any).eq("user_id", user.id);
+    if (error) {
+      toast({ title: t("common.error"), description: error.message, variant: "destructive" });
+    } else {
+      setAgreementAccepted(true);
+      setShowAgreement(false);
+      toast({ title: "تم قبول الاتفاقية ✅" });
+    }
+    setAgreementLoading(false);
+  };
 
   /* ── Order Actions ── */
 
@@ -177,6 +211,11 @@ const ProviderDashboard = () => {
 
   const acceptOrder = async (id: string) => {
     if (!user) return;
+    // Debt hold check
+    if (isOnHold) {
+      toast({ title: "لا يمكن قبول الطلب", description: "لديك مستحقات مالية غير مسددة. يرجى تسوية الرصيد أولاً.", variant: "destructive" });
+      return;
+    }
     setActionLoading(id);
     try {
       const now = new Date().toISOString();
@@ -520,6 +559,42 @@ const ProviderDashboard = () => {
       </header>
 
       <main className="container py-6 px-4">
+        {/* Provider Agreement Overlay */}
+        {showAgreement && !agreementAccepted && (
+          <div className="mb-6">
+            <Card className="border-2 border-warning/50 bg-warning/5">
+              <CardContent className="py-6 space-y-4">
+                <div className="flex items-center gap-2 text-warning">
+                  <ShieldCheck className="h-5 w-5" />
+                  <h3 className="font-bold text-sm">اتفاقية مقدم الخدمة</h3>
+                </div>
+                <p className="text-sm leading-relaxed">
+                  أنا مزود مستقل ومرخّص (إن وجد) وأتحمل كامل المسؤولية المهنية والقانونية عن الخدمة المقدمة، وأوافق على تعويض المنصة عن أي مطالبات ناتجة عن عملي.
+                </p>
+                <Button
+                  className="w-full gap-2"
+                  onClick={acceptAgreement}
+                  disabled={agreementLoading}
+                >
+                  {agreementLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
+                  أوافق على الاتفاقية
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Debt Hold Banner */}
+        {isOnHold && (
+          <div className="mb-6 rounded-lg border-2 border-destructive/50 bg-destructive/5 p-4 flex items-start gap-3">
+            <Lock className="h-5 w-5 text-destructive mt-0.5 shrink-0" />
+            <div>
+              <p className="text-sm font-bold text-destructive">حسابك معلّق</p>
+              <p className="text-xs text-muted-foreground">لديك مستحقات مالية تتجاوز الحد المسموح ({formatCurrency(debtLimit)}). لا يمكنك قبول طلبات جديدة حتى تتم التسوية.</p>
+            </div>
+          </div>
+        )}
+
         {/* Balance Card */}
         <Card className="mb-6">
           <CardContent className="flex items-center justify-between py-4">
@@ -637,16 +712,28 @@ const ProviderDashboard = () => {
                       {/* Before acceptance: locked message + action buttons */}
                       {!accepted && o.status === "ASSIGNED" && (
                         <>
-                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/50 rounded-lg p-2.5">
-                            <Lock className="h-3.5 w-3.5" />
-                            {t("provider.dashboard.press_accept")}
-                          </div>
+                          {isOnHold ? (
+                            <div className="flex items-center gap-1.5 text-xs text-destructive bg-destructive/10 rounded-lg p-2.5">
+                              <Lock className="h-3.5 w-3.5" />
+                              لا يمكنك قبول طلبات جديدة — لديك مستحقات مالية غير مسددة
+                            </div>
+                          ) : !agreementAccepted ? (
+                            <div className="flex items-center gap-1.5 text-xs text-warning bg-warning/10 rounded-lg p-2.5">
+                              <ShieldCheck className="h-3.5 w-3.5" />
+                              يرجى قبول اتفاقية مقدم الخدمة أولاً
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/50 rounded-lg p-2.5">
+                              <Lock className="h-3.5 w-3.5" />
+                              {t("provider.dashboard.press_accept")}
+                            </div>
+                          )}
                           <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
                             <Button
                               size="sm"
                               className="gap-1 h-7 text-xs flex-1 bg-success hover:bg-success/90"
                               onClick={() => acceptOrder(o.id)}
-                              disabled={actionLoading === o.id}
+                              disabled={actionLoading === o.id || isOnHold || !agreementAccepted}
                             >
                               {actionLoading === o.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Eye className="h-3 w-3" />}
                               {t("provider.dashboard.accept")}
