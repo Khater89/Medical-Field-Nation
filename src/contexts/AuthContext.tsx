@@ -67,6 +67,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       ]);
       if (rolesResult.data) setRoles(rolesResult.data.map((r) => r.role as AppRole));
       if (profileResult.data) setProfile(profileResult.data as Profile);
+      console.log("[AuthContext] staff_users result:", JSON.stringify(staffResult));
       setStaffRole(staffResult.data?.role ?? null);
     } catch (e) {
       console.error("fetchUserData error (non-fatal):", e);
