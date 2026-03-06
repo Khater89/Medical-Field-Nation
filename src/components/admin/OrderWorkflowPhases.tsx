@@ -14,6 +14,7 @@ import {
   Briefcase, Edit2,
 } from "lucide-react";
 import type { BookingRow } from "./BookingDetailsDrawer";
+import { logAssistantAction } from "@/lib/auditLog";
 
 /* ── Types ── */
 
@@ -92,7 +93,7 @@ interface Props {
 
 const OrderWorkflowPhases = ({ booking, serviceName, servicePrice, onWorkflowChange, onDataRefresh }: Props) => {
   const { t, formatCurrency } = useLanguage();
-  const { isAdmin } = useAuth();
+  const { isAdmin, staffRole } = useAuth();
 
   // Phase 1 state
   const [clientAgreed, setClientAgreed] = useState(!!booking.deal_confirmed_at);
@@ -177,6 +178,7 @@ const OrderWorkflowPhases = ({ booking, serviceName, servicePrice, onWorkflowCha
         });
       }
       toast.success("تم تأكيد الاتفاق مع العميل ✅");
+      logAssistantAction({ staffRole, bookingId: booking.id, bookingRef: booking.booking_number, action: "DEAL_CONFIRMED" });
     } catch (err: any) {
       toast.error(err.message);
       setClientAgreed(false);
@@ -208,6 +210,7 @@ const OrderWorkflowPhases = ({ booking, serviceName, servicePrice, onWorkflowCha
         });
       }
       toast.success("تم حفظ سعر العميل ✅");
+      logAssistantAction({ staffRole, bookingId: booking.id, bookingRef: booking.booking_number, action: "PRICED", details: { client_price: clientPrice } });
       setEditingClientPrice(false);
       refresh();
     } catch (err: any) {
@@ -246,6 +249,7 @@ const OrderWorkflowPhases = ({ booking, serviceName, servicePrice, onWorkflowCha
         });
       }
       toast.success("تم حفظ حصة المزود ✅");
+      logAssistantAction({ staffRole, bookingId: booking.id, bookingRef: booking.booking_number, action: "PROVIDER_SHARE_SET", details: { provider_share: providerShare } });
       setEditingProviderShare(false);
       refresh();
     } catch (err: any) {
@@ -308,6 +312,7 @@ const OrderWorkflowPhases = ({ booking, serviceName, servicePrice, onWorkflowCha
         description: "يرجى متابعة قبول المزود للطلب",
         duration: 8000,
       });
+      logAssistantAction({ staffRole, bookingId: booking.id, bookingRef: booking.booking_number, action: "ASSIGNED", details: { provider_id: selectedProvider, client_price: clientPrice, provider_share: providerShare } });
       onWorkflowChange();
     } catch (err: any) {
       toast.error(err.message);

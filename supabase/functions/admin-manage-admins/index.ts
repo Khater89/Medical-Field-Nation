@@ -88,10 +88,24 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const { action, role: targetRole } = body;
 
+    // Check staff_users role for granular permissions
+    const { data: staffRow } = await supabaseAdmin.from("staff_users").select("role").eq("user_id", userId).maybeSingle();
+    const staffRole = staffRow?.role || null;
+    const isPlatformOwner = staffRole === "owner";
+
     // Actions that require admin role only
     const adminOnlyActions = ["invite_admin", "remove_admin", "create_cs", "list"];
     if (adminOnlyActions.includes(action) && !isAdmin) {
       return new Response(JSON.stringify({ error: "Forbidden: admin only" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Staff management (invite/remove/create) requires platform owner
+    const ownerOnlyActions = ["invite_admin", "remove_admin", "create_cs"];
+    if (ownerOnlyActions.includes(action) && !isPlatformOwner) {
+      return new Response(JSON.stringify({ error: "Forbidden: only platform owner can manage staff" }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

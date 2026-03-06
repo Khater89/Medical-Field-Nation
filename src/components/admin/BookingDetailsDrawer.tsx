@@ -15,6 +15,7 @@ import {
   Brain, AlertTriangle, Wrench,
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import OrderWorkflowPhases from "./OrderWorkflowPhases";
@@ -98,6 +99,7 @@ const InfoRow = ({ icon: Icon, label, value, dir }: { icon: any; label: string; 
 
 const BookingDetailsDrawer = ({ booking, open, onOpenChange, serviceName, servicePrice, providerName, providerPhone, onStatusChange, onDataRefresh }: Props) => {
   const { t, formatCurrency, formatDate, formatDateTime, formatDateShort } = useLanguage();
+  const { isOwner } = useAuth();
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
   const [cancelling, setCancelling] = useState(false);
@@ -328,7 +330,7 @@ const BookingDetailsDrawer = ({ booking, open, onOpenChange, serviceName, servic
           {/* Actions for non-workflow bookings */}
           {!showWorkflow && (
             <div className="flex gap-2 pt-2">
-              {booking.status !== "CANCELLED" && booking.status !== "COMPLETED" && (
+              {isOwner && booking.status !== "CANCELLED" && booking.status !== "COMPLETED" && (
                 <Button variant="destructive" className="flex-1 gap-1.5" onClick={() => setCancelDialogOpen(true)}>
                   <Ban className="h-4 w-4" /> {t("booking.details.cancel") || "إلغاء الطلب"}
                 </Button>
@@ -345,7 +347,7 @@ const BookingDetailsDrawer = ({ booking, open, onOpenChange, serviceName, servic
           )}
 
           {/* Cancel action for workflow bookings too */}
-          {showWorkflow && booking.status !== "CANCELLED" && (
+          {isOwner && showWorkflow && booking.status !== "CANCELLED" && (
             <Button variant="destructive" size="sm" className="w-full gap-1.5" onClick={() => setCancelDialogOpen(true)}>
               <Ban className="h-4 w-4" /> {t("booking.details.cancel") || "إلغاء الطلب"}
             </Button>

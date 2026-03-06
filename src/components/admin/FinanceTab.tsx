@@ -20,6 +20,7 @@ import {
   ArrowDownCircle, ArrowUpCircle, CalendarDays,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface ProviderDebt {
   user_id: string;
@@ -43,6 +44,7 @@ interface LedgerEntry {
 const FinanceTab = () => {
   const { t, formatCurrency, formatDateShort, isRTL } = useLanguage();
   const { toast } = useToast();
+  const { isOwner } = useAuth();
   const [loading, setLoading] = useState(true);
   const [providers, setProviders] = useState<ProviderDebt[]>([]);
   const [search, setSearch] = useState("");
@@ -300,8 +302,8 @@ const FinanceTab = () => {
                 </CardContent>
               </Card>
 
-              {/* Settlement button - only show if there's debt */}
-              {amountDue > 0 && (
+              {/* Settlement button - only show if there's debt AND user is owner */}
+              {isOwner && amountDue > 0 && (
                 <Button variant="outline" className="w-full gap-1.5" onClick={openSettlementModal}>
                   <DollarSign className="h-4 w-4" /> {t("provider.details.settlement")}
                 </Button>
