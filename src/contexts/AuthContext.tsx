@@ -39,9 +39,6 @@ interface AuthContextType {
   isCS: boolean;
   isProvider: boolean;
   isCustomer: boolean;
-  staffRole: string | null;
-  isOwner: boolean;
-  isOwnerAssistant: boolean;
   signOut: () => Promise<void>;
   refreshUserData: () => Promise<void>;
 }
@@ -53,21 +50,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [roles, setRoles] = useState<AppRole[]>([]);
-  const [staffRole, setStaffRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [rolesLoaded, setRolesLoaded] = useState(false);
 
   // Non-blocking fetch – errors are swallowed, state is always updated
   const fetchUserData = useCallback(async (userId: string) => {
     try {
-      const [rolesResult, profileResult, staffResult] = await Promise.all([
+      const [rolesResult, profileResult] = await Promise.all([
         supabase.from("user_roles").select("role").eq("user_id", userId),
         supabase.from("profiles").select("*").eq("user_id", userId).maybeSingle(),
-        supabase.from("staff_users").select("role").eq("user_id", userId).maybeSingle(),
       ]);
       if (rolesResult.data) setRoles(rolesResult.data.map((r) => r.role as AppRole));
       if (profileResult.data) setProfile(profileResult.data as Profile);
-      setStaffRole(staffResult.data?.role ?? null);
     } catch (e) {
       console.error("fetchUserData error (non-fatal):", e);
     } finally {
@@ -137,7 +131,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await supabase.auth.signOut();
     setRoles([]);
     setProfile(null);
-    setStaffRole(null);
     setRolesLoaded(false);
   };
 
@@ -149,15 +142,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isCS = roles.includes("cs");
   const isProvider = roles.includes("provider");
   const isCustomer = roles.includes("customer");
-  const isOwner = staffRole === "owner";
-  const isOwnerAssistant = staffRole === "owner_assistant";
 
   return (
     <AuthContext.Provider
       value={{
         user, session, profile, roles, loading, rolesLoaded,
         isAdmin, isCS, isProvider, isCustomer,
-        staffRole, isOwner, isOwnerAssistant,
         signOut, refreshUserData,
       }}
     >

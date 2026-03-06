@@ -136,7 +136,6 @@ export type Database = {
           accepted_at: string | null
           actual_duration_minutes: number | null
           agreed_price: number | null
-          ai_safety_note: string | null
           ai_service_match: string | null
           ai_summary: string | null
           ai_tools_list: string[] | null
@@ -194,7 +193,6 @@ export type Database = {
           accepted_at?: string | null
           actual_duration_minutes?: number | null
           agreed_price?: number | null
-          ai_safety_note?: string | null
           ai_service_match?: string | null
           ai_summary?: string | null
           ai_tools_list?: string[] | null
@@ -252,7 +250,6 @@ export type Database = {
           accepted_at?: string | null
           actual_duration_minutes?: number | null
           agreed_price?: number | null
-          ai_safety_note?: string | null
           ai_service_match?: string | null
           ai_summary?: string | null
           ai_tools_list?: string[] | null
@@ -425,7 +422,6 @@ export type Database = {
           phone: string | null
           profile_completed: boolean | null
           provider_agreement_accepted_at: string | null
-          provider_agreement_version: string | null
           provider_status: string
           radius_km: number | null
           role_type: string | null
@@ -452,7 +448,6 @@ export type Database = {
           phone?: string | null
           profile_completed?: boolean | null
           provider_agreement_accepted_at?: string | null
-          provider_agreement_version?: string | null
           provider_status?: string
           radius_km?: number | null
           role_type?: string | null
@@ -479,7 +474,6 @@ export type Database = {
           phone?: string | null
           profile_completed?: boolean | null
           provider_agreement_accepted_at?: string | null
-          provider_agreement_version?: string | null
           provider_status?: string
           radius_km?: number | null
           role_type?: string | null

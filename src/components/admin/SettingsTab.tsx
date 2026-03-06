@@ -9,7 +9,6 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Loader2, Save, Percent, Wallet, AlertTriangle, Phone, Trash2, ShieldCheck, UserPlus, UserMinus, Mail } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
 
 interface AdminUser {
   user_id: string;
@@ -326,7 +325,6 @@ const CSAgentsSection = () => {
 const SettingsTab = () => {
   const { toast } = useToast();
   const { t } = useLanguage();
-  const { isOwner } = useAuth();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [settings, setSettings] = useState({
@@ -436,9 +434,9 @@ const SettingsTab = () => {
     <div className="space-y-6">
       <h2 className="text-lg font-bold">{t("settings.title")}</h2>
 
-      {/* Admins Section - Owner only */}
-      {isOwner && <AdminsSection />}
-      {isOwner && <CSAgentsSection />}
+      {/* Admins Section */}
+      <AdminsSection />
+      <CSAgentsSection />
 
       <Card>
         <CardHeader>
@@ -553,8 +551,7 @@ const SettingsTab = () => {
         {t("settings.save")}
       </Button>
 
-      {/* Danger Zone - Owner only */}
-      {isOwner && (
+      {/* Danger Zone */}
       <div className="pt-6 border-t border-destructive/20">
         <Card className="border-destructive/30">
           <CardHeader>
@@ -574,7 +571,6 @@ const SettingsTab = () => {
           </CardContent>
         </Card>
       </div>
-      )}
 
       {/* Clear Confirmation Dialog */}
       <Dialog open={clearDialogOpen} onOpenChange={setClearDialogOpen}>

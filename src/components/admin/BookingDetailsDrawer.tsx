@@ -12,10 +12,8 @@ import { Label } from "@/components/ui/label";
 import {
   CalendarDays, MapPin, Phone, User, UserCheck,
   MessageCircle, FileText, StickyNote, Ban, Loader2, ClipboardCheck,
-  Brain, AlertTriangle, Wrench,
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import OrderWorkflowPhases from "./OrderWorkflowPhases";
@@ -53,12 +51,6 @@ export interface BookingRow {
   customer_name?: string | null;
   customer_phone?: string | null;
   client_address_text?: string | null;
-  voice_url?: string | null;
-  voice_transcript?: string | null;
-  ai_service_match?: string | null;
-  ai_tools_list?: string[] | null;
-  ai_summary?: string | null;
-  ai_safety_note?: string | null;
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -99,7 +91,6 @@ const InfoRow = ({ icon: Icon, label, value, dir }: { icon: any; label: string; 
 
 const BookingDetailsDrawer = ({ booking, open, onOpenChange, serviceName, servicePrice, providerName, providerPhone, onStatusChange, onDataRefresh }: Props) => {
   const { t, formatCurrency, formatDate, formatDateTime, formatDateShort } = useLanguage();
-  const { isOwner } = useAuth();
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
   const [cancelling, setCancelling] = useState(false);
@@ -277,42 +268,6 @@ const BookingDetailsDrawer = ({ booking, open, onOpenChange, serviceName, servic
             </div>
           )}
 
-          {/* AI Triage Section (Admin only) */}
-          {(booking.ai_summary || booking.ai_service_match || booking.ai_safety_note || booking.voice_transcript) && (
-            <div className="rounded-lg border border-info/20 bg-info/5 p-3 space-y-2">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-info">
-                <Brain className="h-3 w-3" /> نتائج AI — للتنسيق فقط وليست تشخيصاً طبياً
-              </div>
-              {booking.ai_safety_note && (
-                <div className="flex items-start gap-1.5 rounded bg-destructive/10 p-2">
-                  <AlertTriangle className="h-3.5 w-3.5 text-destructive mt-0.5 shrink-0" />
-                  <p className="text-xs font-bold text-destructive">{booking.ai_safety_note}</p>
-                </div>
-              )}
-              {booking.ai_service_match && (
-                <div className="text-xs">
-                  <span className="text-muted-foreground">نوع الخدمة المقترح:</span>{" "}
-                  <Badge variant="outline" className="text-[10px]">{booking.ai_service_match}</Badge>
-                </div>
-              )}
-              {booking.ai_tools_list && booking.ai_tools_list.length > 0 && (
-                <div className="text-xs flex items-start gap-1">
-                  <Wrench className="h-3 w-3 text-muted-foreground mt-0.5 shrink-0" />
-                  <span>{booking.ai_tools_list.join("، ")}</span>
-                </div>
-              )}
-              {booking.ai_summary && (
-                <p className="text-xs text-foreground">{booking.ai_summary}</p>
-              )}
-              {booking.voice_transcript && (
-                <details className="text-xs">
-                  <summary className="cursor-pointer text-muted-foreground hover:text-foreground">تفريغ الصوت</summary>
-                  <p className="mt-1 p-2 rounded bg-muted text-xs">{booking.voice_transcript}</p>
-                </details>
-              )}
-            </div>
-          )}
-
           {/* ═══ Phased Workflow for NEW / pre-accepted ASSIGNED bookings ═══ */}
           {showWorkflow && (
             <OrderWorkflowPhases
@@ -330,7 +285,7 @@ const BookingDetailsDrawer = ({ booking, open, onOpenChange, serviceName, servic
           {/* Actions for non-workflow bookings */}
           {!showWorkflow && (
             <div className="flex gap-2 pt-2">
-              {isOwner && booking.status !== "CANCELLED" && booking.status !== "COMPLETED" && (
+              {booking.status !== "CANCELLED" && booking.status !== "COMPLETED" && (
                 <Button variant="destructive" className="flex-1 gap-1.5" onClick={() => setCancelDialogOpen(true)}>
                   <Ban className="h-4 w-4" /> {t("booking.details.cancel") || "إلغاء الطلب"}
                 </Button>
@@ -347,7 +302,7 @@ const BookingDetailsDrawer = ({ booking, open, onOpenChange, serviceName, servic
           )}
 
           {/* Cancel action for workflow bookings too */}
-          {isOwner && showWorkflow && booking.status !== "CANCELLED" && (
+          {showWorkflow && booking.status !== "CANCELLED" && (
             <Button variant="destructive" size="sm" className="w-full gap-1.5" onClick={() => setCancelDialogOpen(true)}>
               <Ban className="h-4 w-4" /> {t("booking.details.cancel") || "إلغاء الطلب"}
             </Button>

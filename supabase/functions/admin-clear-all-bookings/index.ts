@@ -38,20 +38,11 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Check admin role + owner in staff_users
+    // Check admin role
     const { data: roles } = await userClient.from("user_roles").select("role").eq("user_id", user.id);
     const isAdmin = (roles || []).some((r: any) => r.role === "admin");
     if (!isAdmin) {
       return new Response(JSON.stringify({ error: "Forbidden: admin only" }), {
-        status: 403,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    // Only platform owner can clear all data
-    const { data: staffRow } = await adminClient.from("staff_users").select("role").eq("user_id", user.id).maybeSingle();
-    if (!staffRow || staffRow.role !== "owner") {
-      return new Response(JSON.stringify({ error: "Forbidden: only platform owner can clear data" }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });

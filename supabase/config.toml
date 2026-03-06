@@ -20,6 +20,3 @@ verify_jwt = false
 
 [functions.admin-setup]
 verify_jwt = false
-
-[functions.hourly-reminders]
-verify_jwt = false
