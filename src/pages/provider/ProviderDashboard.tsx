@@ -189,6 +189,7 @@ const ProviderDashboard = () => {
     const now = new Date().toISOString();
     const { error } = await supabase.from("profiles").update({
       provider_agreement_accepted_at: now,
+      provider_agreement_version: "v1",
     } as any).eq("user_id", user.id);
     if (error) {
       toast({ title: t("common.error"), description: error.message, variant: "destructive" });
