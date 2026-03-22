@@ -412,6 +412,7 @@ export type Database = {
         Row: {
           address_text: string | null
           available_now: boolean | null
+          bio: string | null
           city: string | null
           created_at: string
           date_of_birth: string | null
@@ -420,6 +421,7 @@ export type Database = {
           languages: string[] | null
           last_active_at: string | null
           lat: number | null
+          license_file_url: string | null
           license_id: string | null
           lng: number | null
           phone: string | null
@@ -439,6 +441,7 @@ export type Database = {
         Insert: {
           address_text?: string | null
           available_now?: boolean | null
+          bio?: string | null
           city?: string | null
           created_at?: string
           date_of_birth?: string | null
@@ -447,6 +450,7 @@ export type Database = {
           languages?: string[] | null
           last_active_at?: string | null
           lat?: number | null
+          license_file_url?: string | null
           license_id?: string | null
           lng?: number | null
           phone?: string | null
@@ -466,6 +470,7 @@ export type Database = {
         Update: {
           address_text?: string | null
           available_now?: boolean | null
+          bio?: string | null
           city?: string | null
           created_at?: string
           date_of_birth?: string | null
@@ -474,6 +479,7 @@ export type Database = {
           languages?: string[] | null
           last_active_at?: string | null
           lat?: number | null
+          license_file_url?: string | null
           license_id?: string | null
           lng?: number | null
           phone?: string | null
