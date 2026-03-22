@@ -188,30 +188,8 @@ const PatientForm = ({ data, onChange }: PatientFormProps) => {
         </Popover>
       </div>
 
-      {/* Time Slot */}
-      <div className="space-y-3">
-        <Label className="text-sm font-medium">{t("form.time")}</Label>
-        <RadioGroup
-          value={data.time}
-          onValueChange={(v) => update("time", v)}
-          className="grid grid-cols-3 gap-2"
-        >
-          {timeSlots.map((slot) => (
-            <label
-              key={slot.value}
-              className={cn(
-                "flex items-center justify-center gap-2 p-3 rounded-lg border-2 cursor-pointer transition-all text-center",
-                data.time === slot.value
-                  ? "border-primary bg-primary/10 text-primary"
-                  : "border-border bg-card hover:border-primary/30"
-              )}
-            >
-              <RadioGroupItem value={slot.value} className="sr-only" />
-              <span className="text-xs font-medium">{slot.label}</span>
-            </label>
-          ))}
-        </RadioGroup>
-      </div>
+      {/* Time Picker */}
+      <TimePicker value={data.time} onChange={(v) => update("time", v)} />
 
       {/* Hours Selector */}
       <div className="space-y-3">
