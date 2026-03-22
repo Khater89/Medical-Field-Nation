@@ -412,6 +412,7 @@ export type Database = {
         Row: {
           address_text: string | null
           available_now: boolean | null
+          avatar_url: string | null
           bio: string | null
           city: string | null
           created_at: string
@@ -441,6 +442,7 @@ export type Database = {
         Insert: {
           address_text?: string | null
           available_now?: boolean | null
+          avatar_url?: string | null
           bio?: string | null
           city?: string | null
           created_at?: string
@@ -470,6 +472,7 @@ export type Database = {
         Update: {
           address_text?: string | null
           available_now?: boolean | null
+          avatar_url?: string | null
           bio?: string | null
           city?: string | null
           created_at?: string

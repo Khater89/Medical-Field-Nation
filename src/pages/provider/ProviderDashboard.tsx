@@ -19,7 +19,7 @@ import {
   Wallet, LogOut, Loader2, CheckCircle, XCircle,
   CalendarDays, MapPin, ClipboardList, Phone,
   MessageCircle, ShieldCheck, Eye, Lock, User, X,
-  History, Play, Square, KeyRound, Clock,
+  History, Play, Square, KeyRound, Clock, Camera, Edit2,
 } from "lucide-react";
 import mfnLogo from "@/assets/mfn-logo.png";
 
@@ -132,6 +132,14 @@ const ProviderDashboard = () => {
   const [addressText, setAddressText] = useState("");
   const [profileSaving, setProfileSaving] = useState(false);
 
+  // Editable personal fields
+  const [editName, setEditName] = useState("");
+  const [editPhone, setEditPhone] = useState("");
+  const [editCity, setEditCity] = useState("");
+  const [editBio, setEditBio] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [avatarUploading, setAvatarUploading] = useState(false);
+
   useEffect(() => {
     if (profile) {
       setAvailableNow(profile.available_now || false);
@@ -139,9 +147,14 @@ const ProviderDashboard = () => {
       setTools(profile.tools || []);
       setRadiusKm(profile.radius_km || 20);
       setAddressText(profile.address_text || "");
-      // Check if provider has accepted agreement
       setAgreementAccepted(!!(profile as any).provider_agreement_accepted_at);
       setShowAgreement(!(profile as any).provider_agreement_accepted_at);
+      // Editable personal fields
+      setEditName(profile.full_name || "");
+      setEditPhone(profile.phone || "");
+      setEditCity(profile.city || "");
+      setEditBio((profile as any).bio || "");
+      setAvatarUrl((profile as any).avatar_url || null);
     }
   }, [profile]);
 
@@ -463,12 +476,41 @@ const ProviderDashboard = () => {
     }
   }, [orders.length]);
 
+  /* ── Avatar Upload ── */
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ title: "حجم الملف كبير جداً (الحد الأقصى 5MB)", variant: "destructive" });
+      return;
+    }
+    setAvatarUploading(true);
+    const ext = file.name.split(".").pop();
+    const path = `${user.id}/avatar-${Date.now()}.${ext}`;
+    const { error } = await supabase.storage.from("profile-avatars").upload(path, file, { upsert: true });
+    if (error) {
+      toast({ title: t("common.error"), description: error.message, variant: "destructive" });
+    } else {
+      const { data: urlData } = supabase.storage.from("profile-avatars").getPublicUrl(path);
+      const publicUrl = urlData.publicUrl;
+      await supabase.from("profiles").update({ avatar_url: publicUrl } as any).eq("user_id", user.id);
+      setAvatarUrl(publicUrl);
+      await refreshUserData();
+      toast({ title: "تم تحديث الصورة الشخصية ✅" });
+    }
+    setAvatarUploading(false);
+  };
+
   /* ── Profile Save ── */
 
   const saveProfile = async () => {
     if (!user) return;
     setProfileSaving(true);
     const { error } = await supabase.from("profiles").update({
+      full_name: editName.trim(),
+      phone: editPhone.trim(),
+      city: editCity.trim(),
+      bio: editBio.trim() || null,
       available_now: availableNow,
       specialties: specialties.length > 0 ? specialties : null,
       tools: tools.length > 0 ? tools : null,
@@ -882,18 +924,72 @@ const ProviderDashboard = () => {
 
           {/* ═══ Profile Tab ═══ */}
           <TabsContent value="profile" className="space-y-4">
+            {/* Avatar & Personal Info */}
             <Card>
-              <CardContent className="py-4 space-y-2">
-                <h3 className="text-sm font-bold">{t("provider.details.basic_info")}</h3>
-                <div className="grid grid-cols-2 gap-2 text-sm">
-                  <div><span className="text-muted-foreground">{t("booking.details.client_name")}:</span> {profile?.full_name}</div>
-                  <div><span className="text-muted-foreground">{t("booking.details.client_phone")}:</span> <span dir="ltr">{profile?.phone}</span></div>
-                  <div><span className="text-muted-foreground">{t("booking.details.client_city")}:</span> {profile?.city}</div>
-                  <div><span className="text-muted-foreground">{t("admin.providers.col.type")}:</span> {profile?.role_type ? t(`role_type.${profile.role_type}`) : "—"}</div>
-                  {profile?.date_of_birth && (
-                    <div><span className="text-muted-foreground">{t("provider.details.registered")}:</span> {profile.date_of_birth}</div>
-                  )}
-                  <div><span className="text-muted-foreground">{t("admin.providers.col.experience")}:</span> {profile?.experience_years || 0} {t("admin.providers.years")}</div>
+              <CardContent className="py-6 space-y-5">
+                {/* Avatar Upload */}
+                <div className="flex flex-col items-center gap-3">
+                  <div className="relative">
+                    <div className="w-24 h-24 rounded-full border-2 border-primary/30 overflow-hidden bg-muted flex items-center justify-center">
+                      {avatarUrl ? (
+                        <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                      ) : (
+                        <User className="h-10 w-10 text-muted-foreground" />
+                      )}
+                    </div>
+                    <label className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center cursor-pointer hover:bg-primary/90 transition-colors shadow-md">
+                      {avatarUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
+                      <input
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp"
+                        className="hidden"
+                        onChange={handleAvatarUpload}
+                        disabled={avatarUploading}
+                      />
+                    </label>
+                  </div>
+                  <p className="text-xs text-muted-foreground">اضغط لتغيير الصورة الشخصية</p>
+                </div>
+
+                {/* Editable Personal Fields */}
+                <h3 className="text-sm font-bold flex items-center gap-1.5">
+                  <Edit2 className="h-3.5 w-3.5" /> {t("provider.details.basic_info")}
+                </h3>
+                <div className="grid gap-3">
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground">{t("booking.details.client_name")}</label>
+                    <Input value={editName} onChange={(e) => setEditName(e.target.value)} className="mt-1" />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground">{t("booking.details.client_phone")}</label>
+                      <Input value={editPhone} onChange={(e) => setEditPhone(e.target.value)} className="mt-1" dir="ltr" />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground">{t("booking.details.client_city")}</label>
+                      <Input value={editCity} onChange={(e) => setEditCity(e.target.value)} className="mt-1" />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground">نبذة مهنية</label>
+                    <Textarea
+                      value={editBio}
+                      onChange={(e) => setEditBio(e.target.value)}
+                      placeholder="اكتب نبذة مختصرة عن خبرتك..."
+                      rows={3}
+                      className="mt-1"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div className="bg-muted/50 rounded-lg p-2.5">
+                      <span className="text-xs text-muted-foreground">{t("admin.providers.col.type")}</span>
+                      <p className="font-medium">{profile?.role_type ? t(`role_type.${profile.role_type}`) : "—"}</p>
+                    </div>
+                    <div className="bg-muted/50 rounded-lg p-2.5">
+                      <span className="text-xs text-muted-foreground">{t("admin.providers.col.experience")}</span>
+                      <p className="font-medium">{profile?.experience_years || 0} {t("admin.providers.years")}</p>
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>

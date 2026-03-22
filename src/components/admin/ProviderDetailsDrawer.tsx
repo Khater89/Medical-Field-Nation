@@ -43,6 +43,9 @@ export interface ProviderProfile {
   created_at: string;
   hasProviderRole: boolean;
   balance: number;
+  bio?: string | null;
+  avatar_url?: string | null;
+  license_file_url?: string | null;
 }
 
 const PROVIDER_STATUS_COLORS: Record<string, string> = {

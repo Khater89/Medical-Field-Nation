@@ -39,39 +39,41 @@ const CSProviderDirectory = () => {
   }, []);
 
   const fetchProviders = async () => {
-    // Get provider user IDs, excluding users who also have cs or admin roles
+    // Get all roles to identify admin/cs users to exclude
     const { data: roles } = await supabase.from("user_roles").select("user_id, role");
     const allRoles = roles || [];
     const csAdminIds = new Set(
       allRoles.filter((r) => r.role === "cs" || r.role === "admin").map((r) => r.user_id)
     );
-    const providerIds = allRoles
-      .filter((r) => r.role === "provider" && !csAdminIds.has(r.user_id))
-      .map((r) => r.user_id);
+    const providerRoleIds = new Set(
+      allRoles.filter((r) => r.role === "provider").map((r) => r.user_id)
+    );
 
-    if (providerIds.length === 0) { setProviders([]); setLoading(false); return; }
-
+    // Fetch profiles with role_type set (registered as providers)
     const { data } = await supabase
       .from("profiles")
       .select("*")
-      .in("user_id", providerIds)
+      .not("role_type", "is", null)
       .order("created_at", { ascending: false });
 
+    const filteredProfiles = ((data as any[]) || []).filter((p) => !csAdminIds.has(p.user_id));
+
+    if (filteredProfiles.length === 0) { setProviders([]); setLoading(false); return; }
+
     // Fetch emails via edge function
+    const allUserIds = filteredProfiles.map((p: any) => p.user_id);
     let emailMap: Record<string, string> = {};
     try {
       const { data: emailData } = await supabase.functions.invoke("admin-manage-admins", {
-        body: { action: "get_emails", user_ids: providerIds },
+        body: { action: "get_emails", user_ids: allUserIds },
       });
       if (emailData?.emails) emailMap = emailData.emails;
     } catch (_) { /* non-critical */ }
 
-    // Fetch balances
-    const providerRoleSet = new Set(providerIds);
-    const enriched: ProviderProfile[] = ((data as any[]) || []).map((p) => ({
+    const enriched: ProviderProfile[] = filteredProfiles.map((p: any) => ({
       ...p,
       email: emailMap[p.user_id] || null,
-      hasProviderRole: providerRoleSet.has(p.user_id),
+      hasProviderRole: providerRoleIds.has(p.user_id),
       balance: 0,
       profile_completed: p.profile_completed ?? false,
       available_now: p.available_now ?? false,

@@ -41,29 +41,32 @@ const ProvidersTab = () => {
   const [deleting, setDeleting] = useState(false);
 
   const fetchProviders = async () => {
-    // Get provider user IDs, excluding users who also have cs or admin roles
+    // Get all roles to identify admin/cs users to exclude
     const { data: roles } = await supabase.from("user_roles").select("user_id, role");
     const allRoles = roles || [];
     const csAdminIds = new Set(
       allRoles.filter((r) => r.role === "cs" || r.role === "admin").map((r) => r.user_id)
     );
-    const providerIds = allRoles
-      .filter((r) => r.role === "provider" && !csAdminIds.has(r.user_id))
-      .map((r) => r.user_id);
+    const providerRoleIds = new Set(
+      allRoles.filter((r) => r.role === "provider").map((r) => r.user_id)
+    );
 
-    if (providerIds.length === 0) { setProviders([]); setLoading(false); return; }
-
-    // Only fetch profiles for users with provider role
+    // Fetch profiles that are either:
+    // 1. Have provider role in user_roles, OR
+    // 2. Have role_type set (registered as provider but not yet approved/assigned role)
     const { data: profiles } = await supabase
       .from("profiles")
       .select("*")
-      .in("user_id", providerIds)
+      .not("role_type", "is", null)
       .order("created_at", { ascending: false });
 
-    if (!profiles) { setLoading(false); return; }
+    if (!profiles || profiles.length === 0) { setProviders([]); setLoading(false); return; }
+
+    // Filter out admin/cs users
+    const filteredProfiles = profiles.filter((p) => !csAdminIds.has(p.user_id));
 
     // Fetch emails for provider profiles via edge function (admin only)
-    const allUserIds = profiles.map((p) => p.user_id);
+    const allUserIds = filteredProfiles.map((p) => p.user_id);
     let emailMap: Record<string, string> = {};
     try {
       const { data: emailData } = await supabase.functions.invoke("admin-manage-admins", {
@@ -73,16 +76,18 @@ const ProvidersTab = () => {
     } catch (_) { /* non-critical */ }
 
     const enriched: ProviderProfile[] = [];
-    for (const p of profiles) {
+    for (const p of filteredProfiles) {
       let balance = 0;
-      const { data } = await supabase.rpc("get_provider_balance", { _provider_id: p.user_id });
-      balance = data || 0;
+      if (providerRoleIds.has(p.user_id)) {
+        const { data } = await supabase.rpc("get_provider_balance", { _provider_id: p.user_id });
+        balance = data || 0;
+      }
       enriched.push({
         ...p,
         email: emailMap[p.user_id] || null,
         available_now: p.available_now ?? false,
         profile_completed: p.profile_completed ?? false,
-        hasProviderRole: true,
+        hasProviderRole: providerRoleIds.has(p.user_id),
         balance,
       } as ProviderProfile);
     }
