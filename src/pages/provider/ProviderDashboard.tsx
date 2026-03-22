@@ -813,12 +813,9 @@ const ProviderDashboard = () => {
                         </span>
                       </div>
 
-                      {/* In-progress timer badge */}
+                      {/* Live timer with dynamic pricing */}
                       {isInProgress && o.check_in_at && !hasCheckedOut && (
-                        <div className="flex items-center gap-2 text-xs bg-primary/10 text-primary rounded-lg p-2">
-                          <Clock className="h-3.5 w-3.5 animate-pulse" />
-                          <span>{t("provider.checkin.elapsed")}: <strong dir="ltr">{formatElapsed(o.check_in_at)}</strong></span>
-                        </div>
+                        <LiveTimerBadge order={o} />
                       )}
 
                       {/* Checked-out invoice summary */}
