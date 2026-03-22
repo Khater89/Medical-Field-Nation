@@ -683,68 +683,6 @@ const ProviderDashboard = () => {
 
   /* ── Render ── */
 
-  // LiveTimerBadge sub-component for IN_PROGRESS orders
-  const LiveTimerBadge = ({ order }: { order: ProviderOrder }) => {
-    const isActive = order.status === "IN_PROGRESS" && !!order.check_in_at && !order.check_out_at;
-    const timer = useLiveTimer(order.check_in_at, isActive);
-    const basePrice = order.agreed_price ?? order.subtotal;
-    const currentBill = calculateEscalatingPrice(basePrice, timer.totalMinutes);
-    const isOvertime = timer.totalMinutes >= 60;
-
-    // Show overtime warning toast once
-    useEffect(() => {
-      if (isOvertime && isActive && !overtimeWarningShown.current.has(order.id)) {
-        overtimeWarningShown.current.add(order.id);
-        toast({
-          title: "⚠️ تنبيه: تجاوز الساعة الأولى",
-          description: `الطلب ${order.booking_number || ""} تجاوز 60 دقيقة — سيتم احتساب رسوم إضافية (8% لكل 15 دقيقة).`,
-          variant: "destructive",
-        });
-      }
-    }, [isOvertime, isActive, order.id, order.booking_number]);
-
-    if (!isActive) return null;
-
-    const extraSegments = timer.totalMinutes > 60 ? Math.ceil((timer.totalMinutes - 60) / 15) : 0;
-
-    return (
-      <div className={`rounded-lg p-3 space-y-2 ${isOvertime ? "bg-destructive/10 border border-destructive/30" : "bg-primary/10 border border-primary/30"}`}>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Timer className={`h-4 w-4 ${isOvertime ? "text-destructive animate-pulse" : "text-primary animate-pulse"}`} />
-            <span className={`text-lg font-mono font-bold tracking-wider ${isOvertime ? "text-destructive" : "text-primary"}`} dir="ltr">
-              {String(timer.hours).padStart(2, "0")}:{String(timer.mins).padStart(2, "0")}:{String(timer.secs).padStart(2, "0")}
-            </span>
-          </div>
-          <div className="text-right">
-            <p className="text-[10px] text-muted-foreground">{t("invoice.current_bill")}</p>
-            <p className={`text-lg font-bold ${isOvertime ? "text-destructive" : "text-primary"}`}>{formatCurrency(currentBill)}</p>
-          </div>
-        </div>
-        {isOvertime && (
-          <div className="flex items-center gap-1.5 text-xs text-destructive">
-            <AlertTriangle className="h-3.5 w-3.5" />
-            <span>وقت إضافي: {extraSegments} فترة × 8% = +{formatCurrency(extraSegments * basePrice * 0.08)}</span>
-          </div>
-        )}
-        <div className="grid grid-cols-3 gap-2 text-[10px] text-muted-foreground">
-          <div className="text-center bg-background/50 rounded p-1">
-            <p>{t("invoice.base_price")}</p>
-            <p className="font-bold text-foreground">{formatCurrency(basePrice)}</p>
-          </div>
-          <div className="text-center bg-background/50 rounded p-1">
-            <p>الوقت الأساسي</p>
-            <p className="font-bold text-foreground">60 دقيقة</p>
-          </div>
-          <div className="text-center bg-background/50 rounded p-1">
-            <p>فترات إضافية</p>
-            <p className="font-bold text-foreground">{extraSegments}</p>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b border-border bg-card sticky top-0 z-40">
