@@ -19,7 +19,7 @@ import {
   Wallet, LogOut, Loader2, CheckCircle, XCircle,
   CalendarDays, MapPin, ClipboardList, Phone,
   MessageCircle, ShieldCheck, Eye, Lock, User, X,
-  History, Play, Square, KeyRound, Clock,
+  History, Play, Square, KeyRound, Clock, Camera, Edit2,
 } from "lucide-react";
 import mfnLogo from "@/assets/mfn-logo.png";
 
