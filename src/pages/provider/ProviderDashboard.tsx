@@ -420,9 +420,10 @@ const ProviderDashboard = () => {
         ...o, check_out_at: now, actual_duration_minutes: durationMinutes, calculated_total: calculatedTotal,
       } : o));
 
-      const hours = Math.ceil(durationMinutes / 60);
-      await logHistory(id, "CHECK_OUT", `تم إنهاء الخدمة — المدة: ${hours} ساعة — الإجمالي: ${calculatedTotal} د.أ`);
-      toast({ title: t("provider.checkout.success"), description: `${t("provider.checkout.duration")}: ${hours} ${t("form.hours.plural")} — ${t("provider.checkout.total")}: ${formatCurrency(calculatedTotal)}` });
+      const extraSegs = durationMinutes > 60 ? Math.ceil((durationMinutes - 60) / 15) : 0;
+      const surchargeNote = extraSegs > 0 ? ` — فترات إضافية: ${extraSegs} × 8%` : "";
+      await logHistory(id, "CHECK_OUT", `تم إنهاء الخدمة — المدة: ${durationMinutes} دقيقة${surchargeNote} — الإجمالي: ${calculatedTotal} د.أ`);
+      toast({ title: t("provider.checkout.success"), description: `المدة: ${durationMinutes} دقيقة — الإجمالي: ${formatCurrency(calculatedTotal)}` });
 
       // Now open the complete dialog for close-out note
       setCompleteDialogOrder(id);
