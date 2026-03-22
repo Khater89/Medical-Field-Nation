@@ -77,8 +77,14 @@ const BookingPage = () => {
     setIsSubmitting(true);
 
     const scheduledAt = new Date(patient.date!);
-    const timeMap: Record<string, number> = { morning: 9, afternoon: 13, evening: 20 };
-    scheduledAt.setHours(timeMap[patient.time] || 9, 0, 0, 0);
+    // Support both "HH:MM" (new precise) and legacy slot names
+    if (patient.time.includes(":")) {
+      const [h, m] = patient.time.split(":").map(Number);
+      scheduledAt.setHours(h, m, 0, 0);
+    } else {
+      const timeMap: Record<string, number> = { morning: 9, afternoon: 13, evening: 20 };
+      scheduledAt.setHours(timeMap[patient.time] || 9, 0, 0, 0);
+    }
 
     // Use edge function — supports both guest & logged-in users
     const { data, error } = await supabase.functions.invoke("create-guest-booking", {
