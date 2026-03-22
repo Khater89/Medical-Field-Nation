@@ -476,12 +476,41 @@ const ProviderDashboard = () => {
     }
   }, [orders.length]);
 
+  /* ── Avatar Upload ── */
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ title: "حجم الملف كبير جداً (الحد الأقصى 5MB)", variant: "destructive" });
+      return;
+    }
+    setAvatarUploading(true);
+    const ext = file.name.split(".").pop();
+    const path = `${user.id}/avatar-${Date.now()}.${ext}`;
+    const { error } = await supabase.storage.from("profile-avatars").upload(path, file, { upsert: true });
+    if (error) {
+      toast({ title: t("common.error"), description: error.message, variant: "destructive" });
+    } else {
+      const { data: urlData } = supabase.storage.from("profile-avatars").getPublicUrl(path);
+      const publicUrl = urlData.publicUrl;
+      await supabase.from("profiles").update({ avatar_url: publicUrl } as any).eq("user_id", user.id);
+      setAvatarUrl(publicUrl);
+      await refreshUserData();
+      toast({ title: "تم تحديث الصورة الشخصية ✅" });
+    }
+    setAvatarUploading(false);
+  };
+
   /* ── Profile Save ── */
 
   const saveProfile = async () => {
     if (!user) return;
     setProfileSaving(true);
     const { error } = await supabase.from("profiles").update({
+      full_name: editName.trim(),
+      phone: editPhone.trim(),
+      city: editCity.trim(),
+      bio: editBio.trim() || null,
       available_now: availableNow,
       specialties: specialties.length > 0 ? specialties : null,
       tools: tools.length > 0 ? tools : null,
