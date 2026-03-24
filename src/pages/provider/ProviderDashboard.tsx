@@ -110,9 +110,7 @@ function useLiveTimer(checkInAt: string | null, isActive: boolean) {
   return elapsed;
 }
 
-function generateOTP(): string {
-  return Math.floor(1000 + Math.random() * 9000).toString();
-}
+// OTP is now generated server-side in provider-checkin edge function
 
 function formatCurrencyFn(n: number) {
   return `${n.toFixed(2)} JOD`;

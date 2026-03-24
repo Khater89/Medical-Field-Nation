@@ -335,6 +335,8 @@ const en: Record<string, string> = {
   "provider.otp.invalid": "Invalid code — check with the client",
   "provider.otp.client_code": "Service confirmation code — show to client",
   "provider.otp.show_client": "The client must tell you this code when service is done",
+  "provider.otp.sent_to_client": "Confirmation code sent to client via WhatsApp",
+  "provider.otp.ask_client": "Ask the client for the code to complete the service",
 
   // Common / Generic
   "common.error": "Error",
