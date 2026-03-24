@@ -95,6 +95,26 @@ const CSAssignmentDialog = ({ booking, open, onOpenChange, onAssigned, serviceNa
   const fetchProviders = async () => {
     setLoadingProviders(true);
 
+    // Find providers who already have an active booking at the same scheduled time
+    const scheduledDate = new Date(booking.scheduled_at);
+    const windowStart = new Date(scheduledDate.getTime() - 2 * 60 * 60 * 1000).toISOString(); // 2h before
+    const windowEnd = new Date(scheduledDate.getTime() + 2 * 60 * 60 * 1000).toISOString();   // 2h after
+
+    const { data: conflictingBookings } = await supabase
+      .from("bookings")
+      .select("assigned_provider_id")
+      .not("assigned_provider_id", "is", null)
+      .in("status", ["ASSIGNED", "ACCEPTED", "IN_PROGRESS"])
+      .gte("scheduled_at", windowStart)
+      .lte("scheduled_at", windowEnd)
+      .neq("id", booking.id);
+
+    const busyProviderIds = new Set(
+      (conflictingBookings || [])
+        .map((b: any) => b.assigned_provider_id)
+        .filter(Boolean)
+    );
+
     // Try geolocation-based matching
     if (booking.client_lat && booking.client_lng) {
       const { data } = await supabase.rpc("find_nearest_providers" as any, {
@@ -102,7 +122,9 @@ const CSAssignmentDialog = ({ booking, open, onOpenChange, onAssigned, serviceNa
         _lng: booking.client_lng,
         _limit: 10,
       });
-      setNearestProviders((data as NearestProvider[]) || []);
+      setNearestProviders(
+        ((data as NearestProvider[]) || []).filter((p) => !busyProviderIds.has(p.provider_id))
+      );
     }
 
     // Also fetch all approved providers as fallback
@@ -112,7 +134,9 @@ const CSAssignmentDialog = ({ booking, open, onOpenChange, onAssigned, serviceNa
       .eq("provider_status", "approved")
       .eq("profile_completed", true);
 
-    setFallbackProviders((profiles as unknown as ProviderRow[]) || []);
+    setFallbackProviders(
+      ((profiles as unknown as ProviderRow[]) || []).filter((p) => !busyProviderIds.has(p.user_id))
+    );
     setLoadingProviders(false);
   };
 
