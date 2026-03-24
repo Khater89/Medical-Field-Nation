@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import {
   CalendarDays, MapPin, Phone, User, UserCheck,
-  MessageCircle, FileText, StickyNote, Ban, Loader2, ClipboardCheck,
+  MessageCircle, FileText, StickyNote, Ban, Loader2, ClipboardCheck, X, Lock, Play,
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -97,6 +97,8 @@ const BookingDetailsDrawer = ({ booking, open, onOpenChange, serviceName, servic
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
   const [cancelling, setCancelling] = useState(false);
+  const [reopening, setReopening] = useState(false);
+  const [unassigning, setUnassigning] = useState(false);
 
   const handleCancel = async () => {
     if (!booking || !cancelReason.trim()) return;
@@ -129,6 +131,87 @@ const BookingDetailsDrawer = ({ booking, open, onOpenChange, serviceName, servic
       toast.error(err.message || "حدث خطأ");
     } finally {
       setCancelling(false);
+    }
+  };
+
+  const handleReopen = async () => {
+    if (!booking) return;
+    setReopening(true);
+    try {
+      const { error } = await supabase
+        .from("bookings")
+        .update({
+          status: "NEW",
+          assigned_provider_id: null,
+          assigned_at: null,
+          assigned_by: null,
+          accepted_at: null,
+          rejected_at: null,
+          rejected_by: null,
+          reject_reason: null,
+          agreed_price: null,
+          provider_share: null,
+          deal_confirmed_at: null,
+          deal_confirmed_by: null,
+        } as any)
+        .eq("id", booking.id);
+      if (error) throw error;
+
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      await supabase.from("booking_history").insert({
+        booking_id: booking.id,
+        action: "REOPENED",
+        performed_by: authUser!.id,
+        performer_role: "admin",
+        note: "تم إعادة فتح الطلب",
+      });
+
+      toast.success("تم إعادة فتح الطلب بنجاح");
+      onOpenChange(false);
+      onStatusChange?.();
+    } catch (err: any) {
+      toast.error(err.message || "حدث خطأ");
+    } finally {
+      setReopening(false);
+    }
+  };
+
+  const handleUnassign = async () => {
+    if (!booking) return;
+    if (!confirm("هل أنت متأكد من إلغاء إسناد المزود؟ سيتم إعادة الطلب لحالة جديد.")) return;
+    setUnassigning(true);
+    try {
+      const { error } = await supabase
+        .from("bookings")
+        .update({
+          status: "NEW",
+          assigned_provider_id: null,
+          assigned_at: null,
+          assigned_by: null,
+          accepted_at: null,
+          rejected_at: null,
+          rejected_by: null,
+          reject_reason: null,
+        } as any)
+        .eq("id", booking.id);
+      if (error) throw error;
+
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      await supabase.from("booking_history").insert({
+        booking_id: booking.id,
+        action: "UNASSIGNED",
+        performed_by: authUser!.id,
+        performer_role: "admin",
+        note: `تم إلغاء إسناد المزود: ${providerName || "غير معروف"}`,
+      });
+
+      toast.success("تم إلغاء الإسناد — يمكنك الآن إسناد مزود آخر");
+      onOpenChange(false);
+      onStatusChange?.();
+    } catch (err: any) {
+      toast.error(err.message || "حدث خطأ");
+    } finally {
+      setUnassigning(false);
     }
   };
 
@@ -229,8 +312,37 @@ const BookingDetailsDrawer = ({ booking, open, onOpenChange, serviceName, servic
               {booking.assigned_at && (
                 <p className="text-xs text-muted-foreground">{t("booking.details.assigned_date")}: {formatDateShort(booking.assigned_at)}</p>
               )}
+
+              {/* Waiting for acceptance indicator */}
+              {booking.status === "ASSIGNED" && !booking.accepted_at && (
+                <div className="flex items-center gap-1.5 text-xs text-warning bg-warning/10 rounded-lg p-2 mt-1">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  بانتظار قبول المزود...
+                </div>
+              )}
+
               {booking.accepted_at && (
                 <p className="text-xs text-success">✅ {t("booking.details.accepted_date")}: {formatDateShort(booking.accepted_at)}</p>
+              )}
+
+              {/* Unassign button - allowed in ASSIGNED and ACCEPTED, blocked in IN_PROGRESS */}
+              {(booking.status === "ASSIGNED" || booking.status === "ACCEPTED") && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="w-full gap-1.5 mt-2 border-destructive/30 text-destructive hover:bg-destructive/10"
+                  onClick={handleUnassign}
+                  disabled={unassigning}
+                >
+                  {unassigning ? <Loader2 className="h-3 w-3 animate-spin" /> : <X className="h-3 w-3" />}
+                  إلغاء الإسناد وتعيين مزود آخر
+                </Button>
+              )}
+              {booking.status === "IN_PROGRESS" && (
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/50 rounded-lg p-2 mt-1">
+                  <Lock className="h-3.5 w-3.5" />
+                  لا يمكن تغيير المزود أثناء تنفيذ الخدمة
+                </div>
               )}
             </div>
           )}
@@ -287,7 +399,18 @@ const BookingDetailsDrawer = ({ booking, open, onOpenChange, serviceName, servic
 
           {/* Actions for non-workflow bookings */}
           {!showWorkflow && (
-            <div className="flex gap-2 pt-2">
+            <div className="flex gap-2 pt-2 flex-wrap">
+              {booking.status === "CANCELLED" && (
+                <Button
+                  variant="outline"
+                  className="flex-1 gap-1.5 border-success/30 text-success hover:bg-success/10"
+                  onClick={handleReopen}
+                  disabled={reopening}
+                >
+                  {reopening ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
+                  إعادة فتح الطلب
+                </Button>
+              )}
               {booking.status !== "CANCELLED" && booking.status !== "COMPLETED" && (
                 <Button variant="destructive" className="flex-1 gap-1.5" onClick={() => setCancelDialogOpen(true)}>
                   <Ban className="h-4 w-4" /> {t("booking.details.cancel") || "إلغاء الطلب"}
