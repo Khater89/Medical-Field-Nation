@@ -312,8 +312,37 @@ const BookingDetailsDrawer = ({ booking, open, onOpenChange, serviceName, servic
               {booking.assigned_at && (
                 <p className="text-xs text-muted-foreground">{t("booking.details.assigned_date")}: {formatDateShort(booking.assigned_at)}</p>
               )}
+
+              {/* Waiting for acceptance indicator */}
+              {booking.status === "ASSIGNED" && !booking.accepted_at && (
+                <div className="flex items-center gap-1.5 text-xs text-warning bg-warning/10 rounded-lg p-2 mt-1">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  بانتظار قبول المزود...
+                </div>
+              )}
+
               {booking.accepted_at && (
                 <p className="text-xs text-success">✅ {t("booking.details.accepted_date")}: {formatDateShort(booking.accepted_at)}</p>
+              )}
+
+              {/* Unassign button - allowed in ASSIGNED and ACCEPTED, blocked in IN_PROGRESS */}
+              {(booking.status === "ASSIGNED" || booking.status === "ACCEPTED") && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="w-full gap-1.5 mt-2 border-destructive/30 text-destructive hover:bg-destructive/10"
+                  onClick={handleUnassign}
+                  disabled={unassigning}
+                >
+                  {unassigning ? <Loader2 className="h-3 w-3 animate-spin" /> : <X className="h-3 w-3" />}
+                  إلغاء الإسناد وتعيين مزود آخر
+                </Button>
+              )}
+              {booking.status === "IN_PROGRESS" && (
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/50 rounded-lg p-2 mt-1">
+                  <Lock className="h-3.5 w-3.5" />
+                  لا يمكن تغيير المزود أثناء تنفيذ الخدمة
+                </div>
               )}
             </div>
           )}
