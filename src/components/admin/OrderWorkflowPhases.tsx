@@ -94,6 +94,8 @@ const OrderWorkflowPhases = ({ booking, serviceName, servicePrice, onWorkflowCha
   const { t, formatCurrency } = useLanguage();
   const { isAdmin } = useAuth();
 
+  const isRejected = booking.status === "REJECTED";
+
   // Phase 1 state
   const [clientAgreed, setClientAgreed] = useState(!!booking.deal_confirmed_at);
   const [clientPrice, setClientPrice] = useState(booking.agreed_price ?? servicePrice ?? 0);
@@ -101,12 +103,12 @@ const OrderWorkflowPhases = ({ booking, serviceName, servicePrice, onWorkflowCha
   const [savingClientPrice, setSavingClientPrice] = useState(false);
   const [internalNote, setInternalNote] = useState(booking.internal_note || "");
 
-  // Phase 2/3 state
+  // Phase 2/3 state - clear provider selection if rejected
   const [showProviders, setShowProviders] = useState(false);
   const [nearestProviders, setNearestProviders] = useState<NearestProvider[]>([]);
   const [fallbackProviders, setFallbackProviders] = useState<ProviderRow[]>([]);
   const [loadingProviders, setLoadingProviders] = useState(false);
-  const [selectedProvider, setSelectedProvider] = useState<string | null>(booking.assigned_provider_id);
+  const [selectedProvider, setSelectedProvider] = useState<string | null>(isRejected ? null : booking.assigned_provider_id);
   const [providerAgreed, setProviderAgreed] = useState(false);
   const [providerShare, setProviderShare] = useState(booking.provider_share ?? 0);
   const [editingProviderShare, setEditingProviderShare] = useState(false);
