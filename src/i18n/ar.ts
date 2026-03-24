@@ -335,6 +335,8 @@ const ar: Record<string, string> = {
   "provider.otp.invalid": "الكود غير صحيح — تحقق من العميل",
   "provider.otp.client_code": "كود تأكيد الخدمة — أظهره للعميل",
   "provider.otp.show_client": "يجب على العميل إخبارك بهذا الكود عند الانتهاء",
+  "provider.otp.sent_to_client": "تم إرسال كود التأكيد للعميل عبر واتساب",
+  "provider.otp.ask_client": "اطلب من العميل إعطاءك الكود لإنهاء الخدمة",
 
   // Common / Generic
   "common.error": "خطأ",
