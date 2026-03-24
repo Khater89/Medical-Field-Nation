@@ -257,7 +257,7 @@ const OrderWorkflowPhases = ({ booking, serviceName, servicePrice, onWorkflowCha
     }
   };
 
-  /* ── Phase 4: Final assignment ── */
+  /* ── Phase 4: Final assignment (or re-assignment after rejection) ── */
   const handleAssign = async () => {
     if (!selectedProvider) return;
     setAssigning(true);
@@ -270,6 +270,11 @@ const OrderWorkflowPhases = ({ booking, serviceName, servicePrice, onWorkflowCha
           status: "ASSIGNED",
           assigned_at: now,
           assigned_by: isAdmin ? "admin" : "cs",
+          // Clear rejection fields on re-assignment
+          rejected_at: null,
+          rejected_by: null,
+          reject_reason: null,
+          accepted_at: null,
         } as any)
         .eq("id", booking.id);
       if (error) throw error;
