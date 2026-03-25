@@ -95,6 +95,26 @@ const InfoRow = ({ icon: Icon, label, value, dir }: { icon: any; label: string; 
   );
 };
 
+const CONTRACT_TEXT = `عقد تنفيذ المهمة — إخلاء مسؤولية طبية
+
+المادة 1: طبيعة المنصة
+تعمل منصة MFN كوسيط تنسيق فقط بين العميل ومقدم الخدمة الصحية المنزلية. لا تقدم المنصة أي تشخيص أو علاج أو استشارة طبية مباشرة.
+
+المادة 2: المسؤولية المهنية
+يتحمل مقدم الخدمة كامل المسؤولية المهنية والقانونية عن جودة الخدمات المقدمة، بما يشمل الأخطاء الطبية، والإهمال المهني، وأي أضرار مباشرة أو غير مباشرة تلحق بالعميل.
+
+المادة 3: إخلاء مسؤولية المنصة
+تُخلي المنصة مسؤوليتها الكاملة عن أي أخطاء طبية، مضاعفات صحية، أو حوادث ناتجة عن الخدمات المقدمة، وتقع المسؤولية حصرياً على مقدم الخدمة المعتمد.
+
+المادة 4: نموذج التسعير والأجور
+• السعر الأساسي: هو المبلغ المتفق عليه مسبقاً للساعة الأولى من الخدمة.
+• الوقت الإضافي: يُحتسب بنسبة 8% من السعر الأساسي عن كل 15 دقيقة إضافية بعد الساعة الأولى.
+• حصة المزود: هي المبلغ المتفق عليه والمحدد في تفاصيل كل طلب.
+• رسوم المنصة: الفرق بين السعر المتفق عليه مع العميل وحصة المزود.
+
+المادة 5: الالتزامات العامة
+يلتزم مقدم الخدمة بالحضور في الموعد المحدد، وتقديم الخدمة بأعلى معايير المهنية، والتعامل مع بيانات العملاء بسرية تامة.`;
+
 const BookingDetailsDrawer = ({ booking, open, onOpenChange, serviceName, servicePrice, providerName, providerPhone, onStatusChange, onDataRefresh }: Props) => {
   const { t, formatCurrency, formatDate, formatDateTime, formatDateShort } = useLanguage();
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
@@ -103,6 +123,7 @@ const BookingDetailsDrawer = ({ booking, open, onOpenChange, serviceName, servic
   const [reopening, setReopening] = useState(false);
   const [unassigning, setUnassigning] = useState(false);
   const [history, setHistory] = useState<any[]>([]);
+  const [contractDialogOpen, setContractDialogOpen] = useState(false);
 
   // Fetch booking history
   useEffect(() => {
