@@ -55,6 +55,8 @@ export interface BookingRow {
   customer_name?: string | null;
   customer_phone?: string | null;
   client_address_text?: string | null;
+  otp_code?: string | null;
+  check_in_at?: string | null;
 }
 
 const STATUS_COLORS: Record<string, string> = {
