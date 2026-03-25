@@ -436,14 +436,9 @@ const ProviderDetailsDrawer = ({ provider, open, onOpenChange, onApprove, onSusp
                     </Button>
                   )}
                   {provider.provider_status === "approved" && (
-                    <>
-                      <Button size="sm" variant="destructive" className="gap-1.5 flex-1" onClick={() => onSuspend(provider.user_id)}>
-                        <XCircle className="h-4 w-4" /> {t("provider.details.suspend")}
-                      </Button>
-                      <Button size="sm" variant="outline" className="gap-1.5 flex-1" onClick={() => onSettlement(provider.user_id)}>
-                        <Wallet className="h-4 w-4" /> {t("provider.details.settlement")}
-                      </Button>
-                    </>
+                    <Button size="sm" variant="destructive" className="gap-1.5 flex-1" onClick={() => onSuspend(provider.user_id)}>
+                      <XCircle className="h-4 w-4" /> {t("provider.details.suspend")}
+                    </Button>
                   )}
                   {provider.provider_status === "suspended" && (
                     <Button size="sm" className="gap-1.5 flex-1" onClick={() => onApprove(provider.user_id)}>
