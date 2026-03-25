@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import {
   CalendarDays, MapPin, Phone, User, UserCheck,
   MessageCircle, FileText, StickyNote, Ban, Loader2, ClipboardCheck, X, Lock, Play,
-  Key, Copy,
+  Key, Copy, History, ShieldCheck,
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
