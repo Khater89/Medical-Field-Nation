@@ -42,7 +42,7 @@ const extractCustomerName = (body: string | null): string | null => {
   return match ? match[1].trim() : null;
 };
 
-const NotificationBell = () => {
+const NotificationBell = ({ onOpenBooking }: { onOpenBooking?: (bookingId: string) => void }) => {
   const { t, formatDateShort } = useLanguage();
   const [notifications, setNotifications] = useState<StaffNotification[]>([]);
   const [open, setOpen] = useState(false);
