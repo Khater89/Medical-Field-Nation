@@ -426,6 +426,7 @@ const ProviderDashboard = () => {
       setOrders((prev) => prev.map((o) => o.id === id ? { ...o, status: "ACCEPTED", accepted_at: now } : o));
 
       await logHistory(id, "ACCEPTED", "تم قبول الطلب من قبل المزود");
+      await logHistory(id, "CONTRACT_ACCEPTED", "وافق المزود على عقد تنفيذ المهمة — إخلاء مسؤولية طبية + التزام بالتسعير التصاعدي");
 
       // Refresh balance (debt was recorded by trigger)
       const balRes = await supabase.rpc("get_provider_balance", { _provider_id: user.id });
