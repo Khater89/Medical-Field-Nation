@@ -89,6 +89,12 @@ const ProviderDetailsDrawer = ({ provider, open, onOpenChange, onApprove, onSusp
   const [selectedBooking, setSelectedBooking] = useState<BookingRow | null>(null);
   const [assignBooking, setAssignBooking] = useState<BookingRow | null>(null);
 
+  // Provider stats
+  const [statsCompleted, setStatsCompleted] = useState(0);
+  const [statsCancelled, setStatsCancelled] = useState(0);
+  const [statsAvgRating, setStatsAvgRating] = useState<number | null>(null);
+  const [statsRatingCount, setStatsRatingCount] = useState(0);
+
   // Fetch bookings when provider changes
   useEffect(() => {
     if (!provider || !open) {
@@ -96,7 +102,25 @@ const ProviderDetailsDrawer = ({ provider, open, onOpenChange, onApprove, onSusp
       return;
     }
     fetchProviderBookings(provider.user_id);
+    fetchProviderStats(provider.user_id);
   }, [provider?.user_id, open]);
+
+  const fetchProviderStats = async (providerId: string) => {
+    const [bookingsRes, ratingsRes] = await Promise.all([
+      supabase.from("bookings").select("status").eq("assigned_provider_id", providerId).in("status", ["COMPLETED", "CANCELLED", "REJECTED"]),
+      supabase.from("provider_ratings" as any).select("rating").eq("provider_id", providerId),
+    ]);
+    let completed = 0, cancelled = 0;
+    (bookingsRes.data || []).forEach((b: any) => {
+      if (b.status === "COMPLETED") completed++;
+      else cancelled++;
+    });
+    setStatsCompleted(completed);
+    setStatsCancelled(cancelled);
+    const ratings = (ratingsRes.data || []) as any[];
+    setStatsRatingCount(ratings.length);
+    setStatsAvgRating(ratings.length > 0 ? ratings.reduce((s: number, r: any) => s + r.rating, 0) / ratings.length : null);
+  };
 
   const fetchProviderBookings = async (providerId: string) => {
     setBookingsLoading(true);
