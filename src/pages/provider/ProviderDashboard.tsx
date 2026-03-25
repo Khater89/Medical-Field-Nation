@@ -116,6 +116,80 @@ function formatCurrencyFn(n: number) {
   return `${n.toFixed(2)} JOD`;
 }
 
+/* ── Countdown hook for scheduled time ── */
+function useCountdown(scheduledAt: string | null, isActive: boolean) {
+  const [remaining, setRemaining] = useState({ days: 0, hours: 0, mins: 0, secs: 0, totalMs: 0, isPast: false });
+
+  useEffect(() => {
+    if (!scheduledAt || !isActive) return;
+    const update = () => {
+      const diff = new Date(scheduledAt).getTime() - Date.now();
+      if (diff <= 0) {
+        setRemaining({ days: 0, hours: 0, mins: 0, secs: 0, totalMs: 0, isPast: true });
+      } else {
+        const totalSecs = Math.floor(diff / 1000);
+        setRemaining({
+          days: Math.floor(totalSecs / 86400),
+          hours: Math.floor((totalSecs % 86400) / 3600),
+          mins: Math.floor((totalSecs % 3600) / 60),
+          secs: totalSecs % 60,
+          totalMs: diff,
+          isPast: false,
+        });
+      }
+    };
+    update();
+    const interval = setInterval(update, 1000);
+    return () => clearInterval(interval);
+  }, [scheduledAt, isActive]);
+
+  return remaining;
+}
+
+/* ── CountdownBadge (top-level) ── */
+const CountdownBadge = ({ scheduledAt }: { scheduledAt: string }) => {
+  const isActive = true;
+  const cd = useCountdown(scheduledAt, isActive);
+
+  if (cd.isPast) {
+    return (
+      <div className="rounded-lg p-2.5 bg-warning/10 border border-warning/30 flex items-center gap-2">
+        <Clock className="h-4 w-4 text-warning" />
+        <span className="text-xs font-medium text-warning">حان موعد الطلب — يرجى التوجه للعميل</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-lg p-2.5 bg-info/10 border border-info/30">
+      <div className="flex items-center gap-2 mb-1">
+        <Clock className="h-4 w-4 text-info" />
+        <span className="text-xs font-medium text-info">الوقت المتبقي للموعد</span>
+      </div>
+      <div className="flex items-center justify-center gap-3 text-center" dir="ltr">
+        {cd.days > 0 && (
+          <div className="bg-background/60 rounded px-2 py-1">
+            <p className="text-lg font-mono font-bold text-info">{cd.days}</p>
+            <p className="text-[9px] text-muted-foreground">يوم</p>
+          </div>
+        )}
+        <div className="bg-background/60 rounded px-2 py-1">
+          <p className="text-lg font-mono font-bold text-info">{String(cd.hours).padStart(2, "0")}</p>
+          <p className="text-[9px] text-muted-foreground">ساعة</p>
+        </div>
+        <div className="bg-background/60 rounded px-2 py-1">
+          <p className="text-lg font-mono font-bold text-info">{String(cd.mins).padStart(2, "0")}</p>
+          <p className="text-[9px] text-muted-foreground">دقيقة</p>
+        </div>
+        <div className="bg-background/60 rounded px-2 py-1">
+          <p className="text-lg font-mono font-bold text-info">{String(cd.secs).padStart(2, "0")}</p>
+          <p className="text-[9px] text-muted-foreground">ثانية</p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 /* ── LiveTimerBadge (top-level to avoid hook ordering issues) ── */
 const LiveTimerBadge = ({ order, t, toast, overtimeWarningShown }: {
   order: ProviderOrder;
@@ -795,10 +869,8 @@ const ProviderDashboard = () => {
                   return (
                   <Card
                     key={o.id}
-                    className={`transition-all ${accepted ? "cursor-pointer hover:shadow-md" : ""} ${isInProgress ? "border-primary/50 ring-1 ring-primary/20" : ""}`}
-                    onClick={() => {
-                      if (accepted) setExpandedOrder(isExpanded ? null : o.id);
-                    }}
+                    className={`transition-all cursor-pointer hover:shadow-md ${isInProgress ? "border-primary/50 ring-1 ring-primary/20" : ""}`}
+                    onClick={() => setExpandedOrder(isExpanded ? null : o.id)}
                   >
                     <CardContent className="py-4 px-4 space-y-2">
                       {/* Header row */}
@@ -859,9 +931,39 @@ const ProviderDashboard = () => {
                         );
                       })()}
 
-                      {/* Before acceptance: locked message + action buttons */}
-                      {!accepted && o.status === "ASSIGNED" && (
-                        <>
+                      {/* Expand hint for collapsed cards */}
+                      {!isExpanded && (
+                        <p className="text-xs text-muted-foreground text-center">اضغط لعرض التفاصيل ▼</p>
+                      )}
+
+                      {/* ═══ Expanded details for ASSIGNED (pre-acceptance) ═══ */}
+                      {isExpanded && o.status === "ASSIGNED" && (
+                        <div className="space-y-3 pt-2 border-t border-border" onClick={(e) => e.stopPropagation()}>
+                          {/* Order details without phone */}
+                          <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-2">
+                            <h5 className="text-xs font-bold flex items-center gap-1.5">
+                              <ClipboardList className="h-3.5 w-3.5" /> تفاصيل الطلب
+                            </h5>
+                            <div className="grid grid-cols-2 gap-1.5 text-xs">
+                              <span className="text-muted-foreground">الخدمة:</span>
+                              <span className="font-medium">{serviceNames[o.service_id] || o.service_id}</span>
+                              <span className="text-muted-foreground">العميل:</span>
+                              <span className="font-medium">{o.customer_display_name || "—"}</span>
+                              <span className="text-muted-foreground">المدينة:</span>
+                              <span className="font-medium">{o.city}</span>
+                              <span className="text-muted-foreground">الموعد:</span>
+                              <span className="font-medium">{formatDate(o.scheduled_at)}</span>
+                              <span className="text-muted-foreground">السعر:</span>
+                              <span className="font-medium text-primary">{o.agreed_price != null ? formatCurrency(o.agreed_price) : formatCurrency(o.subtotal)}</span>
+                            </div>
+                            {/* Phone hidden notice */}
+                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-muted rounded p-2 mt-1">
+                              <Lock className="h-3 w-3" />
+                              رقم التواصل مع العميل سيظهر بعد قبول الطلب
+                            </div>
+                          </div>
+
+                          {/* Accept/Reject buttons */}
                           {isOnHold ? (
                             <div className="flex items-center gap-1.5 text-xs text-destructive bg-destructive/10 rounded-lg p-2.5">
                               <Lock className="h-3.5 w-3.5" />
@@ -872,20 +974,15 @@ const ProviderDashboard = () => {
                               <ShieldCheck className="h-3.5 w-3.5" />
                               يرجى قبول اتفاقية مقدم الخدمة أولاً
                             </div>
-                          ) : (
-                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/50 rounded-lg p-2.5">
-                              <Lock className="h-3.5 w-3.5" />
-                              {t("provider.dashboard.press_accept")}
-                            </div>
-                          )}
-                          <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+                          ) : null}
+                          <div className="flex gap-2">
                             <Button
                               size="sm"
                               className="gap-1 h-7 text-xs flex-1 bg-success hover:bg-success/90"
                               onClick={() => acceptOrder(o.id)}
                               disabled={actionLoading === o.id || isOnHold || !agreementAccepted}
                             >
-                              {actionLoading === o.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Eye className="h-3 w-3" />}
+                              {actionLoading === o.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <CheckCircle className="h-3 w-3" />}
                               {t("provider.dashboard.accept")}
                             </Button>
                             <Button
@@ -898,22 +995,62 @@ const ProviderDashboard = () => {
                               <XCircle className="h-3 w-3" /> {t("provider.dashboard.reject")}
                             </Button>
                           </div>
-                        </>
-                      )}
 
-                      {/* After acceptance: show hint to click */}
-                      {accepted && !isExpanded && (o.status === "ACCEPTED" || o.status === "IN_PROGRESS" || o.status === "COMPLETED") && (
-                        <p className="text-xs text-muted-foreground text-center">اضغط لعرض التفاصيل ▼</p>
+                          {/* History timeline */}
+                          {(historyMap[o.id] || []).length > 0 && (
+                            <div className="border border-border rounded-lg p-3 space-y-2 bg-muted/30">
+                              <h5 className="text-xs font-bold text-muted-foreground flex items-center gap-1"><History className="h-3 w-3" /> سجل الطلب</h5>
+                              {(historyMap[o.id] || []).map((h: any) => (
+                                <div key={h.id} className="flex items-start gap-2 text-xs">
+                                  <div className={`w-1.5 h-1.5 rounded-full mt-1.5 shrink-0 ${
+                                    h.action === "ACCEPTED" ? "bg-success" :
+                                    h.action === "CHECK_IN" ? "bg-primary" :
+                                    h.action === "COMPLETED" ? "bg-primary" : "bg-warning"
+                                  }`} />
+                                  <div>
+                                    <span className="font-medium">{
+                                      h.action === "ASSIGNED" ? "📋 إسناد" :
+                                      h.action === "ACCEPTED" ? "✅ قبول" : h.action
+                                    }</span>
+                                    {h.note && <span className="text-muted-foreground ms-1">— {h.note}</span>}
+                                    <p className="text-[10px] text-muted-foreground" dir="ltr">{new Date(h.created_at).toLocaleString("ar-JO")}</p>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
                       )}
 
                       {/* Expanded details for accepted orders */}
                       {accepted && isExpanded && (
                         <div className="space-y-3 pt-2 border-t border-border" onClick={(e) => e.stopPropagation()}>
-                          {/* Contact Details */}
+                          {/* Countdown timer for ACCEPTED orders (before check-in) */}
+                          {o.status === "ACCEPTED" && !o.check_in_at && (
+                            <CountdownBadge scheduledAt={o.scheduled_at} />
+                          )}
+
+                          {/* Contact Details with phone */}
                           <div className="rounded-lg border border-success/20 bg-success/5 p-3 space-y-1.5">
                             <div className="flex items-center gap-1.5 text-xs font-medium text-success">
                               <ShieldCheck className="h-3.5 w-3.5" /> {t("provider.dashboard.contact_info")}
                             </div>
+                            {/* Customer phone - now visible after acceptance */}
+                            {o.customer_phone && (
+                              <div className="flex items-center gap-1.5 text-sm">
+                                <Phone className="h-3 w-3 text-success" />
+                                <span className="text-xs text-muted-foreground">رقم العميل:</span>
+                                <a href={`tel:${o.customer_phone}`} dir="ltr" className="font-medium text-success hover:underline">{o.customer_phone}</a>
+                                <a
+                                  href={`https://wa.me/${o.customer_phone.replace(/^0/, "962")}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-success hover:text-success/80"
+                                >
+                                  <MessageCircle className="h-3.5 w-3.5" />
+                                </a>
+                              </div>
+                            )}
                             {coordinatorPhone && (
                               <p className="text-sm flex items-center gap-1.5">
                                 <Phone className="h-3 w-3 text-muted-foreground" />

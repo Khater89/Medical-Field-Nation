@@ -167,6 +167,7 @@ export type Database = {
           deposit_status: string | null
           id: string
           internal_note: string | null
+          last_provider_reminder_at: string | null
           notes: string | null
           otp_code: string | null
           payment_method: string
@@ -225,6 +226,7 @@ export type Database = {
           deposit_status?: string | null
           id?: string
           internal_note?: string | null
+          last_provider_reminder_at?: string | null
           notes?: string | null
           otp_code?: string | null
           payment_method?: string
@@ -283,6 +285,7 @@ export type Database = {
           deposit_status?: string | null
           id?: string
           internal_note?: string | null
+          last_provider_reminder_at?: string | null
           notes?: string | null
           otp_code?: string | null
           payment_method?: string
