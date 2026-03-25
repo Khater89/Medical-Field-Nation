@@ -288,6 +288,10 @@ const ProviderDashboard = () => {
   const [showAgreement, setShowAgreement] = useState(false);
   const [agreementLoading, setAgreementLoading] = useState(false);
 
+  // Order-specific contract dialog
+  const [contractOrderId, setContractOrderId] = useState<string | null>(null);
+  const [contractAccepted, setContractAccepted] = useState(false);
+
   // Debt limit
   const [debtLimit, setDebtLimit] = useState(-20);
   const [isOnHold, setIsOnHold] = useState(false);
