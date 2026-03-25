@@ -557,6 +557,30 @@ const BookingDetailsDrawer = ({ booking, open, onOpenChange, serviceName, servic
           )}
         </div>
 
+        {/* Contract Dialog */}
+        <Dialog open={contractDialogOpen} onOpenChange={setContractDialogOpen}>
+          <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <ShieldCheck className="h-5 w-5 text-primary" /> عقد تنفيذ المهمة
+              </DialogTitle>
+              <DialogDescription>النص الكامل للعقد الذي وافق عليه المزود</DialogDescription>
+            </DialogHeader>
+            <div className="whitespace-pre-wrap text-sm leading-relaxed text-foreground bg-muted/30 rounded-lg p-4 border border-border">
+              {CONTRACT_TEXT}
+            </div>
+            {history.find(h => h.action === "CONTRACT_ACCEPTED") && (
+              <div className="flex items-center gap-2 text-xs text-success bg-success/10 rounded-lg p-2">
+                <ShieldCheck className="h-4 w-4" />
+                <span>تم التوقيع بتاريخ: {new Date(history.find(h => h.action === "CONTRACT_ACCEPTED")!.created_at).toLocaleString("ar-JO")}</span>
+              </div>
+            )}
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setContractDialogOpen(false)}>إغلاق</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
         {/* Cancel Dialog */}
         <Dialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
           <DialogContent>
