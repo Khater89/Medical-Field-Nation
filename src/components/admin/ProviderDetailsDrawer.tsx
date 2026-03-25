@@ -350,7 +350,32 @@ const ProviderDetailsDrawer = ({ provider, open, onOpenChange, onApprove, onSusp
                   </div>
                 )}
 
-                {/* Activity */}
+                {/* Performance Stats */}
+                <div className="rounded-lg border border-border p-3 space-y-3">
+                  <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
+                    📊 الأداء والتقييم
+                  </h4>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="text-center rounded-lg bg-success/5 border border-success/20 p-2">
+                      <CheckCheck className="h-4 w-4 text-success mx-auto mb-1" />
+                      <p className="text-lg font-bold text-success">{statsCompleted}</p>
+                      <p className="text-[10px] text-muted-foreground">مكتملة</p>
+                    </div>
+                    <div className="text-center rounded-lg bg-destructive/5 border border-destructive/20 p-2">
+                      <Ban className="h-4 w-4 text-destructive mx-auto mb-1" />
+                      <p className="text-lg font-bold text-destructive">{statsCancelled}</p>
+                      <p className="text-[10px] text-muted-foreground">ملغاة/مرفوضة</p>
+                    </div>
+                    <div className="text-center rounded-lg bg-warning/5 border border-warning/20 p-2">
+                      <Star className="h-4 w-4 text-warning fill-warning mx-auto mb-1" />
+                      <p className="text-lg font-bold text-warning">{statsAvgRating ? statsAvgRating.toFixed(1) : "—"}</p>
+                      <p className="text-[10px] text-muted-foreground">
+                        {statsRatingCount > 0 ? `${statsRatingCount} تقييم` : "لا تقييمات"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
                 <div className="rounded-lg border border-border p-3 space-y-2">
                   <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{t("provider.details.activity")}</h4>
                   <div className="text-xs text-muted-foreground space-y-1">
