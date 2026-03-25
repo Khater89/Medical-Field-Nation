@@ -123,15 +123,63 @@ const ProvidersTab = () => {
   const recordSettlement = async (userId: string) => {
     const amount = prompt(t("provider.details.settlement_prompt"));
     if (!amount || isNaN(Number(amount)) || Number(amount) <= 0) return;
-    const { error } = await supabase.from("provider_wallet_ledger").insert({
-      provider_id: userId, amount: Number(amount), reason: "settlement",
-    });
+
+    const paymentMethod = prompt("طريقة الدفع:\n1 - CliQ (أدخل رقم المرجع بعد ذلك)\n2 - كاش\n\nأدخل 1 أو 2:");
+    if (!paymentMethod || !["1", "2"].includes(paymentMethod.trim())) return;
+
+    let cliqReference: string | null = null;
+    if (paymentMethod.trim() === "1") {
+      cliqReference = prompt("أدخل رقم مرجع CliQ:");
+      if (!cliqReference || !cliqReference.trim()) return;
+    }
+
+    const insertData: any = {
+      provider_id: userId,
+      amount: Number(amount),
+      reason: "settlement",
+    };
+    if (cliqReference) insertData.cliq_reference = cliqReference.trim();
+
+    const { error } = await supabase.from("provider_wallet_ledger").insert(insertData);
     if (error) {
       toast({ title: t("common.error"), description: error.message, variant: "destructive" });
-    } else {
-      toast({ title: t("provider.details.settlement_success") });
-      fetchProviders();
+      return;
     }
+
+    // Find provider info for notification
+    const provider = providers.find(p => p.user_id === userId);
+    const providerName = provider?.full_name || "مزود";
+    const providerPhone = provider?.phone || "";
+    const methodText = paymentMethod.trim() === "1" ? `CliQ (${cliqReference})` : "كاش";
+
+    // Send staff notification
+    await supabase.from("staff_notifications" as any).insert({
+      target_role: "admin",
+      title: `💰 تسوية مالية: ${providerName}`,
+      body: `تم تسجيل تسوية بقيمة ${Number(amount)} د.أ — طريقة الدفع: ${methodText}`,
+      provider_id: userId,
+    });
+
+    // Send WhatsApp notification via outbox for provider
+    if (providerPhone) {
+      const whatsappMessage = `مرحباً ${providerName}، تم تسجيل تسوية مالية في حسابك بقيمة ${Number(amount)} د.أ عبر ${methodText}. فريق إدارة Medical Field Nation.`;
+      await supabase.from("booking_outbox").insert({
+        booking_id: "00000000-0000-0000-0000-000000000000",
+        destination: "webhook",
+        payload: {
+          event: "provider_settlement",
+          provider_id: userId,
+          provider_name: providerName,
+          provider_phone: providerPhone,
+          amount: Number(amount),
+          payment_method: methodText,
+          message: whatsappMessage,
+        },
+      } as any);
+    }
+
+    toast({ title: t("provider.details.settlement_success") });
+    fetchProviders();
   };
 
   const deleteProvider = async () => {

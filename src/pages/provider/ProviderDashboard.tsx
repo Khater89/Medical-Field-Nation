@@ -288,6 +288,10 @@ const ProviderDashboard = () => {
   const [showAgreement, setShowAgreement] = useState(false);
   const [agreementLoading, setAgreementLoading] = useState(false);
 
+  // Order-specific contract dialog
+  const [contractOrderId, setContractOrderId] = useState<string | null>(null);
+  const [contractAccepted, setContractAccepted] = useState(false);
+
   // Debt limit
   const [debtLimit, setDebtLimit] = useState(-20);
   const [isOnHold, setIsOnHold] = useState(false);
@@ -979,7 +983,7 @@ const ProviderDashboard = () => {
                             <Button
                               size="sm"
                               className="gap-1 h-7 text-xs flex-1 bg-success hover:bg-success/90"
-                              onClick={() => acceptOrder(o.id)}
+                              onClick={() => { setContractOrderId(o.id); setContractAccepted(false); }}
                               disabled={actionLoading === o.id || isOnHold || !agreementAccepted}
                             >
                               {actionLoading === o.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <CheckCircle className="h-3 w-3" />}
@@ -1422,6 +1426,100 @@ const ProviderDashboard = () => {
             <AlertDialogCancel>{t("action.cancel")}</AlertDialogCancel>
             <AlertDialogAction onClick={verifyOtpAndCheckOut} disabled={otpInput.length !== 4}>
               {t("provider.otp.verify")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Order Contract Dialog */}
+      <AlertDialog open={!!contractOrderId} onOpenChange={(open) => { if (!open) { setContractOrderId(null); setContractAccepted(false); } }}>
+        <AlertDialogContent className="max-h-[85vh] overflow-y-auto">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <ShieldCheck className="h-5 w-5 text-warning" />
+              عقد وسياسة قبول الطلب
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-right">
+              يرجى قراءة الشروط التالية بعناية قبل قبول الطلب
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <div className="space-y-4 text-sm leading-relaxed text-foreground bg-muted/30 rounded-lg p-4 max-h-[50vh] overflow-y-auto">
+            <div className="space-y-2">
+              <h4 className="font-bold text-primary">أولاً: إخلاء المسؤولية الطبية</h4>
+              <p>تعمل منصة Medical Field Nation كوسيط تنسيق فقط، ولا تقدم أي تشخيص أو علاج طبي. أنت كمقدم خدمة مستقل ومرخّص تتحمل <strong>كامل المسؤولية المهنية والقانونية</strong> عن جميع الخدمات الطبية التي تقدمها من خلال المنصة.</p>
+              <p>المنصة غير مسؤولة عن أي أخطاء طبية أو مضاعفات أو أضرار ناتجة عن تقديم الخدمة، وتخلي مسؤوليتها الكاملة عن ذلك.</p>
+            </div>
+
+            <div className="space-y-2">
+              <h4 className="font-bold text-primary">ثانياً: المسؤولية المهنية</h4>
+              <ul className="list-disc list-inside space-y-1 text-xs">
+                <li>أنت المسؤول الأول والوحيد عن جودة وسلامة الخدمة المقدمة.</li>
+                <li>يجب عليك الالتزام بأعلى معايير الرعاية الطبية المهنية.</li>
+                <li>تلتزم بتوفير الأدوات والمعدات اللازمة لتقديم الخدمة.</li>
+                <li>في حال وقوع أي حادث أو خطأ طبي، تتحمل أنت المسؤولية القانونية كاملة.</li>
+                <li>توافق على تعويض المنصة عن أي مطالبات أو دعاوى ناتجة عن خدماتك.</li>
+              </ul>
+            </div>
+
+            <div className="space-y-2">
+              <h4 className="font-bold text-primary">ثالثاً: الأجر المتفق عليه والدفع</h4>
+              {(() => {
+                const contractOrder = orders.find(o => o.id === contractOrderId);
+                const price = contractOrder?.agreed_price ?? contractOrder?.subtotal ?? 0;
+                return (
+                  <>
+                    <p>الأجر المتفق عليه لهذا الطلب هو: <strong className="text-success">{formatCurrency(price)}</strong> للساعة الأولى.</p>
+                    <ul className="list-disc list-inside space-y-1 text-xs">
+                      <li>في حال تجاوز مدة الخدمة 60 دقيقة، تُحتسب رسوم إضافية بنسبة <strong>8%</strong> من السعر الأساسي عن كل 15 دقيقة إضافية.</li>
+                      <li>يتم خصم حصة المنصة (رسوم التنسيق) تلقائياً من رصيدك.</li>
+                      <li>التسويات المالية تتم وفق الجدول المتفق عليه مع إدارة المنصة.</li>
+                      <li>لا يحق لك المطالبة بأجر أعلى من المتفق عليه مباشرة من العميل.</li>
+                    </ul>
+                  </>
+                );
+              })()}
+            </div>
+
+            <div className="space-y-2">
+              <h4 className="font-bold text-primary">رابعاً: الالتزامات العامة</h4>
+              <ul className="list-disc list-inside space-y-1 text-xs">
+                <li>الالتزام بالموعد المحدد والحضور في الوقت المتفق عليه.</li>
+                <li>عدم إلغاء الطلب بعد القبول إلا بالتنسيق مع إدارة المنصة.</li>
+                <li>الحفاظ على سرية بيانات العملاء وعدم مشاركتها.</li>
+                <li>التعامل باحترافية ولباقة مع العملاء.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="flex items-start gap-2 mt-2">
+            <input
+              type="checkbox"
+              id="contract-accept"
+              checked={contractAccepted}
+              onChange={(e) => setContractAccepted(e.target.checked)}
+              className="mt-1 h-4 w-4 rounded border-primary text-primary focus:ring-primary"
+            />
+            <label htmlFor="contract-accept" className="text-xs leading-relaxed cursor-pointer">
+              أقر بأنني قرأت وفهمت جميع الشروط أعلاه، وأوافق على تحمل كامل المسؤولية المهنية والقانونية عن هذا الطلب، وأوافق على الأجر المتفق عليه.
+            </label>
+          </div>
+
+          <AlertDialogFooter>
+            <AlertDialogCancel>رجوع</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-success hover:bg-success/90"
+              disabled={!contractAccepted}
+              onClick={() => {
+                if (contractOrderId) {
+                  acceptOrder(contractOrderId);
+                  setContractOrderId(null);
+                  setContractAccepted(false);
+                }
+              }}
+            >
+              <CheckCircle className="h-4 w-4 me-1" />
+              أوافق وأقبل الطلب
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
