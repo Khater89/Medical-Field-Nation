@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
@@ -56,7 +57,9 @@ const FinanceTab = () => {
 
   // Settlement modal
   const [settlementOpen, setSettlementOpen] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<"cliq" | "cash">("cliq");
   const [cliqReference, setCliqReference] = useState("");
+  const [cashAmount, setCashAmount] = useState("");
   const [settlementLoading, setSettlementLoading] = useState(false);
 
   const fetchData = async () => {
@@ -64,12 +67,12 @@ const FinanceTab = () => {
 
     const { data: roles } = await supabase.from("user_roles").select("user_id").eq("role", "provider");
     const providerIds = (roles || []).map((r) => r.user_id);
-    if (providerIds.length === 0) { setLoading(false); return; }
+    if (providerIds.length === 0) { setProviders([]); setLoading(false); return; }
 
     const { data: staffRoles } = await supabase.from("user_roles").select("user_id").in("role", ["admin", "cs"]);
     const staffIds = new Set((staffRoles || []).map((r) => r.user_id));
     const pureProviderIds = providerIds.filter((id) => !staffIds.has(id));
-    if (pureProviderIds.length === 0) { setLoading(false); return; }
+    if (pureProviderIds.length === 0) { setProviders([]); setLoading(false); return; }
 
     const { data: profiles } = await supabase
       .from("profiles")
@@ -81,8 +84,11 @@ const FinanceTab = () => {
     for (const p of (profiles || [])) {
       const { data: bal } = await supabase.rpc("get_provider_balance", { _provider_id: p.user_id });
       const balance = bal || 0;
-      enriched.push({ ...p, balance });
-      if (balance < 0) debt += Math.abs(balance);
+      // Only include providers with debt (negative balance)
+      if (balance < 0) {
+        enriched.push({ ...p, balance });
+        debt += Math.abs(balance);
+      }
     }
     enriched.sort((a, b) => a.balance - b.balance);
     setProviders(enriched);
@@ -144,36 +150,47 @@ const FinanceTab = () => {
 
   const openSettlementModal = () => {
     setCliqReference("");
+    setCashAmount("");
+    setPaymentMethod("cliq");
     setSettlementOpen(true);
   };
 
   const confirmSettlement = async () => {
-    if (!selectedProvider || amountDue <= 0 || !cliqReference.trim()) return;
+    if (!selectedProvider || amountDue <= 0) return;
+
+    if (paymentMethod === "cliq" && !cliqReference.trim()) return;
+    if (paymentMethod === "cash") {
+      const parsed = parseFloat(cashAmount);
+      if (isNaN(parsed) || parsed <= 0) return;
+    }
+
     setSettlementLoading(true);
+
+    const settlementAmount = paymentMethod === "cash" ? parseFloat(cashAmount) : amountDue;
+    const reference = paymentMethod === "cliq" ? cliqReference.trim() : `CASH-${Date.now()}`;
 
     const { error } = await supabase.from("provider_wallet_ledger").insert({
       provider_id: selectedProvider.user_id,
-      amount: amountDue,
+      amount: settlementAmount,
       reason: "settlement",
-      cliq_reference: cliqReference.trim(),
+      cliq_reference: reference,
       settled_at: new Date().toISOString(),
     });
 
     if (error) {
       toast({ title: t("common.error"), description: error.message, variant: "destructive" });
     } else {
-      // Send admin notification
+      const methodLabel = paymentMethod === "cliq" ? `CliQ: ${cliqReference.trim()}` : `كاش: ${formatCurrency(settlementAmount)}`;
       await supabase.from("staff_notifications").insert({
         title: `تسوية: ${selectedProvider.full_name || "مزوّد"}`,
-        body: `تمت تسوية ${formatCurrency(amountDue)} — CliQ: ${cliqReference.trim()}`,
+        body: `تمت تسوية ${formatCurrency(settlementAmount)} — ${methodLabel}`,
         target_role: "admin",
         provider_id: selectedProvider.user_id,
       });
 
       toast({ title: t("provider.details.settlement_success") });
       setSettlementOpen(false);
-      // Refresh data
-      const updatedProvider = { ...selectedProvider, balance: selectedProvider.balance + amountDue };
+      const updatedProvider = { ...selectedProvider, balance: selectedProvider.balance + settlementAmount };
       setSelectedProvider(updatedProvider);
       openProviderLedger(updatedProvider);
       fetchData();
@@ -223,7 +240,7 @@ const FinanceTab = () => {
               <Wallet className="h-8 w-8 text-primary" />
               <div>
                 <p className="text-xs text-muted-foreground">{t("finance.providers_with_debt")}</p>
-                <p className="text-xl font-bold text-primary">{providers.filter((p) => p.balance < 0).length}</p>
+                <p className="text-xl font-bold text-primary">{providers.length}</p>
               </div>
             </div>
           </CardContent>
@@ -244,41 +261,49 @@ const FinanceTab = () => {
         </div>
       </div>
 
-      {/* Provider Debt Table */}
-      <div className="rounded-lg border border-border overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-muted/50">
-              <TableHead>{t("admin.providers.col.name")}</TableHead>
-              <TableHead>{t("admin.providers.col.phone")}</TableHead>
-              <TableHead>{t("admin.providers.col.city")}</TableHead>
-              <TableHead>{t("admin.providers.col.type")}</TableHead>
-              <TableHead>{t("finance.debt_amount")}</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filtered.map((p) => (
-              <TableRow
-                key={p.user_id}
-                className="cursor-pointer hover:bg-accent/50 transition-colors"
-                onClick={() => openProviderLedger(p)}
-              >
-                <TableCell className="font-medium text-sm">{p.full_name || "—"}</TableCell>
-                <TableCell className="text-xs" dir="ltr">{p.phone || "—"}</TableCell>
-                <TableCell className="text-sm">{p.city || "—"}</TableCell>
-                <TableCell className="text-xs">
-                  {t(`role_type.${p.role_type || ""}`) !== `role_type.${p.role_type || ""}` ? t(`role_type.${p.role_type}`) : p.role_type || "—"}
-                </TableCell>
-                <TableCell>
-                  <span className={`text-sm font-bold ${p.balance < 0 ? "text-destructive" : p.balance > 0 ? "text-success" : "text-muted-foreground"}`}>
-                    {formatCurrency(p.balance)}
-                  </span>
-                </TableCell>
+      {/* Provider Debt Table - only indebted providers */}
+      {filtered.length === 0 ? (
+        <Card>
+          <CardContent className="py-10 text-center text-muted-foreground">
+            لا يوجد مزوّدون مديونون حالياً
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="rounded-lg border border-border overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted/50">
+                <TableHead>{t("admin.providers.col.name")}</TableHead>
+                <TableHead>{t("admin.providers.col.phone")}</TableHead>
+                <TableHead>{t("admin.providers.col.city")}</TableHead>
+                <TableHead>{t("admin.providers.col.type")}</TableHead>
+                <TableHead>{t("finance.debt_amount")}</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+            </TableHeader>
+            <TableBody>
+              {filtered.map((p) => (
+                <TableRow
+                  key={p.user_id}
+                  className="cursor-pointer hover:bg-accent/50 transition-colors"
+                  onClick={() => openProviderLedger(p)}
+                >
+                  <TableCell className="font-medium text-sm">{p.full_name || "—"}</TableCell>
+                  <TableCell className="text-xs" dir="ltr">{p.phone || "—"}</TableCell>
+                  <TableCell className="text-sm">{p.city || "—"}</TableCell>
+                  <TableCell className="text-xs">
+                    {t(`role_type.${p.role_type || ""}`) !== `role_type.${p.role_type || ""}` ? t(`role_type.${p.role_type}`) : p.role_type || "—"}
+                  </TableCell>
+                  <TableCell>
+                    <span className="text-sm font-bold text-destructive">
+                      {formatCurrency(p.balance)}
+                    </span>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
 
       {/* Provider Ledger Drawer */}
       <Sheet open={!!selectedProvider} onOpenChange={(open) => { if (!open) setSelectedProvider(null); }}>
@@ -291,16 +316,16 @@ const FinanceTab = () => {
           {selectedProvider && (
             <div className="space-y-4">
               {/* Balance summary */}
-              <Card className={`border ${(selectedProvider.balance < 0) ? "border-destructive/30 bg-destructive/5" : "border-success/30 bg-success/5"}`}>
+              <Card className="border-destructive/30 bg-destructive/5">
                 <CardContent className="py-3 px-4 flex items-center justify-between">
                   <span className="text-sm font-medium">{t("finance.current_balance")}</span>
-                  <span className={`text-lg font-bold ${selectedProvider.balance < 0 ? "text-destructive" : "text-success"}`}>
+                  <span className="text-lg font-bold text-destructive">
                     {formatCurrency(selectedProvider.balance)}
                   </span>
                 </CardContent>
               </Card>
 
-              {/* Settlement button - only show if there's debt */}
+              {/* Settlement button */}
               {amountDue > 0 && (
                 <Button variant="outline" className="w-full gap-1.5" onClick={openSettlementModal}>
                   <DollarSign className="h-4 w-4" /> {t("provider.details.settlement")}
@@ -332,7 +357,9 @@ const FinanceTab = () => {
                             <span className="text-[10px] text-muted-foreground" dir="ltr">{entry.booking_number}</span>
                           )}
                           {entry.cliq_reference && (
-                            <span className="text-[10px] text-muted-foreground" dir="ltr">CliQ: {entry.cliq_reference}</span>
+                            <span className="text-[10px] text-muted-foreground" dir="ltr">
+                              {entry.cliq_reference.startsWith("CASH-") ? "💵 كاش" : `CliQ: ${entry.cliq_reference}`}
+                            </span>
                           )}
                         </div>
                         <p className="text-[10px] text-muted-foreground mt-0.5">
@@ -352,7 +379,7 @@ const FinanceTab = () => {
         </SheetContent>
       </Sheet>
 
-      {/* Settlement Modal */}
+      {/* Settlement Modal with CliQ/Cash choice */}
       <Dialog open={settlementOpen} onOpenChange={setSettlementOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -363,7 +390,7 @@ const FinanceTab = () => {
           </DialogHeader>
 
           <div className="space-y-4 py-2">
-            {/* Amount due - read only */}
+            {/* Amount due */}
             <div className="space-y-2">
               <Label className="text-sm font-medium">المبلغ المستحق للمنصة</Label>
               <div className="flex h-10 w-full items-center rounded-md border border-input bg-muted px-3 text-sm font-bold text-destructive">
@@ -371,19 +398,64 @@ const FinanceTab = () => {
               </div>
             </div>
 
-            {/* CliQ reference - required */}
-            <div className="space-y-2">
-              <Label htmlFor="cliq-ref" className="text-sm font-medium">
-                رقم حوالة CliQ <span className="text-destructive">*</span>
-              </Label>
-              <Input
-                id="cliq-ref"
-                placeholder="أدخل رقم حوالة CliQ"
-                value={cliqReference}
-                onChange={(e) => setCliqReference(e.target.value)}
-                dir="ltr"
-              />
+            {/* Payment method selection */}
+            <div className="space-y-3">
+              <Label className="text-sm font-medium">طريقة الدفع</Label>
+              <RadioGroup value={paymentMethod} onValueChange={(v) => setPaymentMethod(v as "cliq" | "cash")} className="gap-3">
+                <div className="flex items-center gap-2 rounded-lg border border-border p-3 cursor-pointer hover:bg-accent/50 transition-colors">
+                  <RadioGroupItem value="cliq" id="cliq" />
+                  <Label htmlFor="cliq" className="cursor-pointer flex-1">
+                    <span className="text-sm font-medium">CliQ</span>
+                    <p className="text-[10px] text-muted-foreground">تسوية المبلغ الكامل عبر حوالة CliQ</p>
+                  </Label>
+                </div>
+                <div className="flex items-center gap-2 rounded-lg border border-border p-3 cursor-pointer hover:bg-accent/50 transition-colors">
+                  <RadioGroupItem value="cash" id="cash" />
+                  <Label htmlFor="cash" className="cursor-pointer flex-1">
+                    <span className="text-sm font-medium">💵 كاش</span>
+                    <p className="text-[10px] text-muted-foreground">إدخال القيمة المدفوعة نقداً</p>
+                  </Label>
+                </div>
+              </RadioGroup>
             </div>
+
+            {/* CliQ reference field */}
+            {paymentMethod === "cliq" && (
+              <div className="space-y-2">
+                <Label htmlFor="cliq-ref" className="text-sm font-medium">
+                  رقم حوالة CliQ <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="cliq-ref"
+                  placeholder="أدخل رقم حوالة CliQ"
+                  value={cliqReference}
+                  onChange={(e) => setCliqReference(e.target.value)}
+                  dir="ltr"
+                />
+              </div>
+            )}
+
+            {/* Cash amount field */}
+            {paymentMethod === "cash" && (
+              <div className="space-y-2">
+                <Label htmlFor="cash-amount" className="text-sm font-medium">
+                  المبلغ المدفوع نقداً <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="cash-amount"
+                  type="number"
+                  placeholder="أدخل المبلغ"
+                  value={cashAmount}
+                  onChange={(e) => setCashAmount(e.target.value)}
+                  dir="ltr"
+                  min="0"
+                  step="0.5"
+                />
+                <p className="text-[10px] text-muted-foreground">
+                  الحد الأقصى: {formatCurrency(amountDue)}
+                </p>
+              </div>
+            )}
           </div>
 
           <DialogFooter>
@@ -392,7 +464,11 @@ const FinanceTab = () => {
             </Button>
             <Button
               onClick={confirmSettlement}
-              disabled={!cliqReference.trim() || settlementLoading || amountDue <= 0}
+              disabled={
+                settlementLoading || amountDue <= 0 ||
+                (paymentMethod === "cliq" && !cliqReference.trim()) ||
+                (paymentMethod === "cash" && (!cashAmount || parseFloat(cashAmount) <= 0 || parseFloat(cashAmount) > amountDue))
+              }
               className="gap-1.5"
             >
               {settlementLoading && <Loader2 className="h-4 w-4 animate-spin" />}
