@@ -116,6 +116,80 @@ function formatCurrencyFn(n: number) {
   return `${n.toFixed(2)} JOD`;
 }
 
+/* ── Countdown hook for scheduled time ── */
+function useCountdown(scheduledAt: string | null, isActive: boolean) {
+  const [remaining, setRemaining] = useState({ days: 0, hours: 0, mins: 0, secs: 0, totalMs: 0, isPast: false });
+
+  useEffect(() => {
+    if (!scheduledAt || !isActive) return;
+    const update = () => {
+      const diff = new Date(scheduledAt).getTime() - Date.now();
+      if (diff <= 0) {
+        setRemaining({ days: 0, hours: 0, mins: 0, secs: 0, totalMs: 0, isPast: true });
+      } else {
+        const totalSecs = Math.floor(diff / 1000);
+        setRemaining({
+          days: Math.floor(totalSecs / 86400),
+          hours: Math.floor((totalSecs % 86400) / 3600),
+          mins: Math.floor((totalSecs % 3600) / 60),
+          secs: totalSecs % 60,
+          totalMs: diff,
+          isPast: false,
+        });
+      }
+    };
+    update();
+    const interval = setInterval(update, 1000);
+    return () => clearInterval(interval);
+  }, [scheduledAt, isActive]);
+
+  return remaining;
+}
+
+/* ── CountdownBadge (top-level) ── */
+const CountdownBadge = ({ scheduledAt }: { scheduledAt: string }) => {
+  const isActive = true;
+  const cd = useCountdown(scheduledAt, isActive);
+
+  if (cd.isPast) {
+    return (
+      <div className="rounded-lg p-2.5 bg-warning/10 border border-warning/30 flex items-center gap-2">
+        <Clock className="h-4 w-4 text-warning" />
+        <span className="text-xs font-medium text-warning">حان موعد الطلب — يرجى التوجه للعميل</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-lg p-2.5 bg-info/10 border border-info/30">
+      <div className="flex items-center gap-2 mb-1">
+        <Clock className="h-4 w-4 text-info" />
+        <span className="text-xs font-medium text-info">الوقت المتبقي للموعد</span>
+      </div>
+      <div className="flex items-center justify-center gap-3 text-center" dir="ltr">
+        {cd.days > 0 && (
+          <div className="bg-background/60 rounded px-2 py-1">
+            <p className="text-lg font-mono font-bold text-info">{cd.days}</p>
+            <p className="text-[9px] text-muted-foreground">يوم</p>
+          </div>
+        )}
+        <div className="bg-background/60 rounded px-2 py-1">
+          <p className="text-lg font-mono font-bold text-info">{String(cd.hours).padStart(2, "0")}</p>
+          <p className="text-[9px] text-muted-foreground">ساعة</p>
+        </div>
+        <div className="bg-background/60 rounded px-2 py-1">
+          <p className="text-lg font-mono font-bold text-info">{String(cd.mins).padStart(2, "0")}</p>
+          <p className="text-[9px] text-muted-foreground">دقيقة</p>
+        </div>
+        <div className="bg-background/60 rounded px-2 py-1">
+          <p className="text-lg font-mono font-bold text-info">{String(cd.secs).padStart(2, "0")}</p>
+          <p className="text-[9px] text-muted-foreground">ثانية</p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 /* ── LiveTimerBadge (top-level to avoid hook ordering issues) ── */
 const LiveTimerBadge = ({ order, t, toast, overtimeWarningShown }: {
   order: ProviderOrder;
