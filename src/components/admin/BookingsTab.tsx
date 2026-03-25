@@ -20,7 +20,19 @@ const STATUS_COLORS: Record<string, string> = {
   CANCELLED: "bg-destructive/10 text-destructive border-destructive/30",
 };
 
-const FILTER_STATUSES = ["ALL", "NEW", "ASSIGNED", "ACCEPTED", "COMPLETED", "CANCELLED", "REJECTED"];
+const FILTER_STATUSES = ["ALL", "NEW", "CONFIRMED", "ASSIGNED", "ACCEPTED", "IN_PROGRESS", "COMPLETED", "CANCELLED", "REJECTED"];
+
+const FILTER_COLORS: Record<string, string> = {
+  ALL: "bg-muted text-foreground border-border",
+  NEW: "bg-info/10 text-info border-info/30",
+  CONFIRMED: "bg-primary/20 text-primary border-primary/30",
+  ASSIGNED: "bg-warning/10 text-warning border-warning/30",
+  ACCEPTED: "bg-success/10 text-success border-success/30",
+  IN_PROGRESS: "bg-chart-4/20 text-chart-4 border-chart-4/30",
+  COMPLETED: "bg-success text-success-foreground border-success",
+  CANCELLED: "bg-destructive/10 text-destructive border-destructive/30",
+  REJECTED: "bg-destructive/20 text-destructive border-destructive/40",
+};
 
 const BookingsTab = () => {
   const { toast } = useToast();

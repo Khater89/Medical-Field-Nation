@@ -391,7 +391,7 @@ const ar: Record<string, string> = {
 
   // Gallery
   "landing.gallery_title": "فريقنا أثناء العمل",
-  "landing.gallery_sub": "لحظات حقيقية من تقديم الرعاية الطبية في المنزل",
+  "landing.gallery_sub": "",
 
   // Settings
   "settings.title": "إعدادات المنصة",
