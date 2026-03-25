@@ -490,9 +490,12 @@ const BookingDetailsDrawer = ({ booking, open, onOpenChange, serviceName, servic
                       h.action === "UNASSIGNED" ? "🔄 إلغاء إسناد" : h.action
                     }</span>
                     {h.action === "CONTRACT_ACCEPTED" && (
-                      <Badge variant="outline" className="ms-1 text-[9px] bg-primary/10 text-primary border-primary/30">
-                        <ShieldCheck className="h-2.5 w-2.5 me-0.5" /> عقد موقّع
-                      </Badge>
+                      <button
+                        onClick={() => setContractDialogOpen(true)}
+                        className="inline-flex items-center gap-0.5 ms-1 text-[9px] bg-primary/10 text-primary border border-primary/30 rounded-full px-1.5 py-0.5 hover:bg-primary/20 transition-colors cursor-pointer"
+                      >
+                        <ShieldCheck className="h-2.5 w-2.5" /> عرض نص العقد الموقّع
+                      </button>
                     )}
                     {h.note && <span className="text-muted-foreground ms-1">— {h.note}</span>}
                     <p className="text-[10px] text-muted-foreground" dir="ltr">{new Date(h.created_at).toLocaleString("ar-JO")}</p>
