@@ -47,7 +47,7 @@ Deno.serve(async (req) => {
     // Verify booking belongs to this provider and is ACCEPTED
     const { data: booking } = await supabaseAdmin
       .from("bookings")
-      .select("id, assigned_provider_id, status")
+      .select("id, assigned_provider_id, status, booking_number")
       .eq("id", booking_id)
       .maybeSingle();
 
@@ -72,38 +72,40 @@ Deno.serve(async (req) => {
 
     if (updateError) throw updateError;
 
-    // Get client contact info to send OTP
+    // Get client contact info
     const { data: contact } = await supabaseAdmin
       .from("booking_contacts")
       .select("customer_name, customer_phone")
       .eq("booking_id", booking_id)
       .maybeSingle();
 
-    // Write to outbox so n8n sends WhatsApp with OTP to client
-    if (contact?.customer_phone) {
-      await supabaseAdmin.from("booking_outbox").insert({
-        booking_id,
-        destination: "webhook",
-        payload: {
-          event: "otp_for_client",
-          booking_id,
-          customer_phone: contact.customer_phone,
-          customer_name: contact.customer_name || "",
-          otp_code: otp,
-          message: `مرحباً ${contact.customer_name || ""}، كود تأكيد إنهاء الخدمة هو: ${otp}. يرجى إعطاء هذا الكود لمقدم الخدمة عند الانتهاء.`,
-          created_at: now,
-        },
-        status: "pending",
-      });
-    }
+    // Get provider name
+    const { data: providerProfile } = await supabaseAdmin
+      .from("profiles")
+      .select("full_name")
+      .eq("user_id", user.id)
+      .maybeSingle();
 
-    // Notify admin
-    await supabaseAdmin.from("staff_notifications").insert({
-      title: `▶️ بدأ المزود العمل`,
-      body: `الطلب ${booking_id.slice(0, 8)} — تم إرسال كود التأكيد للعميل`,
-      target_role: "admin",
-      booking_id,
-    });
+    const customerName = contact?.customer_name || "العميل";
+    const customerPhone = contact?.customer_phone || "";
+    const providerName = providerProfile?.full_name || "المزود";
+    const bookingNum = booking.booking_number || booking_id.slice(0, 8);
+
+    // Send OTP notification to ADMIN and CS (not to client)
+    await supabaseAdmin.from("staff_notifications").insert([
+      {
+        title: `🔑 كود إنهاء الخدمة — ${bookingNum}`,
+        body: `المزود "${providerName}" بدأ العمل. كود التأكيد: ${otp}\nالعميل: ${customerName} — ${customerPhone}\nيرجى التواصل مع العميل للتأكيد ثم تزويده بالكود.`,
+        target_role: "admin",
+        booking_id,
+      },
+      {
+        title: `🔑 كود إنهاء الخدمة — ${bookingNum}`,
+        body: `المزود "${providerName}" بدأ العمل. كود التأكيد: ${otp}\nالعميل: ${customerName} — ${customerPhone}\nيرجى التواصل مع العميل للتأكيد ثم تزويده بالكود.`,
+        target_role: "cs",
+        booking_id,
+      },
+    ]);
 
     return new Response(JSON.stringify({ success: true }), {
       status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
