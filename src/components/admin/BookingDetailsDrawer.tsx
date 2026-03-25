@@ -95,6 +95,26 @@ const InfoRow = ({ icon: Icon, label, value, dir }: { icon: any; label: string; 
   );
 };
 
+const CONTRACT_TEXT = `عقد تنفيذ المهمة — إخلاء مسؤولية طبية
+
+المادة 1: طبيعة المنصة
+تعمل منصة MFN كوسيط تنسيق فقط بين العميل ومقدم الخدمة الصحية المنزلية. لا تقدم المنصة أي تشخيص أو علاج أو استشارة طبية مباشرة.
+
+المادة 2: المسؤولية المهنية
+يتحمل مقدم الخدمة كامل المسؤولية المهنية والقانونية عن جودة الخدمات المقدمة، بما يشمل الأخطاء الطبية، والإهمال المهني، وأي أضرار مباشرة أو غير مباشرة تلحق بالعميل.
+
+المادة 3: إخلاء مسؤولية المنصة
+تُخلي المنصة مسؤوليتها الكاملة عن أي أخطاء طبية، مضاعفات صحية، أو حوادث ناتجة عن الخدمات المقدمة، وتقع المسؤولية حصرياً على مقدم الخدمة المعتمد.
+
+المادة 4: نموذج التسعير والأجور
+• السعر الأساسي: هو المبلغ المتفق عليه مسبقاً للساعة الأولى من الخدمة.
+• الوقت الإضافي: يُحتسب بنسبة 8% من السعر الأساسي عن كل 15 دقيقة إضافية بعد الساعة الأولى.
+• حصة المزود: هي المبلغ المتفق عليه والمحدد في تفاصيل كل طلب.
+• رسوم المنصة: الفرق بين السعر المتفق عليه مع العميل وحصة المزود.
+
+المادة 5: الالتزامات العامة
+يلتزم مقدم الخدمة بالحضور في الموعد المحدد، وتقديم الخدمة بأعلى معايير المهنية، والتعامل مع بيانات العملاء بسرية تامة.`;
+
 const BookingDetailsDrawer = ({ booking, open, onOpenChange, serviceName, servicePrice, providerName, providerPhone, onStatusChange, onDataRefresh }: Props) => {
   const { t, formatCurrency, formatDate, formatDateTime, formatDateShort } = useLanguage();
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
@@ -103,6 +123,7 @@ const BookingDetailsDrawer = ({ booking, open, onOpenChange, serviceName, servic
   const [reopening, setReopening] = useState(false);
   const [unassigning, setUnassigning] = useState(false);
   const [history, setHistory] = useState<any[]>([]);
+  const [contractDialogOpen, setContractDialogOpen] = useState(false);
 
   // Fetch booking history
   useEffect(() => {
@@ -469,9 +490,12 @@ const BookingDetailsDrawer = ({ booking, open, onOpenChange, serviceName, servic
                       h.action === "UNASSIGNED" ? "🔄 إلغاء إسناد" : h.action
                     }</span>
                     {h.action === "CONTRACT_ACCEPTED" && (
-                      <Badge variant="outline" className="ms-1 text-[9px] bg-primary/10 text-primary border-primary/30">
-                        <ShieldCheck className="h-2.5 w-2.5 me-0.5" /> عقد موقّع
-                      </Badge>
+                      <button
+                        onClick={() => setContractDialogOpen(true)}
+                        className="inline-flex items-center gap-0.5 ms-1 text-[9px] bg-primary/10 text-primary border border-primary/30 rounded-full px-1.5 py-0.5 hover:bg-primary/20 transition-colors cursor-pointer"
+                      >
+                        <ShieldCheck className="h-2.5 w-2.5" /> عرض نص العقد الموقّع
+                      </button>
                     )}
                     {h.note && <span className="text-muted-foreground ms-1">— {h.note}</span>}
                     <p className="text-[10px] text-muted-foreground" dir="ltr">{new Date(h.created_at).toLocaleString("ar-JO")}</p>
@@ -532,6 +556,30 @@ const BookingDetailsDrawer = ({ booking, open, onOpenChange, serviceName, servic
             </Button>
           )}
         </div>
+
+        {/* Contract Dialog */}
+        <Dialog open={contractDialogOpen} onOpenChange={setContractDialogOpen}>
+          <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <ShieldCheck className="h-5 w-5 text-primary" /> عقد تنفيذ المهمة
+              </DialogTitle>
+              <DialogDescription>النص الكامل للعقد الذي وافق عليه المزود</DialogDescription>
+            </DialogHeader>
+            <div className="whitespace-pre-wrap text-sm leading-relaxed text-foreground bg-muted/30 rounded-lg p-4 border border-border">
+              {CONTRACT_TEXT}
+            </div>
+            {history.find(h => h.action === "CONTRACT_ACCEPTED") && (
+              <div className="flex items-center gap-2 text-xs text-success bg-success/10 rounded-lg p-2">
+                <ShieldCheck className="h-4 w-4" />
+                <span>تم التوقيع بتاريخ: {new Date(history.find(h => h.action === "CONTRACT_ACCEPTED")!.created_at).toLocaleString("ar-JO")}</span>
+              </div>
+            )}
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setContractDialogOpen(false)}>إغلاق</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         {/* Cancel Dialog */}
         <Dialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
