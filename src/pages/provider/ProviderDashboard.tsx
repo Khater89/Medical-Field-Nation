@@ -869,10 +869,8 @@ const ProviderDashboard = () => {
                   return (
                   <Card
                     key={o.id}
-                    className={`transition-all ${accepted ? "cursor-pointer hover:shadow-md" : ""} ${isInProgress ? "border-primary/50 ring-1 ring-primary/20" : ""}`}
-                    onClick={() => {
-                      if (accepted) setExpandedOrder(isExpanded ? null : o.id);
-                    }}
+                    className={`transition-all cursor-pointer hover:shadow-md ${isInProgress ? "border-primary/50 ring-1 ring-primary/20" : ""}`}
+                    onClick={() => setExpandedOrder(isExpanded ? null : o.id)}
                   >
                     <CardContent className="py-4 px-4 space-y-2">
                       {/* Header row */}
@@ -933,9 +931,39 @@ const ProviderDashboard = () => {
                         );
                       })()}
 
-                      {/* Before acceptance: locked message + action buttons */}
-                      {!accepted && o.status === "ASSIGNED" && (
-                        <>
+                      {/* Expand hint for collapsed cards */}
+                      {!isExpanded && (
+                        <p className="text-xs text-muted-foreground text-center">اضغط لعرض التفاصيل ▼</p>
+                      )}
+
+                      {/* ═══ Expanded details for ASSIGNED (pre-acceptance) ═══ */}
+                      {isExpanded && o.status === "ASSIGNED" && (
+                        <div className="space-y-3 pt-2 border-t border-border" onClick={(e) => e.stopPropagation()}>
+                          {/* Order details without phone */}
+                          <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-2">
+                            <h5 className="text-xs font-bold flex items-center gap-1.5">
+                              <ClipboardList className="h-3.5 w-3.5" /> تفاصيل الطلب
+                            </h5>
+                            <div className="grid grid-cols-2 gap-1.5 text-xs">
+                              <span className="text-muted-foreground">الخدمة:</span>
+                              <span className="font-medium">{serviceNames[o.service_id] || o.service_id}</span>
+                              <span className="text-muted-foreground">العميل:</span>
+                              <span className="font-medium">{o.customer_display_name || "—"}</span>
+                              <span className="text-muted-foreground">المدينة:</span>
+                              <span className="font-medium">{o.city}</span>
+                              <span className="text-muted-foreground">الموعد:</span>
+                              <span className="font-medium">{formatDate(o.scheduled_at)}</span>
+                              <span className="text-muted-foreground">السعر:</span>
+                              <span className="font-medium text-primary">{o.agreed_price != null ? formatCurrency(o.agreed_price) : formatCurrency(o.subtotal)}</span>
+                            </div>
+                            {/* Phone hidden notice */}
+                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-muted rounded p-2 mt-1">
+                              <Lock className="h-3 w-3" />
+                              رقم التواصل مع العميل سيظهر بعد قبول الطلب
+                            </div>
+                          </div>
+
+                          {/* Accept/Reject buttons */}
                           {isOnHold ? (
                             <div className="flex items-center gap-1.5 text-xs text-destructive bg-destructive/10 rounded-lg p-2.5">
                               <Lock className="h-3.5 w-3.5" />
@@ -946,20 +974,15 @@ const ProviderDashboard = () => {
                               <ShieldCheck className="h-3.5 w-3.5" />
                               يرجى قبول اتفاقية مقدم الخدمة أولاً
                             </div>
-                          ) : (
-                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/50 rounded-lg p-2.5">
-                              <Lock className="h-3.5 w-3.5" />
-                              {t("provider.dashboard.press_accept")}
-                            </div>
-                          )}
-                          <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+                          ) : null}
+                          <div className="flex gap-2">
                             <Button
                               size="sm"
                               className="gap-1 h-7 text-xs flex-1 bg-success hover:bg-success/90"
                               onClick={() => acceptOrder(o.id)}
                               disabled={actionLoading === o.id || isOnHold || !agreementAccepted}
                             >
-                              {actionLoading === o.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Eye className="h-3 w-3" />}
+                              {actionLoading === o.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <CheckCircle className="h-3 w-3" />}
                               {t("provider.dashboard.accept")}
                             </Button>
                             <Button
@@ -972,7 +995,31 @@ const ProviderDashboard = () => {
                               <XCircle className="h-3 w-3" /> {t("provider.dashboard.reject")}
                             </Button>
                           </div>
-                        </>
+
+                          {/* History timeline */}
+                          {(historyMap[o.id] || []).length > 0 && (
+                            <div className="border border-border rounded-lg p-3 space-y-2 bg-muted/30">
+                              <h5 className="text-xs font-bold text-muted-foreground flex items-center gap-1"><History className="h-3 w-3" /> سجل الطلب</h5>
+                              {(historyMap[o.id] || []).map((h: any) => (
+                                <div key={h.id} className="flex items-start gap-2 text-xs">
+                                  <div className={`w-1.5 h-1.5 rounded-full mt-1.5 shrink-0 ${
+                                    h.action === "ACCEPTED" ? "bg-success" :
+                                    h.action === "CHECK_IN" ? "bg-primary" :
+                                    h.action === "COMPLETED" ? "bg-primary" : "bg-warning"
+                                  }`} />
+                                  <div>
+                                    <span className="font-medium">{
+                                      h.action === "ASSIGNED" ? "📋 إسناد" :
+                                      h.action === "ACCEPTED" ? "✅ قبول" : h.action
+                                    }</span>
+                                    {h.note && <span className="text-muted-foreground ms-1">— {h.note}</span>}
+                                    <p className="text-[10px] text-muted-foreground" dir="ltr">{new Date(h.created_at).toLocaleString("ar-JO")}</p>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
                       )}
 
                       {/* After acceptance: show hint to click */}
