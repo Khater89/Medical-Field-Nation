@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -20,7 +20,19 @@ const STATUS_COLORS: Record<string, string> = {
   CANCELLED: "bg-destructive/10 text-destructive border-destructive/30",
 };
 
-const FILTER_STATUSES = ["ALL", "NEW", "ASSIGNED", "ACCEPTED", "COMPLETED", "CANCELLED", "REJECTED"];
+const FILTER_STATUSES = ["ALL", "NEW", "CONFIRMED", "ASSIGNED", "ACCEPTED", "IN_PROGRESS", "COMPLETED", "CANCELLED", "REJECTED"];
+
+const FILTER_COLORS: Record<string, string> = {
+  ALL: "bg-muted text-foreground border-border",
+  NEW: "bg-info/10 text-info border-info/30",
+  CONFIRMED: "bg-primary/20 text-primary border-primary/30",
+  ASSIGNED: "bg-warning/10 text-warning border-warning/30",
+  ACCEPTED: "bg-success/10 text-success border-success/30",
+  IN_PROGRESS: "bg-chart-4/20 text-chart-4 border-chart-4/30",
+  COMPLETED: "bg-success text-success-foreground border-success",
+  CANCELLED: "bg-destructive/10 text-destructive border-destructive/30",
+  REJECTED: "bg-destructive/20 text-destructive border-destructive/40",
+};
 
 const BookingsTab = () => {
   const { toast } = useToast();
@@ -97,32 +109,40 @@ const BookingsTab = () => {
 
   return (
     <div className="space-y-4">
-      {/* Filters */}
+      {/* Header + Search */}
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <h2 className="text-lg font-bold">{t("admin.bookings.title")} ({bookings.length})</h2>
-        <div className="flex gap-2 flex-wrap">
-          <div className="relative">
-            <Search className={`absolute ${isRTL ? "right-3" : "left-3"} top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground`} />
-            <Input
-              placeholder={t("admin.bookings.search")}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className={`${isRTL ? "pr-9" : "pl-9"} w-[200px]`}
-            />
-          </div>
-          <Select value={filter} onValueChange={setFilter}>
-            <SelectTrigger className="w-32">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {FILTER_STATUSES.map((s) => (
-                <SelectItem key={s} value={s}>
-                  {s === "ALL" ? t("admin.bookings.filter_all") : t(`status.${s}`)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <div className="relative">
+          <Search className={`absolute ${isRTL ? "right-3" : "left-3"} top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground`} />
+          <Input
+            placeholder={t("admin.bookings.search")}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className={`${isRTL ? "pr-9" : "pl-9"} w-[200px]`}
+          />
         </div>
+      </div>
+
+      {/* Status Filter Chips */}
+      <div className="flex gap-2 flex-wrap">
+        {FILTER_STATUSES.map((s) => (
+          <button
+            key={s}
+            onClick={() => setFilter(s)}
+            className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
+              filter === s
+                ? `${FILTER_COLORS[s]} ring-2 ring-ring ring-offset-1`
+                : "bg-muted/50 text-muted-foreground border-border hover:bg-muted"
+            }`}
+          >
+            {s === "ALL" ? t("admin.bookings.filter_all") : t(`status.${s}`)}
+            {s !== "ALL" && (
+              <span className="ms-1 opacity-70">
+                ({bookings.filter(b => b.status === s).length})
+              </span>
+            )}
+          </button>
+        ))}
       </div>
 
       {/* Table */}
