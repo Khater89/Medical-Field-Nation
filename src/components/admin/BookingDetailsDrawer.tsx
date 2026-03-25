@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import {
   CalendarDays, MapPin, Phone, User, UserCheck,
   MessageCircle, FileText, StickyNote, Ban, Loader2, ClipboardCheck, X, Lock, Play,
+  Key, Copy,
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -54,6 +55,8 @@ export interface BookingRow {
   customer_name?: string | null;
   customer_phone?: string | null;
   client_address_text?: string | null;
+  otp_code?: string | null;
+  check_in_at?: string | null;
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -338,10 +341,49 @@ const BookingDetailsDrawer = ({ booking, open, onOpenChange, serviceName, servic
                   إلغاء الإسناد وتعيين مزود آخر
                 </Button>
               )}
-              {booking.status === "IN_PROGRESS" && (
-                <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/50 rounded-lg p-2 mt-1">
-                  <Lock className="h-3.5 w-3.5" />
-                  لا يمكن تغيير المزود أثناء تنفيذ الخدمة
+               {booking.status === "IN_PROGRESS" && (
+                <div className="space-y-2 mt-1">
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/50 rounded-lg p-2">
+                    <Lock className="h-3.5 w-3.5" />
+                    لا يمكن تغيير المزود أثناء تنفيذ الخدمة
+                  </div>
+                  {/* OTP Code Display */}
+                  {booking.otp_code && (
+                    <div className="rounded-lg border-2 border-warning/40 bg-warning/5 p-3 space-y-2">
+                      <div className="flex items-center gap-1.5 text-xs font-bold text-warning">
+                        <Key className="h-3.5 w-3.5" /> كود إنهاء الخدمة
+                      </div>
+                      <div className="flex items-center justify-center gap-2 rounded-lg bg-warning/10 py-3">
+                        <span className="text-2xl font-bold tracking-[0.4em] text-warning" dir="ltr">{booking.otp_code}</span>
+                      </div>
+                      <div className="flex gap-1.5">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="gap-1 h-7 text-xs flex-1"
+                          onClick={() => {
+                            navigator.clipboard.writeText(booking.otp_code!);
+                            toast.success(`تم نسخ الكود: ${booking.otp_code}`);
+                          }}
+                        >
+                          <Copy className="h-3 w-3" /> نسخ الكود
+                        </Button>
+                        {booking.customer_phone && (
+                          <a
+                            href={`https://wa.me/${(booking.customer_phone).replace(/^0/, "962")}?text=${encodeURIComponent(`مرحباً ${booking.customer_name || ""}، كود تأكيد إنهاء الخدمة هو: *${booking.otp_code}*\nيرجى إعطاء هذا الكود لمقدم الخدمة عند الانتهاء.`)}`}
+                            target="_blank" rel="noopener noreferrer"
+                          >
+                            <Button size="sm" variant="outline" className="gap-1 h-7 text-xs">
+                              <MessageCircle className="h-3 w-3" /> إرسال واتساب
+                            </Button>
+                          </a>
+                        )}
+                      </div>
+                      <p className="text-[10px] text-muted-foreground text-center">
+                        تواصل مع العميل للتأكيد ثم زوّده بالكود
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
