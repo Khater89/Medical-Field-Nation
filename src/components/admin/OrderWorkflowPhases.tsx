@@ -11,8 +11,9 @@ import { toast } from "sonner";
 import {
   Phone, MessageCircle, UserCheck, Loader2, MapPin,
   DollarSign, Handshake, Users, CheckCircle, Lock, AlertTriangle,
-  Briefcase, Edit2,
+  Briefcase, Edit2, Star, XCircle, CheckCheck,
 } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import type { BookingRow } from "./BookingDetailsDrawer";
 
 /* ── Types ── */
@@ -42,6 +43,13 @@ interface ProviderRow {
   radius_km: number | null;
   lat: number | null;
   lng: number | null;
+}
+
+interface ProviderStats {
+  completed: number;
+  cancelled: number;
+  avgRating: number | null;
+  ratingCount: number;
 }
 
 const ROLE_TYPE_LABELS: Record<string, string> = {
@@ -113,6 +121,7 @@ const OrderWorkflowPhases = ({ booking, serviceName, servicePrice, onWorkflowCha
   const [providerShare, setProviderShare] = useState(booking.provider_share ?? 0);
   const [editingProviderShare, setEditingProviderShare] = useState(false);
   const [savingProviderShare, setSavingProviderShare] = useState(false);
+  const [providerStats, setProviderStats] = useState<Record<string, ProviderStats>>({});
 
   // Phase 4 state
   const [assigning, setAssigning] = useState(false);
@@ -137,7 +146,7 @@ const OrderWorkflowPhases = ({ booking, serviceName, servicePrice, onWorkflowCha
   // Refresh helper (keeps drawer open)
   const refresh = () => onDataRefresh ? onDataRefresh() : onWorkflowChange();
 
-  // Fetch providers
+  // Fetch providers + stats
   const fetchProviders = async () => {
     setLoadingProviders(true);
     if (booking.client_lat && booking.client_lng) {
@@ -154,6 +163,34 @@ const OrderWorkflowPhases = ({ booking, serviceName, servicePrice, onWorkflowCha
       .eq("provider_status", "approved")
       .eq("profile_completed", true);
     setFallbackProviders((profiles as unknown as ProviderRow[]) || []);
+
+    // Fetch booking stats per provider
+    const { data: completedData } = await supabase
+      .from("bookings")
+      .select("assigned_provider_id, status")
+      .in("status", ["COMPLETED", "CANCELLED", "REJECTED"]);
+
+    const { data: ratingsData } = await supabase
+      .from("provider_ratings" as any)
+      .select("provider_id, rating");
+
+    const statsMap: Record<string, ProviderStats> = {};
+    (completedData || []).forEach((b: any) => {
+      const pid = b.assigned_provider_id;
+      if (!pid) return;
+      if (!statsMap[pid]) statsMap[pid] = { completed: 0, cancelled: 0, avgRating: null, ratingCount: 0 };
+      if (b.status === "COMPLETED") statsMap[pid].completed++;
+      else statsMap[pid].cancelled++;
+    });
+    (ratingsData || []).forEach((r: any) => {
+      const pid = r.provider_id;
+      if (!statsMap[pid]) statsMap[pid] = { completed: 0, cancelled: 0, avgRating: null, ratingCount: 0 };
+      statsMap[pid].ratingCount++;
+      statsMap[pid].avgRating = statsMap[pid].avgRating
+        ? (statsMap[pid].avgRating! * (statsMap[pid].ratingCount - 1) + r.rating) / statsMap[pid].ratingCount
+        : r.rating;
+    });
+    setProviderStats(statsMap);
     setLoadingProviders(false);
   };
 
@@ -361,7 +398,9 @@ const OrderWorkflowPhases = ({ booking, serviceName, servicePrice, onWorkflowCha
   const ProviderCard = ({ id, name, phone, city, roleType, experienceYears, distanceKm, availableNow }: {
     id: string; name: string; phone: string | null; city: string | null;
     roleType: string | null; experienceYears: number | null; distanceKm?: number; availableNow: boolean;
-  }) => (
+  }) => {
+    const stats = providerStats[id];
+    return (
     <Card
       className={`transition-colors ${selectedProvider === id ? "ring-2 ring-primary bg-primary/5" : "hover:bg-accent/50"}`}
     >
@@ -384,10 +423,50 @@ const OrderWorkflowPhases = ({ booking, serviceName, servicePrice, onWorkflowCha
             </div>
             {phone && <p className="text-xs text-muted-foreground mt-0.5" dir="ltr">📞 {phone}</p>}
           </div>
-          {distanceKm != null && (
-            <span className="text-sm font-bold text-primary">{distanceKm} كم</span>
-          )}
+          <div className="flex flex-col items-end gap-1">
+            {distanceKm != null && (
+              <span className="text-sm font-bold text-primary">{distanceKm} كم</span>
+            )}
+          </div>
         </div>
+
+        {/* Stats row */}
+        <TooltipProvider>
+          <div className="flex items-center gap-3 text-xs">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="flex items-center gap-1 text-success">
+                  <CheckCheck className="h-3 w-3" />
+                  <span className="font-semibold">{stats?.completed || 0}</span>
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>طلبات مكتملة</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="flex items-center gap-1 text-destructive">
+                  <XCircle className="h-3 w-3" />
+                  <span className="font-semibold">{stats?.cancelled || 0}</span>
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>طلبات ملغاة/مرفوضة</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="flex items-center gap-1 text-warning">
+                  <Star className="h-3 w-3 fill-current" />
+                  <span className="font-semibold">
+                    {stats?.avgRating ? stats.avgRating.toFixed(1) : "—"}
+                  </span>
+                  {stats?.ratingCount ? (
+                    <span className="text-muted-foreground">({stats.ratingCount})</span>
+                  ) : null}
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>تقييم العملاء</TooltipContent>
+            </Tooltip>
+          </div>
+        </TooltipProvider>
         {/* Contact buttons */}
         <div className="flex gap-1.5 flex-wrap" onClick={(e) => e.stopPropagation()}>
           {phone && (
@@ -420,7 +499,8 @@ const OrderWorkflowPhases = ({ booking, serviceName, servicePrice, onWorkflowCha
         </div>
       </CardContent>
     </Card>
-  );
+    );
+  };
 
   return (
     <div className="space-y-4">
