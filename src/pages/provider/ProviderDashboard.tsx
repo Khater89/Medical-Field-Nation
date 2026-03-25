@@ -1022,19 +1022,35 @@ const ProviderDashboard = () => {
                         </div>
                       )}
 
-                      {/* After acceptance: show hint to click */}
-                      {accepted && !isExpanded && (o.status === "ACCEPTED" || o.status === "IN_PROGRESS" || o.status === "COMPLETED") && (
-                        <p className="text-xs text-muted-foreground text-center">اضغط لعرض التفاصيل ▼</p>
-                      )}
-
                       {/* Expanded details for accepted orders */}
                       {accepted && isExpanded && (
                         <div className="space-y-3 pt-2 border-t border-border" onClick={(e) => e.stopPropagation()}>
-                          {/* Contact Details */}
+                          {/* Countdown timer for ACCEPTED orders (before check-in) */}
+                          {o.status === "ACCEPTED" && !o.check_in_at && (
+                            <CountdownBadge scheduledAt={o.scheduled_at} />
+                          )}
+
+                          {/* Contact Details with phone */}
                           <div className="rounded-lg border border-success/20 bg-success/5 p-3 space-y-1.5">
                             <div className="flex items-center gap-1.5 text-xs font-medium text-success">
                               <ShieldCheck className="h-3.5 w-3.5" /> {t("provider.dashboard.contact_info")}
                             </div>
+                            {/* Customer phone - now visible after acceptance */}
+                            {o.customer_phone && (
+                              <div className="flex items-center gap-1.5 text-sm">
+                                <Phone className="h-3 w-3 text-success" />
+                                <span className="text-xs text-muted-foreground">رقم العميل:</span>
+                                <a href={`tel:${o.customer_phone}`} dir="ltr" className="font-medium text-success hover:underline">{o.customer_phone}</a>
+                                <a
+                                  href={`https://wa.me/${o.customer_phone.replace(/^0/, "962")}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-success hover:text-success/80"
+                                >
+                                  <MessageCircle className="h-3.5 w-3.5" />
+                                </a>
+                              </div>
+                            )}
                             {coordinatorPhone && (
                               <p className="text-sm flex items-center gap-1.5">
                                 <Phone className="h-3 w-3 text-muted-foreground" />
