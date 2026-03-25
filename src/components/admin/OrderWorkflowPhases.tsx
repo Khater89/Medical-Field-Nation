@@ -11,7 +11,7 @@ import { toast } from "sonner";
 import {
   Phone, MessageCircle, UserCheck, Loader2, MapPin,
   DollarSign, Handshake, Users, CheckCircle, Lock, AlertTriangle,
-  Briefcase, Edit2,
+  Briefcase, Edit2, Star, XCircle, CheckCheck,
 } from "lucide-react";
 import type { BookingRow } from "./BookingDetailsDrawer";
 
