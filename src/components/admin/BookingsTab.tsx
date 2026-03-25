@@ -198,9 +198,16 @@ const BookingsTab = () => {
                     )}
                   </TableCell>
                   <TableCell>
-                    <Badge variant="outline" className={`text-[10px] ${STATUS_COLORS[b.status] || ""}`}>
-                      {t(`status.${b.status}`)}
-                    </Badge>
+                    <div className="flex items-center gap-1">
+                      <Badge variant="outline" className={`text-[10px] ${STATUS_COLORS[b.status] || ""}`}>
+                        {t(`status.${b.status}`)}
+                      </Badge>
+                      {b.status === "IN_PROGRESS" && b.otp_code && (
+                        <Badge className="text-[9px] bg-warning/20 text-warning border border-warning/40 animate-pulse">
+                          🔑 OTP
+                        </Badge>
+                      )}
+                    </div>
                   </TableCell>
                   <TableCell className="text-xs">
                     {b.assigned_provider_id ? (

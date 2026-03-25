@@ -42,7 +42,7 @@ const extractCustomerName = (body: string | null): string | null => {
   return match ? match[1].trim() : null;
 };
 
-const NotificationBell = () => {
+const NotificationBell = ({ onOpenBooking }: { onOpenBooking?: (bookingId: string) => void }) => {
   const { t, formatDateShort } = useLanguage();
   const [notifications, setNotifications] = useState<StaffNotification[]>([]);
   const [open, setOpen] = useState(false);
@@ -124,10 +124,10 @@ const NotificationBell = () => {
                 return (
                   <div
                     key={n.id}
-                    className={`px-3 py-2.5 transition-colors ${!n.read ? "bg-primary/5" : ""} ${isOTP ? "border-s-4 border-s-warning" : ""}`}
+                    className={`px-3 py-2.5 transition-colors ${!n.read ? "bg-primary/5" : ""} ${isOTP ? "border-s-4 border-s-warning bg-warning/5" : ""}`}
                   >
-                    <div className="cursor-pointer" onClick={() => markRead(n.id)}>
-                      <p className="text-xs font-medium">{n.title}</p>
+                    <div className="cursor-pointer" onClick={() => { markRead(n.id); if (n.booking_id) { setOpen(false); onOpenBooking?.(n.booking_id); } }}>
+                      <p className={`text-xs font-medium ${isOTP ? "text-warning" : ""}`}>{n.title}</p>
                       {n.body && !isOTP && (
                         <p className="text-[10px] text-muted-foreground mt-0.5 line-clamp-2">{n.body}</p>
                       )}
