@@ -83,11 +83,30 @@ const SuccessView = ({ onReset, bookingNumber }: SuccessViewProps) => {
         </motion.div>
       )}
 
+      {/* Track Order Link */}
+      {bookingNumber && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5, duration: 0.4 }}
+        >
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2"
+            onClick={() => navigate("/track")}
+          >
+            <Search className="h-4 w-4" />
+            تتبع طلبك
+          </Button>
+        </motion.div>
+      )}
+
       {/* CTA */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.5, duration: 0.4 }}
+        transition={{ delay: 0.6, duration: 0.4 }}
       >
         <Button onClick={onReset} size="lg" className="rounded-full px-8 font-semibold gap-2 shadow-md hover:shadow-lg transition-shadow">
           {t("action.book_now")}
