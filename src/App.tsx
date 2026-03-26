@@ -27,11 +27,15 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-const App = () => (
+const App = () => {
+  const { SplashWrapper } = useSplashScreen();
+
+  return (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <LanguageProvider>
         <AuthProvider>
+          <SplashWrapper />
           <Toaster />
           <Sonner />
           <BrowserRouter>
