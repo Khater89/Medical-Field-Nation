@@ -82,6 +82,12 @@ const AuthPage = () => {
               </Button>
             ),
           });
+        } else if (error.message?.toLowerCase().includes("invalid login credentials")) {
+          toast({
+            title: "خطأ في تسجيل الدخول",
+            description: "بيانات الدخول غير صحيحة. إذا سجّلت عبر Google أو Apple، استخدم الزر المناسب أدناه.",
+            variant: "destructive",
+          });
         } else {
           toast({ title: "خطأ في تسجيل الدخول", description: error.message, variant: "destructive" });
         }
