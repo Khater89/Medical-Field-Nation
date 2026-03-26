@@ -14,6 +14,7 @@ interface SuccessViewProps {
 const SuccessView = ({ onReset, bookingNumber }: SuccessViewProps) => {
   const { t } = useLanguage();
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const copyBookingNumber = () => {
     if (bookingNumber) {
