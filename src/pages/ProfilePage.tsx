@@ -340,6 +340,16 @@ const ProfilePage = () => {
         </Tabs>
       </main>
 
+      {/* Order Tracking Dialog */}
+      <Dialog open={!!trackingBookingId} onOpenChange={(open) => { if (!open) setTrackingBookingId(null); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>تتبع الطلب</DialogTitle>
+          </DialogHeader>
+          {trackingBookingId && <CustomerOrderTracker bookingId={trackingBookingId} />}
+        </DialogContent>
+      </Dialog>
+
       {/* Cancel Confirmation Dialog */}
       <AlertDialog open={!!cancelBookingId} onOpenChange={(open) => { if (!open) setCancelBookingId(null); }}>
         <AlertDialogContent>
