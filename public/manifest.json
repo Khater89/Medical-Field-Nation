@@ -1,0 +1,26 @@
+{
+  "name": "Medical Field Nation — خدمات طبية ميدانية",
+  "short_name": "MFN",
+  "description": "احجز خدمات طبية ميدانية احترافية - أطباء، تمريض، علاج طبيعي، تحاليل مخبرية",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f5f7fa",
+  "theme_color": "#e65100",
+  "orientation": "portrait-primary",
+  "dir": "rtl",
+  "lang": "ar",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
