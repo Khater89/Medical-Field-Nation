@@ -21,6 +21,7 @@ import AccountReviewPage from "./pages/AccountReviewPage";
 import AuthCallback from "./pages/AuthCallback";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
+import TrackOrderPage from "./pages/TrackOrderPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
