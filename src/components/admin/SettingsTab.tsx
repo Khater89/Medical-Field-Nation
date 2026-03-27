@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Loader2, Save, Percent, Wallet, AlertTriangle, Phone, Trash2, ShieldCheck, UserPlus, UserMinus, Mail } from "lucide-react";
+import { Loader2, Save, Percent, Wallet, AlertTriangle, Phone, Trash2, ShieldCheck, UserPlus, UserMinus, Mail, Landmark } from "lucide-react";
 
 interface AdminUser {
   user_id: string;
