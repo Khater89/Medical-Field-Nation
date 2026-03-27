@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import {
   Search, Loader2, CheckCircle, Circle, Clock,
-  MapPin, CalendarDays, ArrowRight,
+  MapPin, CalendarDays, Landmark, Copy,
 } from "lucide-react";
 
 const STATUS_ORDER = ["NEW", "CONFIRMED", "ASSIGNED", "ACCEPTED", "IN_PROGRESS", "COMPLETED"];
@@ -37,10 +37,20 @@ interface TrackingResult {
   };
   history: { action: string; created_at: string; note: string | null }[];
   rating: { rating: number; comment: string | null } | null;
+  bank_info: {
+    bank_name: string | null;
+    bank_iban: string | null;
+    bank_cliq_alias: string | null;
+    bank_account_holder: string | null;
+  } | null;
 }
 
 const TrackOrderPage = () => {
   const { toast } = useToast();
+  const copyText = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast({ title: "تم النسخ ✓" });
+  };
   const [bookingNumber, setBookingNumber] = useState("");
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
@@ -222,6 +232,57 @@ const TrackOrderPage = () => {
                   {result.rating.comment && (
                     <p className="text-xs text-muted-foreground">{result.rating.comment}</p>
                   )}
+                </div>
+              )}
+
+              {/* Bank Payment Info - only after COMPLETED */}
+              {result.bank_info && booking.status === "COMPLETED" && (
+                <div className="border-t pt-3 space-y-3 text-start">
+                  <div className="flex items-center gap-2 justify-center">
+                    <Landmark className="h-5 w-5 text-primary" />
+                    <p className="font-bold text-sm text-foreground">ادفع عبر CliQ / تحويل بنكي</p>
+                  </div>
+
+                  {result.bank_info.bank_account_holder && (
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">صاحب الحساب</span>
+                      <span className="font-medium">{result.bank_info.bank_account_holder}</span>
+                    </div>
+                  )}
+                  {result.bank_info.bank_name && (
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">البنك</span>
+                      <span className="font-medium">{result.bank_info.bank_name}</span>
+                    </div>
+                  )}
+                  {result.bank_info.bank_iban && (
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">IBAN</span>
+                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => copyText(result.bank_info!.bank_iban!)}>
+                          <Copy className="h-3 w-3" />
+                        </Button>
+                      </div>
+                      <p className="text-xs font-mono bg-muted rounded px-2 py-1.5 break-all" dir="ltr">
+                        {result.bank_info.bank_iban}
+                      </p>
+                    </div>
+                  )}
+                  {result.bank_info.bank_cliq_alias && (
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">CliQ Alias</span>
+                      <div className="flex items-center gap-1">
+                        <span className="font-mono font-medium" dir="ltr">{result.bank_info.bank_cliq_alias}</span>
+                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => copyText(result.bank_info!.bank_cliq_alias!)}>
+                          <Copy className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  <p className="text-[10px] text-muted-foreground text-center pt-1">
+                    يرجى ذكر رقم الحجز في ملاحظات التحويل
+                  </p>
                 </div>
               )}
             </CardContent>

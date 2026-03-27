@@ -73,15 +73,27 @@ Deno.serve(async (req) => {
       .eq("id", booking.service_id)
       .single();
 
-    // Fetch rating if completed
+    // Fetch rating and bank info if completed
     let rating = null;
+    let bank_info = null;
     if (booking.status === "COMPLETED") {
-      const { data: r } = await supabase
-        .from("provider_ratings")
-        .select("rating, comment")
-        .eq("booking_id", booking.id)
-        .maybeSingle();
-      rating = r;
+      const [ratingRes, bankRes] = await Promise.all([
+        supabase
+          .from("provider_ratings")
+          .select("rating, comment")
+          .eq("booking_id", booking.id)
+          .maybeSingle(),
+        supabase
+          .from("platform_settings")
+          .select("bank_name, bank_iban, bank_cliq_alias, bank_account_holder")
+          .eq("id", 1)
+          .maybeSingle(),
+      ]);
+      rating = ratingRes.data;
+      const b = bankRes.data;
+      if (b && (b.bank_iban || b.bank_cliq_alias)) {
+        bank_info = b;
+      }
     }
 
     return new Response(JSON.stringify({
@@ -98,6 +110,7 @@ Deno.serve(async (req) => {
       },
       history: history || [],
       rating,
+      bank_info,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
