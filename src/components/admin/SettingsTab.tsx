@@ -558,7 +558,56 @@ const SettingsTab = () => {
         </CardContent>
       </Card>
 
-      <Button onClick={handleSave} className="gap-2" disabled={saving}>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Landmark className="h-5 w-5 text-primary" />
+            بيانات الحساب البنكي (CliQ)
+          </CardTitle>
+          <CardDescription>بيانات الحساب البنكي للمنصة — تظهر للعميل بعد تأكيد الحجز لتحويل المبلغ</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div>
+            <label className="text-xs font-medium text-muted-foreground">اسم صاحب الحساب</label>
+            <Input
+              value={settings.bank_account_holder}
+              onChange={(e) => setSettings({ ...settings, bank_account_holder: e.target.value })}
+              placeholder="الاسم كما في البنك"
+              className="mt-1"
+            />
+          </div>
+          <div>
+            <label className="text-xs font-medium text-muted-foreground">اسم البنك</label>
+            <Input
+              value={settings.bank_name}
+              onChange={(e) => setSettings({ ...settings, bank_name: e.target.value })}
+              placeholder="مثال: البنك العربي"
+              className="mt-1"
+            />
+          </div>
+          <div>
+            <label className="text-xs font-medium text-muted-foreground">IBAN</label>
+            <Input
+              value={settings.bank_iban}
+              onChange={(e) => setSettings({ ...settings, bank_iban: e.target.value })}
+              placeholder="JO00XXXX0000000000000000000000"
+              className="mt-1 font-mono"
+              dir="ltr"
+            />
+          </div>
+          <div>
+            <label className="text-xs font-medium text-muted-foreground">CliQ Alias (اختياري)</label>
+            <Input
+              value={settings.bank_cliq_alias}
+              onChange={(e) => setSettings({ ...settings, bank_cliq_alias: e.target.value })}
+              placeholder="مثال: MFN-PAY"
+              className="mt-1"
+              dir="ltr"
+            />
+          </div>
+        </CardContent>
+      </Card>
+
         {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
         {t("settings.save")}
       </Button>
