@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Loader2, Save, Percent, Wallet, AlertTriangle, Phone, Trash2, ShieldCheck, UserPlus, UserMinus, Mail } from "lucide-react";
+import { Loader2, Save, Percent, Wallet, AlertTriangle, Phone, Trash2, ShieldCheck, UserPlus, UserMinus, Mail, Landmark } from "lucide-react";
 
 interface AdminUser {
   user_id: string;
@@ -333,6 +333,10 @@ const SettingsTab = () => {
     provider_debt_limit: -20,
     coordinator_phone: "",
     coordinator_phone_2: "",
+    bank_name: "",
+    bank_iban: "",
+    bank_cliq_alias: "",
+    bank_account_holder: "",
   });
 
   // Clear bookings state
@@ -355,6 +359,10 @@ const SettingsTab = () => {
         provider_debt_limit: data.provider_debt_limit,
         coordinator_phone: (data as any).coordinator_phone || "",
         coordinator_phone_2: (data as any).coordinator_phone_2 || "",
+        bank_name: (data as any).bank_name || "",
+        bank_iban: (data as any).bank_iban || "",
+        bank_cliq_alias: (data as any).bank_cliq_alias || "",
+        bank_account_holder: (data as any).bank_account_holder || "",
       });
     }
     setLoading(false);
@@ -372,6 +380,10 @@ const SettingsTab = () => {
         provider_debt_limit: settings.provider_debt_limit,
         coordinator_phone: settings.coordinator_phone.trim() || null,
         coordinator_phone_2: settings.coordinator_phone_2.trim() || null,
+        bank_name: settings.bank_name.trim() || null,
+        bank_iban: settings.bank_iban.trim() || null,
+        bank_cliq_alias: settings.bank_cliq_alias.trim() || null,
+        bank_account_holder: settings.bank_account_holder.trim() || null,
       } as any)
       .eq("id", 1);
 
@@ -540,6 +552,56 @@ const SettingsTab = () => {
               onChange={(e) => setSettings({ ...settings, coordinator_phone_2: e.target.value })}
               placeholder="07XXXXXXXX"
               className="w-48 mt-1"
+              dir="ltr"
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Landmark className="h-5 w-5 text-primary" />
+            بيانات الحساب البنكي (CliQ)
+          </CardTitle>
+          <CardDescription>بيانات الحساب البنكي للمنصة — تظهر للعميل بعد تأكيد الحجز لتحويل المبلغ</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div>
+            <label className="text-xs font-medium text-muted-foreground">اسم صاحب الحساب</label>
+            <Input
+              value={settings.bank_account_holder}
+              onChange={(e) => setSettings({ ...settings, bank_account_holder: e.target.value })}
+              placeholder="الاسم كما في البنك"
+              className="mt-1"
+            />
+          </div>
+          <div>
+            <label className="text-xs font-medium text-muted-foreground">اسم البنك</label>
+            <Input
+              value={settings.bank_name}
+              onChange={(e) => setSettings({ ...settings, bank_name: e.target.value })}
+              placeholder="مثال: البنك العربي"
+              className="mt-1"
+            />
+          </div>
+          <div>
+            <label className="text-xs font-medium text-muted-foreground">IBAN</label>
+            <Input
+              value={settings.bank_iban}
+              onChange={(e) => setSettings({ ...settings, bank_iban: e.target.value })}
+              placeholder="JO00XXXX0000000000000000000000"
+              className="mt-1 font-mono"
+              dir="ltr"
+            />
+          </div>
+          <div>
+            <label className="text-xs font-medium text-muted-foreground">CliQ Alias (اختياري)</label>
+            <Input
+              value={settings.bank_cliq_alias}
+              onChange={(e) => setSettings({ ...settings, bank_cliq_alias: e.target.value })}
+              placeholder="مثال: MFN-PAY"
+              className="mt-1"
               dir="ltr"
             />
           </div>
