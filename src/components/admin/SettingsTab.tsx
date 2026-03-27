@@ -380,6 +380,10 @@ const SettingsTab = () => {
         provider_debt_limit: settings.provider_debt_limit,
         coordinator_phone: settings.coordinator_phone.trim() || null,
         coordinator_phone_2: settings.coordinator_phone_2.trim() || null,
+        bank_name: settings.bank_name.trim() || null,
+        bank_iban: settings.bank_iban.trim() || null,
+        bank_cliq_alias: settings.bank_cliq_alias.trim() || null,
+        bank_account_holder: settings.bank_account_holder.trim() || null,
       } as any)
       .eq("id", 1);
 
