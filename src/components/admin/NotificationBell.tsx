@@ -6,7 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import {
   Popover, PopoverContent, PopoverTrigger,
 } from "@/components/ui/popover";
-import { Bell, CheckCircle, MessageCircle, Copy, Key } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Bell, CheckCircle, MessageCircle, Copy, Key, Clock, XCircle, Info } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 
@@ -20,6 +21,23 @@ interface StaffNotification {
   read: boolean;
   created_at: string;
 }
+
+type NotifCategory = "all" | "otp" | "late" | "reject" | "other";
+
+const categorize = (n: StaffNotification): NotifCategory => {
+  if (n.title.includes("🔑")) return "otp";
+  if (n.title.includes("تأخر") || n.title.includes("⏰")) return "late";
+  if (n.title.includes("رفض") || n.title.includes("🚨")) return "reject";
+  return "other";
+};
+
+const CATEGORY_CONFIG: Record<NotifCategory, { label: string; icon: React.ReactNode }> = {
+  all: { label: "الكل", icon: <Bell className="h-3 w-3" /> },
+  otp: { label: "أكواد", icon: <Key className="h-3 w-3" /> },
+  late: { label: "تأخير", icon: <Clock className="h-3 w-3" /> },
+  reject: { label: "رفض", icon: <XCircle className="h-3 w-3" /> },
+  other: { label: "عام", icon: <Info className="h-3 w-3" /> },
+};
 
 /** Extract OTP code from notification body */
 const extractOTP = (body: string | null): string | null => {
@@ -46,13 +64,14 @@ const NotificationBell = ({ onOpenBooking }: { onOpenBooking?: (bookingId: strin
   const { t, formatDateShort } = useLanguage();
   const [notifications, setNotifications] = useState<StaffNotification[]>([]);
   const [open, setOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<NotifCategory>("all");
 
   const fetchNotifications = async () => {
     const { data } = await supabase
       .from("staff_notifications" as any)
       .select("*")
       .order("created_at", { ascending: false })
-      .limit(20);
+      .limit(50);
     setNotifications((data as unknown as StaffNotification[]) || []);
   };
 
@@ -63,6 +82,13 @@ const NotificationBell = ({ onOpenBooking }: { onOpenBooking?: (bookingId: strin
   }, []);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
+
+  const filtered = activeTab === "all" ? notifications : notifications.filter((n) => categorize(n) === activeTab);
+
+  const unreadByCategory = (cat: NotifCategory) => {
+    if (cat === "all") return unreadCount;
+    return notifications.filter((n) => !n.read && categorize(n) === cat).length;
+  };
 
   const markRead = async (id: string) => {
     await supabase.from("staff_notifications" as any).update({ read: true }).eq("id", id);
@@ -89,6 +115,74 @@ const NotificationBell = ({ onOpenBooking }: { onOpenBooking?: (bookingId: strin
 
   const isOTPNotification = (n: StaffNotification) => n.title.includes("🔑");
 
+  const renderNotification = (n: StaffNotification) => {
+    const otp = extractOTP(n.body);
+    const phone = extractPhone(n.body);
+    const customerName = extractCustomerName(n.body);
+    const isOTP = isOTPNotification(n);
+    const cat = categorize(n);
+
+    const borderColor = cat === "otp" ? "border-s-warning" : cat === "late" ? "border-s-destructive" : cat === "reject" ? "border-s-orange-500" : "border-s-primary";
+
+    return (
+      <div
+        key={n.id}
+        className={`px-3 py-2.5 transition-colors border-s-4 ${borderColor} ${!n.read ? "bg-primary/5" : ""}`}
+      >
+        <div className="cursor-pointer" onClick={() => { markRead(n.id); if (n.booking_id) { setOpen(false); onOpenBooking?.(n.booking_id); } }}>
+          <p className={`text-xs font-medium ${isOTP ? "text-warning" : cat === "late" ? "text-destructive" : cat === "reject" ? "text-orange-600" : ""}`}>{n.title}</p>
+          {n.body && !isOTP && (
+            <p className="text-[10px] text-muted-foreground mt-0.5 line-clamp-2">{n.body}</p>
+          )}
+        </div>
+
+        {/* OTP Special UI */}
+        {isOTP && otp && (
+          <div className="mt-2 space-y-2">
+            <div className="flex items-center justify-center gap-2 rounded-lg bg-warning/10 border border-warning/30 py-2 px-3">
+              <Key className="h-4 w-4 text-warning" />
+              <span className="text-xl font-bold tracking-[0.3em] text-warning" dir="ltr">{otp}</span>
+            </div>
+            {customerName && (
+              <p className="text-[11px] text-muted-foreground">
+                العميل: <strong>{customerName}</strong> {phone ? `— ${phone}` : ""}
+              </p>
+            )}
+            <div className="flex gap-1.5">
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-1 h-7 text-[10px] flex-1"
+                onClick={() => copyOTP(otp)}
+              >
+                <Copy className="h-3 w-3" /> نسخ الكود
+              </Button>
+              {phone && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="gap-1 h-7 text-[10px] flex-1"
+                  onClick={() => sendOTPviaWhatsApp(phone, otp, customerName)}
+                >
+                  <MessageCircle className="h-3 w-3" /> إرسال واتساب
+                </Button>
+              )}
+              {phone && (
+                <a href={`tel:${phone}`}>
+                  <Button size="sm" variant="outline" className="gap-1 h-7 text-[10px]">
+                    📞
+                  </Button>
+                </a>
+              )}
+            </div>
+          </div>
+        )}
+
+        <p className="text-[10px] text-muted-foreground mt-1">{formatDateShort(n.created_at)}</p>
+      </div>
+    );
+  };
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -101,7 +195,7 @@ const NotificationBell = ({ onOpenBooking }: { onOpenBooking?: (bookingId: strin
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-96 p-0" align="end">
+      <PopoverContent className="w-[420px] p-0" align="end">
         <div className="flex items-center justify-between px-3 py-2 border-b border-border">
           <h4 className="text-sm font-bold">{t("notifications.title")}</h4>
           {unreadCount > 0 && (
@@ -110,78 +204,35 @@ const NotificationBell = ({ onOpenBooking }: { onOpenBooking?: (bookingId: strin
             </Button>
           )}
         </div>
-        <ScrollArea className="max-h-[400px]">
-          {notifications.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-6">{t("notifications.no_notifications")}</p>
-          ) : (
-            <div className="divide-y divide-border">
-              {notifications.map((n) => {
-                const otp = extractOTP(n.body);
-                const phone = extractPhone(n.body);
-                const customerName = extractCustomerName(n.body);
-                const isOTP = isOTPNotification(n);
 
-                return (
-                  <div
-                    key={n.id}
-                    className={`px-3 py-2.5 transition-colors ${!n.read ? "bg-primary/5" : ""} ${isOTP ? "border-s-4 border-s-warning bg-warning/5" : ""}`}
-                  >
-                    <div className="cursor-pointer" onClick={() => { markRead(n.id); if (n.booking_id) { setOpen(false); onOpenBooking?.(n.booking_id); } }}>
-                      <p className={`text-xs font-medium ${isOTP ? "text-warning" : ""}`}>{n.title}</p>
-                      {n.body && !isOTP && (
-                        <p className="text-[10px] text-muted-foreground mt-0.5 line-clamp-2">{n.body}</p>
-                      )}
-                    </div>
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as NotifCategory)} dir="rtl">
+          <TabsList className="w-full rounded-none border-b bg-transparent h-9 px-1">
+            {(["all", "otp", "late", "reject", "other"] as NotifCategory[]).map((cat) => {
+              const count = unreadByCategory(cat);
+              return (
+                <TabsTrigger key={cat} value={cat} className="text-[10px] gap-1 px-2 py-1 data-[state=active]:bg-muted">
+                  {CATEGORY_CONFIG[cat].icon}
+                  {CATEGORY_CONFIG[cat].label}
+                  {count > 0 && (
+                    <span className="bg-destructive text-destructive-foreground rounded-full text-[9px] px-1 min-w-[14px] text-center">
+                      {count}
+                    </span>
+                  )}
+                </TabsTrigger>
+              );
+            })}
+          </TabsList>
 
-                    {/* OTP Special UI */}
-                    {isOTP && otp && (
-                      <div className="mt-2 space-y-2">
-                        <div className="flex items-center justify-center gap-2 rounded-lg bg-warning/10 border border-warning/30 py-2 px-3">
-                          <Key className="h-4 w-4 text-warning" />
-                          <span className="text-xl font-bold tracking-[0.3em] text-warning" dir="ltr">{otp}</span>
-                        </div>
-                        {customerName && (
-                          <p className="text-[11px] text-muted-foreground">
-                            العميل: <strong>{customerName}</strong> {phone ? `— ${phone}` : ""}
-                          </p>
-                        )}
-                        <div className="flex gap-1.5">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="gap-1 h-7 text-[10px] flex-1"
-                            onClick={() => copyOTP(otp)}
-                          >
-                            <Copy className="h-3 w-3" /> نسخ الكود
-                          </Button>
-                          {phone && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="gap-1 h-7 text-[10px] flex-1"
-                              onClick={() => sendOTPviaWhatsApp(phone, otp, customerName)}
-                            >
-                              <MessageCircle className="h-3 w-3" /> إرسال واتساب
-                            </Button>
-                          )}
-                          {phone && (
-                            <a href={`tel:${phone}`}>
-                              <Button size="sm" variant="outline" className="gap-1 h-7 text-[10px]">
-                                📞
-                              </Button>
-                            </a>
-                          )}
-                        </div>
-                      </div>
-                    )}
-
-                    <p className="text-[10px] text-muted-foreground mt-1">{formatDateShort(n.created_at)}</p>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </ScrollArea>
+          <ScrollArea className="max-h-[400px]">
+            {filtered.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-6">{t("notifications.no_notifications")}</p>
+            ) : (
+              <div className="divide-y divide-border">
+                {filtered.map(renderNotification)}
+              </div>
+            )}
+          </ScrollArea>
+        </Tabs>
       </PopoverContent>
     </Popover>
   );

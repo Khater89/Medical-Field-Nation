@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import {
   Search, Loader2, CheckCircle, Circle, Clock,
-  MapPin, CalendarDays, Landmark, Copy,
+  MapPin, CalendarDays, Landmark, Copy, AlertTriangle,
 } from "lucide-react";
 
 const STATUS_ORDER = ["NEW", "CONFIRMED", "ASSIGNED", "ACCEPTED", "IN_PROGRESS", "COMPLETED"];
@@ -43,6 +43,8 @@ interface TrackingResult {
     bank_cliq_alias: string | null;
     bank_account_holder: string | null;
   } | null;
+  is_provider_late?: boolean;
+  late_minutes?: number;
 }
 
 const TrackOrderPage = () => {
@@ -189,6 +191,19 @@ const TrackOrderPage = () => {
                   {booking.calculated_total || booking.subtotal} د.أ
                 </span>
               </div>
+
+              {/* Late provider alert */}
+              {result.is_provider_late && (
+                <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 flex items-start gap-2">
+                  <AlertTriangle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium text-destructive">تأخر مقدم الخدمة</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      مقدم الخدمة متأخر عن الموعد المحدد بـ {result.late_minutes} دقيقة. فريقنا يتابع الوضع.
+                    </p>
+                  </div>
+                </div>
+              )}
 
               {/* Timeline */}
               <div className="relative space-y-0 pr-4 pt-2">

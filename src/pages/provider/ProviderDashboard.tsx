@@ -494,15 +494,32 @@ const ProviderDashboard = () => {
     setActionLoading(null);
   };
 
-  /* ── Check-in ── */
+  /* ── Check-in (with GPS validation) ── */
   const checkIn = async (id: string) => {
     if (!user) return;
     setActionLoading(id);
     try {
+      // Get provider's current GPS location
+      let provider_lat: number | null = null;
+      let provider_lng: number | null = null;
+      try {
+        const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, {
+            enableHighAccuracy: true, timeout: 15000, maximumAge: 0,
+          });
+        });
+        provider_lat = pos.coords.latitude;
+        provider_lng = pos.coords.longitude;
+      } catch (geoErr: any) {
+        toast({ title: "يرجى تفعيل خدمة الموقع", description: "نحتاج موقعك للتحقق من وصولك لموقع العميل", variant: "destructive" });
+        setActionLoading(null);
+        return;
+      }
+
       const now = new Date().toISOString();
       // Generate OTP server-side via edge function (provider never sees it)
       const { data: checkinResult, error: fnError } = await supabase.functions.invoke("provider-checkin", {
-        body: { booking_id: id },
+        body: { booking_id: id, provider_lat, provider_lng },
       });
       if (fnError) throw fnError;
       if (checkinResult?.error) throw new Error(checkinResult.error);
