@@ -43,6 +43,8 @@ interface TrackingResult {
     bank_cliq_alias: string | null;
     bank_account_holder: string | null;
   } | null;
+  is_provider_late?: boolean;
+  late_minutes?: number;
 }
 
 const TrackOrderPage = () => {
