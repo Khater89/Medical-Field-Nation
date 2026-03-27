@@ -96,6 +96,18 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Check if provider is late (ACCEPTED, past scheduled_at, no check_in)
+    let is_provider_late = false;
+    let late_minutes = 0;
+    if (
+      (booking.status === "ACCEPTED" || booking.status === "ASSIGNED") &&
+      !booking.check_in_at &&
+      new Date(booking.scheduled_at).getTime() < Date.now()
+    ) {
+      is_provider_late = true;
+      late_minutes = Math.floor((Date.now() - new Date(booking.scheduled_at).getTime()) / 60000);
+    }
+
     return new Response(JSON.stringify({
       booking: {
         id: booking.id,
@@ -111,6 +123,8 @@ Deno.serve(async (req) => {
       history: history || [],
       rating,
       bank_info,
+      is_provider_late,
+      late_minutes,
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

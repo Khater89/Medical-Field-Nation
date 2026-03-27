@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import {
   Search, Loader2, CheckCircle, Circle, Clock,
-  MapPin, CalendarDays, Landmark, Copy,
+  MapPin, CalendarDays, Landmark, Copy, AlertTriangle,
 } from "lucide-react";
 
 const STATUS_ORDER = ["NEW", "CONFIRMED", "ASSIGNED", "ACCEPTED", "IN_PROGRESS", "COMPLETED"];
