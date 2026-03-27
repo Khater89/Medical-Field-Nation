@@ -1,18 +1,9 @@
-import { useState, useEffect } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { CheckCircle2, PartyPopper, Copy, Search, Landmark, Loader2 } from "lucide-react";
+import { CheckCircle2, PartyPopper, Copy, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
-
-interface BankInfo {
-  bank_name: string | null;
-  bank_iban: string | null;
-  bank_cliq_alias: string | null;
-  bank_account_holder: string | null;
-}
 
 interface SuccessViewProps {
   onReset: () => void;
