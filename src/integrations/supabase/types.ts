@@ -380,6 +380,10 @@ export type Database = {
       }
       platform_settings: {
         Row: {
+          bank_account_holder: string | null
+          bank_cliq_alias: string | null
+          bank_iban: string | null
+          bank_name: string | null
           coordinator_phone: string | null
           coordinator_phone_2: string | null
           deposit_percent: number
@@ -390,6 +394,10 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          bank_account_holder?: string | null
+          bank_cliq_alias?: string | null
+          bank_iban?: string | null
+          bank_name?: string | null
           coordinator_phone?: string | null
           coordinator_phone_2?: string | null
           deposit_percent?: number
@@ -400,6 +408,10 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          bank_account_holder?: string | null
+          bank_cliq_alias?: string | null
+          bank_iban?: string | null
+          bank_name?: string | null
           coordinator_phone?: string | null
           coordinator_phone_2?: string | null
           deposit_percent?: number
