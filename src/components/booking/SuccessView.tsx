@@ -22,12 +22,6 @@ const SuccessView = ({ onReset, bookingNumber }: SuccessViewProps) => {
     }
   };
 
-  const copyText = (text: string) => {
-    navigator.clipboard.writeText(text);
-    toast({ title: "تم النسخ ✓" });
-  };
-
-  const hasBankInfo = bankInfo && (bankInfo.bank_iban || bankInfo.bank_cliq_alias);
 
   return (
     <div className="flex flex-col items-center justify-center text-center py-16 space-y-8">
@@ -88,66 +82,6 @@ const SuccessView = ({ onReset, bookingNumber }: SuccessViewProps) => {
           </div>
         </motion.div>
       )}
-
-      {/* CliQ / Bank Payment Info */}
-      {loadingBank ? (
-        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-      ) : hasBankInfo ? (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.45, duration: 0.4 }}
-          className="w-full max-w-sm"
-        >
-          <div className="rounded-xl border-2 border-accent/30 bg-accent/5 p-4 space-y-3 text-start">
-            <div className="flex items-center gap-2 justify-center">
-              <Landmark className="h-5 w-5 text-primary" />
-              <p className="font-bold text-sm text-foreground">ادفع عبر CliQ / تحويل بنكي</p>
-            </div>
-
-            {bankInfo.bank_account_holder && (
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">صاحب الحساب</span>
-                <span className="font-medium">{bankInfo.bank_account_holder}</span>
-              </div>
-            )}
-            {bankInfo.bank_name && (
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">البنك</span>
-                <span className="font-medium">{bankInfo.bank_name}</span>
-              </div>
-            )}
-            {bankInfo.bank_iban && (
-              <div className="space-y-1">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">IBAN</span>
-                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => copyText(bankInfo.bank_iban!)}>
-                    <Copy className="h-3 w-3" />
-                  </Button>
-                </div>
-                <p className="text-xs font-mono bg-muted rounded px-2 py-1.5 break-all" dir="ltr">
-                  {bankInfo.bank_iban}
-                </p>
-              </div>
-            )}
-            {bankInfo.bank_cliq_alias && (
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">CliQ Alias</span>
-                <div className="flex items-center gap-1">
-                  <span className="font-mono font-medium" dir="ltr">{bankInfo.bank_cliq_alias}</span>
-                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => copyText(bankInfo.bank_cliq_alias!)}>
-                    <Copy className="h-3 w-3" />
-                  </Button>
-                </div>
-              </div>
-            )}
-
-            <p className="text-[10px] text-muted-foreground text-center pt-1">
-              يرجى ذكر رقم الحجز في ملاحظات التحويل
-            </p>
-          </div>
-        </motion.div>
-      ) : null}
 
       {/* Track Order Link */}
       {bookingNumber && (
