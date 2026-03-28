@@ -156,6 +156,7 @@ Deno.serve(async (req) => {
       history: history || [],
       rating,
       bank_info,
+      provider_info,
       is_provider_late,
       late_minutes,
     }), {
