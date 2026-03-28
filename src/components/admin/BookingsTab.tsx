@@ -38,6 +38,7 @@ const BookingsTab = () => {
   const { toast } = useToast();
   const { t, formatCurrency, formatDateShort, isRTL } = useLanguage();
   const [bookings, setBookings] = useState<BookingRow[]>([]);
+  const [clientCancelledIds, setClientCancelledIds] = useState<Set<string>>(new Set());
   const [serviceNames, setServiceNames] = useState<Record<string, string>>({});
   const [servicePrices, setServicePrices] = useState<Record<string, number>>({});
   const [serviceCategories, setServiceCategories] = useState<Record<string, string>>({});
@@ -50,12 +51,19 @@ const BookingsTab = () => {
   const [selectedBooking, setSelectedBooking] = useState<BookingRow | null>(null);
 
   const fetchBookings = async () => {
-    const [bookingsRes, contactsRes, servicesRes, profilesRes] = await Promise.all([
+    const [bookingsRes, contactsRes, servicesRes, profilesRes, cancelHistoryRes] = await Promise.all([
       supabase.from("bookings").select("*").order("created_at", { ascending: false }),
       supabase.from("booking_contacts").select("*"),
       supabase.from("services").select("id, name, base_price, category"),
       supabase.from("profiles").select("user_id, full_name, phone"),
+      // Fetch cancellation history to identify client-cancelled bookings
+      supabase.from("booking_history").select("booking_id, performer_role").eq("action", "CANCELLED").eq("performer_role", "customer"),
     ]);
+
+    // Build set of client-cancelled booking IDs
+    const clientCancelled = new Set<string>();
+    (cancelHistoryRes.data || []).forEach((h: any) => { clientCancelled.add(h.booking_id); });
+    setClientCancelledIds(clientCancelled);
 
     // Merge contact info into bookings
     const contactMap: Record<string, any> = {};
@@ -91,7 +99,13 @@ const BookingsTab = () => {
 
   useEffect(() => { fetchBookings(); }, []);
 
-  const filtered = bookings.filter((b) => {
+  // Filter out client-cancelled bookings (they disappear from dashboard)
+  const visibleBookings = bookings.filter((b) => {
+    if (b.status === "CANCELLED" && clientCancelledIds.has(b.id)) return false;
+    return true;
+  });
+
+  const filtered = visibleBookings.filter((b) => {
     if (filter !== "ALL" && b.status !== filter) return false;
     if (search) {
       const q = search.toLowerCase();
@@ -111,7 +125,7 @@ const BookingsTab = () => {
     <div className="space-y-4">
       {/* Header + Search */}
       <div className="flex items-center justify-between gap-2 flex-wrap">
-        <h2 className="text-lg font-bold">{t("admin.bookings.title")} ({bookings.length})</h2>
+        <h2 className="text-lg font-bold">{t("admin.bookings.title")} ({visibleBookings.length})</h2>
         <div className="relative">
           <Search className={`absolute ${isRTL ? "right-3" : "left-3"} top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground`} />
           <Input
@@ -138,7 +152,7 @@ const BookingsTab = () => {
             {s === "ALL" ? t("admin.bookings.filter_all") : t(`status.${s}`)}
             {s !== "ALL" && (
               <span className="ms-1 opacity-70">
-                ({bookings.filter(b => b.status === s).length})
+                ({visibleBookings.filter(b => b.status === s).length})
               </span>
             )}
           </button>
