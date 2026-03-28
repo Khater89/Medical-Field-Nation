@@ -162,6 +162,7 @@ const AppHeader = () => {
 
           {user ? (
             <DropdownMenu>
+
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm" className="gap-1.5 text-xs sm:text-sm max-w-[180px] rounded-full">
                   <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center">
