@@ -96,6 +96,39 @@ Deno.serve(async (req) => {
       }
     }
 
+    // Fetch provider details if assigned
+    let provider_info = null;
+    if (booking.assigned_provider_id && ["ASSIGNED", "ACCEPTED", "IN_PROGRESS", "COMPLETED"].includes(booking.status)) {
+      const { data: provider } = await supabase
+        .from("profiles")
+        .select("full_name, avatar_url, role_type, specialties, experience_years, city")
+        .eq("user_id", booking.assigned_provider_id)
+        .single();
+
+      if (provider) {
+        // Get provider average rating
+        const { data: ratings } = await supabase
+          .from("provider_ratings")
+          .select("rating")
+          .eq("provider_id", booking.assigned_provider_id);
+
+        const avgRating = ratings && ratings.length > 0
+          ? (ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length).toFixed(1)
+          : null;
+
+        provider_info = {
+          full_name: provider.full_name,
+          avatar_url: provider.avatar_url,
+          role_type: provider.role_type,
+          specialties: provider.specialties,
+          experience_years: provider.experience_years,
+          city: provider.city,
+          avg_rating: avgRating,
+          total_ratings: ratings?.length || 0,
+        };
+      }
+    }
+
     // Check if provider is late (ACCEPTED, past scheduled_at, no check_in)
     let is_provider_late = false;
     let late_minutes = 0;
