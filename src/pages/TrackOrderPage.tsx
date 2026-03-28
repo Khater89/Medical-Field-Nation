@@ -7,8 +7,12 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Search, Loader2, CheckCircle, Circle, Clock,
-  MapPin, CalendarDays, Landmark, Copy, AlertTriangle,
+  MapPin, CalendarDays, Landmark, Copy, AlertTriangle, XCircle,
 } from "lucide-react";
 
 const STATUS_ORDER = ["NEW", "CONFIRMED", "ASSIGNED", "ACCEPTED", "IN_PROGRESS", "COMPLETED"];
@@ -22,6 +26,8 @@ const STATUS_LABELS: Record<string, string> = {
   CANCELLED: "تم إلغاء الطلب",
   REJECTED: "تم رفض الطلب",
 };
+
+const CANCELLABLE_STATUSES = ["NEW", "CONFIRMED", "ASSIGNED", "ACCEPTED"];
 
 interface TrackingResult {
   booking: {
@@ -57,6 +63,8 @@ const TrackOrderPage = () => {
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<TrackingResult | null>(null);
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
 
   const handleTrack = async () => {
     if (!bookingNumber.trim() || !phone.trim()) {
@@ -90,6 +98,41 @@ const TrackOrderPage = () => {
       toast({ title: "حدث خطأ في الاتصال", variant: "destructive" });
     }
     setLoading(false);
+  };
+
+  const canCancel = () => {
+    if (!result?.booking) return false;
+    const { status, scheduled_at } = result.booking;
+    if (!CANCELLABLE_STATUSES.includes(status)) return false;
+    const scheduledTime = new Date(scheduled_at).getTime();
+    const twoHoursBefore = scheduledTime - 2 * 60 * 60 * 1000;
+    return Date.now() < twoHoursBefore;
+  };
+
+  const handleCancel = async () => {
+    setCancelling(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("cancel-booking", {
+        body: { booking_number: bookingNumber.trim(), phone: phone.trim() },
+      });
+
+      if (error || data?.error) {
+        const reason = data?.reason;
+        if (reason === "too_close") {
+          toast({ title: "لا يمكن الإلغاء", description: "لا يمكن إلغاء الطلب قبل موعده بأقل من ساعتين", variant: "destructive" });
+        } else {
+          toast({ title: "لا يمكن إلغاء الطلب في هذه المرحلة", variant: "destructive" });
+        }
+      } else {
+        toast({ title: "تم إلغاء الطلب بنجاح ✓" });
+        // Re-fetch to update UI
+        handleTrack();
+      }
+    } catch {
+      toast({ title: "حدث خطأ", variant: "destructive" });
+    }
+    setCancelling(false);
+    setCancelDialogOpen(false);
   };
 
   const booking = result?.booking;
@@ -205,6 +248,19 @@ const TrackOrderPage = () => {
                 </div>
               )}
 
+              {/* Cancel Button */}
+              {canCancel() && (
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  className="w-full gap-2"
+                  onClick={() => setCancelDialogOpen(true)}
+                >
+                  <XCircle className="h-4 w-4" />
+                  إلغاء الطلب
+                </Button>
+              )}
+
               {/* Timeline */}
               <div className="relative space-y-0 pr-4 pt-2">
                 {steps.map((step, i) => (
@@ -257,7 +313,6 @@ const TrackOrderPage = () => {
                     <Landmark className="h-5 w-5 text-primary" />
                     <p className="font-bold text-sm text-foreground">ادفع عبر CliQ / تحويل بنكي</p>
                   </div>
-
                   {result.bank_info.bank_account_holder && (
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-muted-foreground">صاحب الحساب</span>
@@ -294,7 +349,6 @@ const TrackOrderPage = () => {
                       </div>
                     </div>
                   )}
-
                   <p className="text-[10px] text-muted-foreground text-center pt-1">
                     يرجى ذكر رقم الحجز في ملاحظات التحويل
                   </p>
@@ -304,6 +358,28 @@ const TrackOrderPage = () => {
           </Card>
         )}
       </main>
+
+      {/* Cancel Confirmation Dialog */}
+      <AlertDialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
+        <AlertDialogContent dir="rtl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>تأكيد إلغاء الطلب</AlertDialogTitle>
+            <AlertDialogDescription>
+              هل أنت متأكد من رغبتك في إلغاء هذا الطلب؟ لا يمكن التراجع عن هذا الإجراء.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-row-reverse gap-2">
+            <AlertDialogCancel>تراجع</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleCancel}
+              disabled={cancelling}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {cancelling ? <Loader2 className="h-4 w-4 animate-spin" /> : "إلغاء الطلب"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
