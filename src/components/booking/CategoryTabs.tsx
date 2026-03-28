@@ -1,11 +1,12 @@
 import { useLanguage } from "@/contexts/LanguageContext";
 import { CATEGORY_CONFIG } from "@/lib/services";
 import { cn } from "@/lib/utils";
-import { Stethoscope, HeartPulse } from "lucide-react";
+import { Stethoscope, HeartPulse, Package } from "lucide-react";
 
 const iconMap: Record<string, React.ElementType> = {
   Stethoscope,
   HeartPulse,
+  Package,
 };
 
 interface CategoryTabsProps {

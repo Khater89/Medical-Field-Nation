@@ -26,4 +26,5 @@ export function calculateHourlyPricing(period: PeriodType, hours: number) {
 export const CATEGORY_CONFIG: Record<string, { labelAr: string; labelEn: string; icon: string }> = {
   medical: { labelAr: "خدمات طبية", labelEn: "Medical Services", icon: "Stethoscope" },
   nursing: { labelAr: "تمريض منزلي", labelEn: "Home Nursing", icon: "HeartPulse" },
+  packages: { labelAr: "باقات سنوية", labelEn: "Annual Packages", icon: "Package" },
 };

@@ -14,6 +14,7 @@ import type { DbService } from "@/hooks/useServices";
 const CATEGORIES = [
   { value: "medical", label: "خدمات طبية" },
   { value: "nursing", label: "تمريض منزلي" },
+  { value: "packages", label: "باقات سنوية" },
 ];
 
 const ServicesTab = () => {
