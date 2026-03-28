@@ -110,18 +110,18 @@ const LandingPage = () => {
           <motion.h1
             variants={fadeUp}
             transition={{ duration: 0.6 }}
-            className="text-4xl sm:text-5xl lg:text-6xl font-black leading-[1.15] max-w-3xl mx-auto"
+            className="text-4xl sm:text-5xl lg:text-6xl font-black leading-[1.15] max-w-3xl mx-auto brand-text-animated"
           >
-            <span className="text-foreground">{t("landing.hero").split(" ").slice(0, 2).join(" ")} </span>
-            <span className="brand-text-animated">{t("landing.hero").split(" ").slice(2).join(" ")}</span>
+            {t("app.brand_name")}
           </motion.h1>
 
           <motion.h2
             variants={fadeUp}
             transition={{ duration: 0.6 }}
-            className="text-2xl sm:text-3xl lg:text-4xl font-black leading-[1.15] max-w-3xl mx-auto brand-text-animated"
+            className="text-2xl sm:text-3xl lg:text-4xl font-black leading-[1.15] max-w-3xl mx-auto"
           >
-            {t("app.brand_name")}
+            <span className="text-foreground">{t("landing.hero").split(" ").slice(0, 2).join(" ")} </span>
+            <span className="brand-text-animated">{t("landing.hero").split(" ").slice(2).join(" ")}</span>
           </motion.h2>
 
           <motion.p
