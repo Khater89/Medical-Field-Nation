@@ -3,12 +3,11 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useNavigate, Link } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { CalendarCheck, Users, LogOut, RefreshCw, PlusCircle } from "lucide-react";
+import { CalendarCheck, Users, LogOut, PlusCircle } from "lucide-react";
 import mfnLogo from "@/assets/mfn-logo.png";
 import NotificationBell from "@/components/admin/NotificationBell";
 import BookingsTab from "@/components/admin/BookingsTab";
 import ProvidersTab from "@/components/admin/ProvidersTab";
-import SyncMonitorTab from "@/components/admin/SyncMonitorTab";
 
 const CSDashboard = () => {
   const { user, signOut } = useAuth();
