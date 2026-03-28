@@ -141,7 +141,8 @@ const AppHeader = () => {
             </a>
           ))}
           <Link to="/booking">
-            <Button size="sm" className="gap-1.5 ms-2 rounded-full px-5 font-semibold shadow-md hover:shadow-lg transition-shadow">
+            <Button size="sm" className="gap-1.5 ms-2 rounded-full px-5 font-bold shadow-lg hover:shadow-xl transition-all bg-gradient-to-r from-primary to-primary/80 text-primary-foreground animate-pulse hover:animate-none">
+              <CalendarCheck className="h-3.5 w-3.5" />
               {t("action.book_now")}
               <ArrowIcon className="h-3.5 w-3.5" />
             </Button>
