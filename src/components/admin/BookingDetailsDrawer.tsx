@@ -570,14 +570,23 @@ const BookingDetailsDrawer = ({ booking, open, onOpenChange, serviceName, servic
           {!showWorkflow && (
             <div className="flex gap-2 pt-2 flex-wrap">
               {booking.status === "CANCELLED" && (
-                <Button
-                  variant="outline"
-                  className="flex-1 gap-1.5 border-success/30 text-success hover:bg-success/10"
-                  onClick={handleReopen}
-                  disabled={reopening}
-                >
-                  {reopening ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
-                  إعادة فتح الطلب
+                <div className="flex-1 space-y-1">
+                  <Button
+                    variant="outline"
+                    className={`w-full gap-1.5 ${reopenExpired ? "opacity-50 cursor-not-allowed" : "border-success/30 text-success hover:bg-success/10"}`}
+                    onClick={handleReopen}
+                    disabled={reopening || reopenExpired}
+                  >
+                    {reopening ? <Loader2 className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
+                    {reopenExpired ? "انتهت مهلة إعادة الفتح" : "إعادة فتح الطلب"}
+                  </Button>
+                  {reopenTimeLeft && !reopenExpired && (
+                    <p className="text-[10px] text-center text-warning">⏳ متبقي {reopenTimeLeft} لإعادة الفتح</p>
+                  )}
+                  {reopenExpired && (
+                    <p className="text-[10px] text-center text-destructive">انتهت مهلة 10 دقائق — لا يمكن إعادة الفتح</p>
+                  )}
+                </div>
                 </Button>
               )}
               {booking.status !== "CANCELLED" && booking.status !== "COMPLETED" && (
