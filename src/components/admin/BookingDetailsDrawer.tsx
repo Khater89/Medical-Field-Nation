@@ -588,7 +588,6 @@ const BookingDetailsDrawer = ({ booking, open, onOpenChange, serviceName, servic
                   )}
                 </div>
               )}
-              )}
               {booking.status !== "CANCELLED" && booking.status !== "COMPLETED" && (
                 <Button variant="destructive" className="flex-1 gap-1.5" onClick={() => setCancelDialogOpen(true)}>
                   <Ban className="h-4 w-4" /> {t("booking.details.cancel") || "إلغاء الطلب"}
