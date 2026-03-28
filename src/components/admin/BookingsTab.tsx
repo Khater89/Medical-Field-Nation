@@ -152,7 +152,7 @@ const BookingsTab = () => {
             {s === "ALL" ? t("admin.bookings.filter_all") : t(`status.${s}`)}
             {s !== "ALL" && (
               <span className="ms-1 opacity-70">
-                ({bookings.filter(b => b.status === s).length})
+                ({visibleBookings.filter(b => b.status === s).length})
               </span>
             )}
           </button>
