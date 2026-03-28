@@ -3,13 +3,12 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useNavigate, Link } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { CalendarCheck, Users, LogOut, RefreshCw, ShieldAlert, PlusCircle } from "lucide-react";
+import { CalendarCheck, Users, LogOut, RefreshCw, PlusCircle } from "lucide-react";
 import mfnLogo from "@/assets/mfn-logo.png";
 import NotificationBell from "@/components/admin/NotificationBell";
 import BookingsTab from "@/components/admin/BookingsTab";
 import ProvidersTab from "@/components/admin/ProvidersTab";
 import SyncMonitorTab from "@/components/admin/SyncMonitorTab";
-import SuspensionRequestsTab from "@/components/admin/SuspensionRequestsTab";
 
 const CSDashboard = () => {
   const { user, signOut } = useAuth();
@@ -46,7 +45,7 @@ const CSDashboard = () => {
 
       <main className="container py-6 px-4">
         <Tabs defaultValue="bookings" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 h-auto">
+          <TabsList className="grid w-full grid-cols-3 h-auto">
             <TabsTrigger value="bookings" className="flex flex-col gap-1 py-2 text-xs">
               <CalendarCheck className="h-4 w-4" />
               {t("admin.tab.bookings")}
@@ -54,10 +53,6 @@ const CSDashboard = () => {
             <TabsTrigger value="providers" className="flex flex-col gap-1 py-2 text-xs">
               <Users className="h-4 w-4" />
               {t("admin.tab.providers")}
-            </TabsTrigger>
-            <TabsTrigger value="suspensions" className="flex flex-col gap-1 py-2 text-xs">
-              <ShieldAlert className="h-4 w-4" />
-              {t("admin.tab.suspensions")}
             </TabsTrigger>
             <TabsTrigger value="sync" className="flex flex-col gap-1 py-2 text-xs">
               <RefreshCw className="h-4 w-4" />
@@ -67,7 +62,6 @@ const CSDashboard = () => {
 
           <TabsContent value="bookings"><BookingsTab /></TabsContent>
           <TabsContent value="providers"><ProvidersTab /></TabsContent>
-          <TabsContent value="suspensions"><SuspensionRequestsTab /></TabsContent>
           <TabsContent value="sync"><SyncMonitorTab /></TabsContent>
         </Tabs>
       </main>
