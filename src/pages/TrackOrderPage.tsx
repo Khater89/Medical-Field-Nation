@@ -6,13 +6,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
   Search, Loader2, CheckCircle, Circle, Clock,
-  MapPin, CalendarDays, Landmark, Copy, AlertTriangle, XCircle,
+  MapPin, CalendarDays, Landmark, Copy, AlertTriangle,
+  Star, Briefcase, User,
 } from "lucide-react";
 
 const STATUS_ORDER = ["NEW", "CONFIRMED", "ASSIGNED", "ACCEPTED", "IN_PROGRESS", "COMPLETED"];
@@ -28,6 +30,17 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 const CANCELLABLE_STATUSES = ["NEW", "CONFIRMED", "ASSIGNED", "ACCEPTED"];
+
+interface ProviderInfo {
+  full_name: string | null;
+  avatar_url: string | null;
+  role_type: string | null;
+  specialties: string[] | null;
+  experience_years: number | null;
+  city: string | null;
+  avg_rating: string | null;
+  total_ratings: number;
+}
 
 interface TrackingResult {
   booking: {
@@ -49,9 +62,17 @@ interface TrackingResult {
     bank_cliq_alias: string | null;
     bank_account_holder: string | null;
   } | null;
+  provider_info: ProviderInfo | null;
   is_provider_late?: boolean;
   late_minutes?: number;
 }
+
+const ROLE_LABELS: Record<string, string> = {
+  doctor: "طبيب",
+  nurse: "ممرض/ة",
+  therapist: "معالج/ة",
+  midwife: "قابلة",
+};
 
 const TrackOrderPage = () => {
   const { toast } = useToast();
@@ -125,7 +146,6 @@ const TrackOrderPage = () => {
         }
       } else {
         toast({ title: "تم إلغاء الطلب بنجاح ✓" });
-        // Re-fetch to update UI
         handleTrack();
       }
     } catch {
@@ -154,6 +174,8 @@ const TrackOrderPage = () => {
       time: booking.created_at,
     });
   }
+
+  const providerInfo = result?.provider_info;
 
   return (
     <div className="min-h-screen bg-background" dir="rtl">
@@ -199,163 +221,228 @@ const TrackOrderPage = () => {
 
         {/* Results */}
         {result && booking && (
-          <Card>
-            <CardContent className="py-5 space-y-5">
-              {/* Header */}
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-bold text-sm">{booking.service_name}</p>
-                  <p className="text-xs text-muted-foreground font-mono" dir="ltr">{booking.booking_number}</p>
-                </div>
-                <Badge variant={isCancelled ? "destructive" : booking.status === "COMPLETED" ? "outline" : "default"}>
-                  {STATUS_LABELS[booking.status] || booking.status}
-                </Badge>
-              </div>
-
-              {/* Info */}
-              <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
-                <span className="flex items-center gap-1">
-                  <CalendarDays className="h-3 w-3" />
-                  {new Date(booking.scheduled_at).toLocaleDateString("ar-JO", {
-                    weekday: "short", month: "short", day: "numeric",
-                  })}
-                </span>
-                <span className="flex items-center gap-1">
-                  <Clock className="h-3 w-3" />
-                  {new Date(booking.scheduled_at).toLocaleTimeString("ar-JO", {
-                    hour: "2-digit", minute: "2-digit",
-                  })}
-                </span>
-                <span className="flex items-center gap-1">
-                  <MapPin className="h-3 w-3" />
-                  {booking.city}
-                </span>
-                <span className="font-medium text-primary">
-                  {booking.calculated_total || booking.subtotal} د.أ
-                </span>
-              </div>
-
-              {/* Late provider alert */}
-              {result.is_provider_late && (
-                <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 flex items-start gap-2">
-                  <AlertTriangle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
+          <>
+            <Card>
+              <CardContent className="py-5 space-y-5">
+                {/* Header */}
+                <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-destructive">تأخر مقدم الخدمة</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      مقدم الخدمة متأخر عن الموعد المحدد بـ {result.late_minutes} دقيقة. فريقنا يتابع الوضع.
+                    <p className="font-bold text-sm">{booking.service_name}</p>
+                    <p className="text-xs text-muted-foreground font-mono" dir="ltr">{booking.booking_number}</p>
+                  </div>
+                  <Badge variant={isCancelled ? "destructive" : booking.status === "COMPLETED" ? "outline" : "default"}>
+                    {STATUS_LABELS[booking.status] || booking.status}
+                  </Badge>
+                </div>
+
+                {/* Info */}
+                <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
+                  <span className="flex items-center gap-1">
+                    <CalendarDays className="h-3 w-3" />
+                    {new Date(booking.scheduled_at).toLocaleDateString("ar-JO", {
+                      weekday: "short", month: "short", day: "numeric",
+                    })}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    {new Date(booking.scheduled_at).toLocaleTimeString("ar-JO", {
+                      hour: "2-digit", minute: "2-digit",
+                    })}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <MapPin className="h-3 w-3" />
+                    {booking.city}
+                  </span>
+                  <span className="font-medium text-primary">
+                    {booking.calculated_total || booking.subtotal} د.أ
+                  </span>
+                </div>
+
+                {/* Late provider alert */}
+                {result.is_provider_late && (
+                  <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3 flex items-start gap-2">
+                    <AlertTriangle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-sm font-medium text-destructive">تأخر مقدم الخدمة</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        مقدم الخدمة متأخر عن الموعد المحدد بـ {result.late_minutes} دقيقة. فريقنا يتابع الوضع.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Provider Info Card */}
+                {providerInfo && (
+                  <div className="rounded-lg border bg-muted/30 p-4 space-y-3">
+                    <p className="text-xs font-semibold text-muted-foreground">مقدم الخدمة</p>
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-12 w-12 border-2 border-primary/20">
+                        <AvatarImage src={providerInfo.avatar_url || undefined} />
+                        <AvatarFallback className="bg-primary/10 text-primary">
+                          <User className="h-5 w-5" />
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-bold text-sm truncate">{providerInfo.full_name || "مقدم خدمة"}</p>
+                        <div className="flex items-center gap-2 flex-wrap mt-0.5">
+                          {providerInfo.role_type && (
+                            <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                              {ROLE_LABELS[providerInfo.role_type] || providerInfo.role_type}
+                            </Badge>
+                          )}
+                          {providerInfo.experience_years && (
+                            <span className="text-[10px] text-muted-foreground flex items-center gap-0.5">
+                              <Briefcase className="h-2.5 w-2.5" />
+                              {providerInfo.experience_years} سنوات خبرة
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Rating & Location */}
+                    <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                      {providerInfo.avg_rating && (
+                        <span className="flex items-center gap-1">
+                          <Star className="h-3 w-3 text-warning fill-warning" />
+                          <span className="font-medium text-foreground">{providerInfo.avg_rating}</span>
+                          <span>({providerInfo.total_ratings} تقييم)</span>
+                        </span>
+                      )}
+                      {providerInfo.city && (
+                        <span className="flex items-center gap-1">
+                          <MapPin className="h-3 w-3" />
+                          {providerInfo.city}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Specialties */}
+                    {providerInfo.specialties && providerInfo.specialties.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5">
+                        {providerInfo.specialties.slice(0, 4).map((s) => (
+                          <Badge key={s} variant="outline" className="text-[10px] px-1.5 py-0 font-normal">
+                            {s}
+                          </Badge>
+                        ))}
+                        {providerInfo.specialties.length > 4 && (
+                          <Badge variant="outline" className="text-[10px] px-1.5 py-0 font-normal">
+                            +{providerInfo.specialties.length - 4}
+                          </Badge>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Timeline */}
+                <div className="relative space-y-0 pr-4 pt-2">
+                  {steps.map((step, i) => (
+                    <div key={i} className="flex items-start gap-3 pb-6 relative">
+                      {i < steps.length - 1 && (
+                        <div className={`absolute right-[7px] top-6 w-0.5 h-full ${step.status === "done" ? "bg-primary" : "bg-border"}`} />
+                      )}
+                      <div className="relative z-10 shrink-0">
+                        {step.status === "done" ? (
+                          <CheckCircle className="h-4 w-4 text-primary" />
+                        ) : step.status === "current" ? (
+                          <Clock className="h-4 w-4 text-primary animate-pulse" />
+                        ) : (
+                          <Circle className="h-4 w-4 text-muted-foreground/40" />
+                        )}
+                      </div>
+                      <div>
+                        <p className={`text-sm font-medium ${step.status === "upcoming" ? "text-muted-foreground/50" : "text-foreground"}`}>
+                          {step.label}
+                        </p>
+                        {step.time && (
+                          <p className="text-[10px] text-muted-foreground">
+                            {new Date(step.time).toLocaleString("ar-JO", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Rating display */}
+                {result.rating && (
+                  <div className="border-t pt-3 space-y-1">
+                    <p className="text-xs font-medium text-muted-foreground">التقييم</p>
+                    <div className="flex gap-0.5">
+                      {[1, 2, 3, 4, 5].map((s) => (
+                        <span key={s} className={`text-lg ${s <= result.rating!.rating ? "text-warning" : "text-muted-foreground/20"}`}>★</span>
+                      ))}
+                    </div>
+                    {result.rating.comment && (
+                      <p className="text-xs text-muted-foreground">{result.rating.comment}</p>
+                    )}
+                  </div>
+                )}
+
+                {/* Bank Payment Info - only after COMPLETED */}
+                {result.bank_info && booking.status === "COMPLETED" && (
+                  <div className="border-t pt-3 space-y-3 text-start">
+                    <div className="flex items-center gap-2 justify-center">
+                      <Landmark className="h-5 w-5 text-primary" />
+                      <p className="font-bold text-sm text-foreground">ادفع عبر CliQ / تحويل بنكي</p>
+                    </div>
+                    {result.bank_info.bank_account_holder && (
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">صاحب الحساب</span>
+                        <span className="font-medium">{result.bank_info.bank_account_holder}</span>
+                      </div>
+                    )}
+                    {result.bank_info.bank_name && (
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">البنك</span>
+                        <span className="font-medium">{result.bank_info.bank_name}</span>
+                      </div>
+                    )}
+                    {result.bank_info.bank_iban && (
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-muted-foreground">IBAN</span>
+                          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => copyText(result.bank_info!.bank_iban!)}>
+                            <Copy className="h-3 w-3" />
+                          </Button>
+                        </div>
+                        <p className="text-xs font-mono bg-muted rounded px-2 py-1.5 break-all" dir="ltr">
+                          {result.bank_info.bank_iban}
+                        </p>
+                      </div>
+                    )}
+                    {result.bank_info.bank_cliq_alias && (
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">CliQ Alias</span>
+                        <div className="flex items-center gap-1">
+                          <span className="font-mono font-medium" dir="ltr">{result.bank_info.bank_cliq_alias}</span>
+                          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => copyText(result.bank_info!.bank_cliq_alias!)}>
+                            <Copy className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                    <p className="text-[10px] text-muted-foreground text-center pt-1">
+                      يرجى ذكر رقم الحجز في ملاحظات التحويل
                     </p>
                   </div>
-                </div>
-              )}
+                )}
+              </CardContent>
+            </Card>
 
-              {/* Cancel Button */}
-              {canCancel() && (
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  className="w-full gap-2"
+            {/* Cancel - subtle text link at the bottom */}
+            {canCancel() && (
+              <div className="text-center pt-2">
+                <button
                   onClick={() => setCancelDialogOpen(true)}
+                  className="text-xs text-muted-foreground/60 hover:text-destructive transition-colors underline underline-offset-2"
                 >
-                  <XCircle className="h-4 w-4" />
-                  إلغاء الطلب
-                </Button>
-              )}
-
-              {/* Timeline */}
-              <div className="relative space-y-0 pr-4 pt-2">
-                {steps.map((step, i) => (
-                  <div key={i} className="flex items-start gap-3 pb-6 relative">
-                    {i < steps.length - 1 && (
-                      <div className={`absolute right-[7px] top-6 w-0.5 h-full ${step.status === "done" ? "bg-primary" : "bg-border"}`} />
-                    )}
-                    <div className="relative z-10 shrink-0">
-                      {step.status === "done" ? (
-                        <CheckCircle className="h-4 w-4 text-primary" />
-                      ) : step.status === "current" ? (
-                        <Clock className="h-4 w-4 text-primary animate-pulse" />
-                      ) : (
-                        <Circle className="h-4 w-4 text-muted-foreground/40" />
-                      )}
-                    </div>
-                    <div>
-                      <p className={`text-sm font-medium ${step.status === "upcoming" ? "text-muted-foreground/50" : "text-foreground"}`}>
-                        {step.label}
-                      </p>
-                      {step.time && (
-                        <p className="text-[10px] text-muted-foreground">
-                          {new Date(step.time).toLocaleString("ar-JO", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                ))}
+                  هل تريد إلغاء هذا الطلب؟
+                </button>
               </div>
-
-              {/* Rating display */}
-              {result.rating && (
-                <div className="border-t pt-3 space-y-1">
-                  <p className="text-xs font-medium text-muted-foreground">التقييم</p>
-                  <div className="flex gap-0.5">
-                    {[1, 2, 3, 4, 5].map((s) => (
-                      <span key={s} className={`text-lg ${s <= result.rating!.rating ? "text-warning" : "text-muted-foreground/20"}`}>★</span>
-                    ))}
-                  </div>
-                  {result.rating.comment && (
-                    <p className="text-xs text-muted-foreground">{result.rating.comment}</p>
-                  )}
-                </div>
-              )}
-
-              {/* Bank Payment Info - only after COMPLETED */}
-              {result.bank_info && booking.status === "COMPLETED" && (
-                <div className="border-t pt-3 space-y-3 text-start">
-                  <div className="flex items-center gap-2 justify-center">
-                    <Landmark className="h-5 w-5 text-primary" />
-                    <p className="font-bold text-sm text-foreground">ادفع عبر CliQ / تحويل بنكي</p>
-                  </div>
-                  {result.bank_info.bank_account_holder && (
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">صاحب الحساب</span>
-                      <span className="font-medium">{result.bank_info.bank_account_holder}</span>
-                    </div>
-                  )}
-                  {result.bank_info.bank_name && (
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">البنك</span>
-                      <span className="font-medium">{result.bank_info.bank_name}</span>
-                    </div>
-                  )}
-                  {result.bank_info.bank_iban && (
-                    <div className="space-y-1">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">IBAN</span>
-                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => copyText(result.bank_info!.bank_iban!)}>
-                          <Copy className="h-3 w-3" />
-                        </Button>
-                      </div>
-                      <p className="text-xs font-mono bg-muted rounded px-2 py-1.5 break-all" dir="ltr">
-                        {result.bank_info.bank_iban}
-                      </p>
-                    </div>
-                  )}
-                  {result.bank_info.bank_cliq_alias && (
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">CliQ Alias</span>
-                      <div className="flex items-center gap-1">
-                        <span className="font-mono font-medium" dir="ltr">{result.bank_info.bank_cliq_alias}</span>
-                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => copyText(result.bank_info!.bank_cliq_alias!)}>
-                          <Copy className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                  <p className="text-[10px] text-muted-foreground text-center pt-1">
-                    يرجى ذكر رقم الحجز في ملاحظات التحويل
-                  </p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+            )}
+          </>
         )}
       </main>
 
