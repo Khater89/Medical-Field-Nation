@@ -221,6 +221,41 @@ const LandingPage = () => {
         </motion.div>
       </section>
 
+      {/* ═══════ PROMO VIDEO ═══════ */}
+      <section className="py-16 bg-card/40">
+        <div className="container max-w-5xl space-y-8">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, amount: 0.3 }}
+            variants={fadeUp}
+            transition={{ duration: 0.6 }}
+            className="text-center space-y-3"
+          >
+            <h2 className="text-2xl sm:text-3xl font-black text-foreground">{isRTL ? "تعرّف علينا" : "About Us"}</h2>
+            <p className="text-muted-foreground max-w-xl mx-auto">{isRTL ? "شاهد كيف نقدّم خدماتنا الطبية المنزلية" : "See how we deliver home medical services"}</p>
+          </motion.div>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true, amount: 0.2 }}
+            transition={{ duration: 0.7 }}
+            className="rounded-2xl overflow-hidden shadow-2xl border border-border"
+          >
+            <video
+              className="w-full aspect-video"
+              autoPlay
+              muted
+              loop
+              playsInline
+              poster={heroMedicalImg}
+            >
+              <source src="/mfn-promo.mp4" type="video/mp4" />
+            </video>
+          </motion.div>
+        </div>
+      </section>
+
       {/* ═══════ WHY US ═══════ */}
       <section className="py-20 bg-card/40">
         <div className="container max-w-6xl space-y-14">
