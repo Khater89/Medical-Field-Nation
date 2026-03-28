@@ -141,7 +141,8 @@ const AppHeader = () => {
             </a>
           ))}
           <Link to="/booking">
-            <Button size="sm" className="gap-1.5 ms-2 rounded-full px-5 font-semibold shadow-md hover:shadow-lg transition-shadow">
+            <Button size="sm" className="gap-1.5 ms-2 rounded-full px-5 font-bold shadow-lg hover:shadow-xl transition-all bg-gradient-to-r from-primary to-primary/80 text-primary-foreground animate-pulse hover:animate-none">
+              <CalendarCheck className="h-3.5 w-3.5" />
               {t("action.book_now")}
               <ArrowIcon className="h-3.5 w-3.5" />
             </Button>
@@ -162,6 +163,7 @@ const AppHeader = () => {
 
           {user ? (
             <DropdownMenu>
+
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm" className="gap-1.5 text-xs sm:text-sm max-w-[180px] rounded-full">
                   <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center">
@@ -211,9 +213,10 @@ const AppHeader = () => {
             </DropdownMenu>
           ) : (
             <Link to="/auth" className="z-10">
-              <Button size="sm" className="gap-1.5 text-xs rounded-full bg-primary text-primary-foreground hover:bg-primary/90 font-semibold shadow-md">
-                <LogIn className="h-3.5 w-3.5" />
+              <Button size="sm" className="gap-1.5 text-xs rounded-full bg-gradient-to-r from-primary to-primary/80 text-primary-foreground hover:from-primary/90 hover:to-primary/70 font-semibold shadow-md hover:shadow-lg transition-all">
+                <User className="h-3.5 w-3.5" />
                 {t("landing.login")}
+                <ArrowIcon className="h-3 w-3" />
               </Button>
             </Link>
           )}

@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import ImageGallery from "@/components/landing/ImageGallery";
+import heroMedicalImg from "@/assets/hero-medical.jpg";
 import {
   ShieldCheck,
   Zap,
@@ -94,85 +95,129 @@ const LandingPage = () => {
           initial="hidden"
           animate="visible"
           variants={stagger}
-          className="container max-w-5xl relative py-20 sm:py-28 text-center space-y-8"
+          className="container max-w-7xl relative py-16 sm:py-24"
         >
-          {/* pill badge */}
-          <motion.div
-            variants={fadeUp}
-            transition={{ duration: 0.5 }}
-            className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-1.5 rounded-full text-sm font-semibold"
-          >
-            <Phone className="h-4 w-4" />
-            {t("landing.feature4")}
-          </motion.div>
-
-          {/* headline */}
-          <motion.h1
-            variants={fadeUp}
-            transition={{ duration: 0.6 }}
-            className="text-4xl sm:text-5xl lg:text-6xl font-black leading-[1.15] max-w-3xl mx-auto brand-text-animated"
-          >
-            {t("app.brand_name")}
-          </motion.h1>
-
-          <motion.h2
-            variants={fadeUp}
-            transition={{ duration: 0.6 }}
-            className="text-2xl sm:text-3xl lg:text-4xl font-black leading-[1.15] max-w-3xl mx-auto"
-          >
-            <span className="text-foreground">{t("landing.hero").split(" ").slice(0, 2).join(" ")} </span>
-            <span className="brand-text-animated">{t("landing.hero").split(" ").slice(2).join(" ")}</span>
-          </motion.h2>
-
-          <motion.p
-            variants={fadeUp}
-            transition={{ duration: 0.6 }}
-            className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed"
-          >
-            {t("landing.hero.sub")}
-          </motion.p>
-
-          {/* CTA */}
-          <motion.div variants={fadeUp} transition={{ duration: 0.6 }} className="flex flex-wrap justify-center gap-3">
-            <Link to="/booking">
-              <Button
-                size="lg"
-                className="gap-2 text-base px-10 h-13 rounded-full shadow-lg hover:shadow-xl transition-all hover:scale-[1.02] active:scale-[0.98]"
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
+            {/* Text content */}
+            <div className="text-center lg:text-start space-y-6 order-2 lg:order-1">
+              {/* pill badge - clickable phone */}
+              <motion.a
+                href="tel:+962790619770"
+                variants={fadeUp}
+                transition={{ duration: 0.5 }}
+                className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-1.5 rounded-full text-sm font-semibold hover:bg-primary/20 transition-colors cursor-pointer"
               >
-                {t("landing.cta")}
-                <ArrowIcon className="h-4 w-4" />
-              </Button>
-            </Link>
-            <Link to="/track">
-              <Button
-                size="lg"
-                variant="outline"
-                className="gap-2 text-base px-8 h-13 rounded-full shadow-sm hover:shadow-md transition-all hover:scale-[1.02] active:scale-[0.98]"
-              >
-                <ClipboardList className="h-4 w-4" />
-                تتبع طلبك
-              </Button>
-            </Link>
-          </motion.div>
+                <Phone className="h-4 w-4 animate-pulse" />
+                {t("landing.feature4")}
+              </motion.a>
 
-          {/* stats */}
-          <motion.div
-            variants={staggerFast}
-            initial="hidden"
-            animate="visible"
-            className="flex flex-wrap justify-center gap-10 pt-8"
-          >
-            {[
-              { value: "22+", label: t("landing.stats.services") },
-              { value: "24/7", label: t("landing.stats.available") },
-              { value: "5+", label: t("landing.stats.cities") },
-            ].map((stat, i) => (
-              <motion.div key={i} variants={scaleIn} transition={{ duration: 0.5 }} className="text-center">
-                <p className="text-3xl sm:text-4xl font-black text-primary">{stat.value}</p>
-                <p className="text-sm text-muted-foreground mt-1">{stat.label}</p>
+              <motion.h1
+                variants={fadeUp}
+                transition={{ duration: 0.6 }}
+                className="text-4xl sm:text-5xl lg:text-6xl font-black leading-[1.15] brand-text-animated"
+              >
+                {t("app.brand_name")}
+              </motion.h1>
+
+              <motion.h2
+                variants={fadeUp}
+                transition={{ duration: 0.6 }}
+                className="text-2xl sm:text-3xl lg:text-4xl font-black leading-[1.15]"
+              >
+                <span className="text-foreground">{t("landing.hero").split(" ").slice(0, 2).join(" ")} </span>
+                <span className="brand-text-animated">{t("landing.hero").split(" ").slice(2).join(" ")}</span>
+              </motion.h2>
+
+              <motion.p
+                variants={fadeUp}
+                transition={{ duration: 0.6 }}
+                className="text-lg sm:text-xl text-muted-foreground leading-relaxed max-w-lg mx-auto lg:mx-0"
+              >
+                {t("landing.hero.sub")}
+              </motion.p>
+
+              {/* CTA */}
+              <motion.div variants={fadeUp} transition={{ duration: 0.6 }} className="flex flex-wrap justify-center lg:justify-start gap-3">
+                <Link to="/booking">
+                  <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <Button
+                      size="lg"
+                      className="gap-2 text-base px-10 h-14 rounded-full shadow-lg hover:shadow-2xl transition-all bg-gradient-to-r from-primary to-primary/80 text-primary-foreground font-bold text-lg"
+                    >
+                      <CalendarDays className="h-5 w-5" />
+                      {t("landing.cta")}
+                      <ArrowIcon className="h-4 w-4 animate-bounce" />
+                    </Button>
+                  </motion.div>
+                </Link>
+                <Link to="/track">
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="gap-2 text-base px-8 h-14 rounded-full shadow-sm hover:shadow-md transition-all hover:scale-[1.02] active:scale-[0.98]"
+                  >
+                    <ClipboardList className="h-4 w-4" />
+                    تتبع طلبك
+                  </Button>
+                </Link>
               </motion.div>
-            ))}
-          </motion.div>
+
+              {/* stats */}
+              <motion.div
+                variants={staggerFast}
+                initial="hidden"
+                animate="visible"
+                className="flex flex-wrap justify-center lg:justify-start gap-10 pt-4"
+              >
+                {[
+                  { value: "22+", label: t("landing.stats.services") },
+                  { value: "24/7", label: t("landing.stats.available") },
+                  { value: "5+", label: t("landing.stats.cities") },
+                ].map((stat, i) => (
+                  <motion.div key={i} variants={scaleIn} transition={{ duration: 0.5 }} className="text-center">
+                    <p className="text-3xl sm:text-4xl font-black text-primary">{stat.value}</p>
+                    <p className="text-sm text-muted-foreground mt-1">{stat.label}</p>
+                  </motion.div>
+                ))}
+              </motion.div>
+            </div>
+
+            {/* Hero Image */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, x: 40 }}
+              animate={{ opacity: 1, scale: 1, x: 0 }}
+              transition={{ duration: 0.8, delay: 0.3 }}
+              className="order-1 lg:order-2 flex justify-center"
+            >
+              <div className="relative">
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-primary-glow/20 rounded-3xl blur-2xl scale-105" />
+                <img
+                  src={heroMedicalImg}
+                  alt="خدمات طبية منزلية - ممرضة تزور مريضاً في المنزل"
+                  width={500}
+                  height={500}
+                  className="relative rounded-3xl shadow-2xl object-cover w-full max-w-[500px] border-2 border-primary/10"
+                />
+                {/* floating badge */}
+                <motion.div
+                  animate={{ y: [0, -8, 0] }}
+                  transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                  className="absolute -bottom-4 -start-4 bg-card rounded-2xl shadow-lg p-3 border border-border flex items-center gap-2"
+                >
+                  <div className="h-10 w-10 rounded-full bg-green-500/10 flex items-center justify-center">
+                    <CheckCircle className="h-5 w-5 text-green-600" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-foreground">أطباء معتمدون</p>
+                    <p className="text-[10px] text-muted-foreground">مرخّصون رسمياً</p>
+                  </div>
+                </motion.div>
+              </div>
+            </motion.div>
+          </div>
         </motion.div>
       </section>
 
