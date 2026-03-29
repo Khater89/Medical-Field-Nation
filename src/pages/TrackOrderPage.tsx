@@ -386,7 +386,7 @@ const TrackOrderPage = () => {
                   </div>
                 ) : booking.status === "COMPLETED" && !ratingSubmitted ? (
                   <div className="border-t pt-3 space-y-3">
-                    <p className="text-xs font-bold text-muted-foreground">قيّم الخدمة ومقدم الخدمة</p>
+                    <p className="text-xs font-bold text-muted-foreground">قيّم مقدم الخدمة</p>
                     <div className="flex gap-1 justify-center">
                       {[1, 2, 3, 4, 5].map((s) => (
                         <button

@@ -1,7 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
-import { DollarSign, User, Clock, Star, CheckCheck, XCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { DollarSign, User, Clock, Star, CheckCheck, XCircle, ArrowUpDown } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 
 interface Quote {
@@ -23,6 +24,8 @@ interface ProviderStats {
   ratingCount: number;
 }
 
+type SortMode = "price" | "rating";
+
 interface Props {
   bookingId: string;
   onSelectQuote?: (providerId: string, quotedPrice: number) => void;
@@ -32,6 +35,7 @@ const ProviderQuotesSection = ({ bookingId, onSelectQuote }: Props) => {
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [loading, setLoading] = useState(true);
   const [providerStats, setProviderStats] = useState<Record<string, ProviderStats>>({});
+  const [sortMode, setSortMode] = useState<SortMode>("price");
 
   useEffect(() => {
     const fetch = async () => {
