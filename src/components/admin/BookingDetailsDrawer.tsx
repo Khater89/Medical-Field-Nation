@@ -131,6 +131,8 @@ const BookingDetailsDrawer = ({ booking, open, onOpenChange, serviceName, servic
   const [reopenTimeLeft, setReopenTimeLeft] = useState("");
   const [broadcastOpen, setBroadcastOpen] = useState(false);
   const [coordinatorPhone, setCoordinatorPhone] = useState<string | null>(null);
+  const [preSelectedProviderId, setPreSelectedProviderId] = useState<string | null>(null);
+  const [preSelectedProviderShare, setPreSelectedProviderShare] = useState<number | null>(null);
 
   // Fetch coordinator phone
   useEffect(() => {
@@ -352,7 +354,13 @@ const BookingDetailsDrawer = ({ booking, open, onOpenChange, serviceName, servic
           )}
 
           {/* Provider Quotes */}
-          <ProviderQuotesSection bookingId={booking.id} />
+          <ProviderQuotesSection
+            bookingId={booking.id}
+            onSelectQuote={(providerId, quotedPrice) => {
+              setPreSelectedProviderId(providerId);
+              setPreSelectedProviderShare(quotedPrice);
+            }}
+          />
 
           {/* Client Info */}
           <div className="rounded-lg border border-border p-3 space-y-3">
@@ -590,6 +598,8 @@ const BookingDetailsDrawer = ({ booking, open, onOpenChange, serviceName, servic
                 onStatusChange?.();
               }}
               onDataRefresh={onDataRefresh}
+              preSelectedProviderId={preSelectedProviderId}
+              preSelectedProviderShare={preSelectedProviderShare}
             />
           )}
 

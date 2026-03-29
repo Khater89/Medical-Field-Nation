@@ -87,6 +87,12 @@ const TrackOrderPage = () => {
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [cancelling, setCancelling] = useState(false);
 
+  // Rating state
+  const [ratingValue, setRatingValue] = useState(0);
+  const [ratingComment, setRatingComment] = useState("");
+  const [submittingRating, setSubmittingRating] = useState(false);
+  const [ratingSubmitted, setRatingSubmitted] = useState(false);
+
   const handleTrack = async () => {
     if (!bookingNumber.trim() || !phone.trim()) {
       toast({ title: "يرجى إدخال رقم الحجز ورقم الهاتف", variant: "destructive" });
@@ -365,8 +371,8 @@ const TrackOrderPage = () => {
                   ))}
                 </div>
 
-                {/* Rating display */}
-                {result.rating && (
+                {/* Rating display or form */}
+                {result.rating ? (
                   <div className="border-t pt-3 space-y-1">
                     <p className="text-xs font-medium text-muted-foreground">التقييم</p>
                     <div className="flex gap-0.5">
@@ -378,7 +384,67 @@ const TrackOrderPage = () => {
                       <p className="text-xs text-muted-foreground">{result.rating.comment}</p>
                     )}
                   </div>
-                )}
+                ) : booking.status === "COMPLETED" && !ratingSubmitted ? (
+                  <div className="border-t pt-3 space-y-3">
+                    <p className="text-xs font-bold text-muted-foreground">قيّم الخدمة ومقدم الخدمة</p>
+                    <div className="flex gap-1 justify-center">
+                      {[1, 2, 3, 4, 5].map((s) => (
+                        <button
+                          key={s}
+                          onClick={() => setRatingValue(s)}
+                          className={`text-2xl transition-colors ${s <= ratingValue ? "text-warning" : "text-muted-foreground/20"} hover:text-warning`}
+                        >
+                          ★
+                        </button>
+                      ))}
+                    </div>
+                    {ratingValue > 0 && (
+                      <>
+                        <textarea
+                          value={ratingComment}
+                          onChange={(e) => setRatingComment(e.target.value)}
+                          placeholder="اكتب ملاحظاتك (اختياري)..."
+                          className="w-full rounded-lg border border-border bg-background p-2 text-sm resize-none"
+                          rows={2}
+                        />
+                        <Button
+                          className="w-full gap-1.5"
+                          size="sm"
+                          disabled={submittingRating}
+                          onClick={async () => {
+                            setSubmittingRating(true);
+                            try {
+                              const { data, error } = await supabase.functions.invoke("submit-rating", {
+                                body: {
+                                  booking_number: bookingNumber.trim(),
+                                  phone: phone.trim(),
+                                  rating: ratingValue,
+                                  comment: ratingComment.trim() || null,
+                                },
+                              });
+                              if (error || data?.error) {
+                                toast({ title: "حدث خطأ في إرسال التقييم", variant: "destructive" });
+                              } else {
+                                setRatingSubmitted(true);
+                                toast({ title: "شكراً لتقييمك! ✨" });
+                              }
+                            } catch {
+                              toast({ title: "حدث خطأ", variant: "destructive" });
+                            }
+                            setSubmittingRating(false);
+                          }}
+                        >
+                          {submittingRating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Star className="h-4 w-4" />}
+                          إرسال التقييم
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                ) : ratingSubmitted ? (
+                  <div className="border-t pt-3 text-center">
+                    <p className="text-sm text-success font-medium">✅ شكراً لتقييمك!</p>
+                  </div>
+                ) : null}
 
                 {/* Bank Payment Info - only after COMPLETED */}
                 {result.bank_info && booking.status === "COMPLETED" && (

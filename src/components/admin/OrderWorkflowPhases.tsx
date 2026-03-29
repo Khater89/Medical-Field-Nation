@@ -43,6 +43,7 @@ interface ProviderRow {
   radius_km: number | null;
   lat: number | null;
   lng: number | null;
+  provider_number: number | null;
 }
 
 interface ProviderStats {
@@ -94,36 +95,38 @@ interface Props {
   booking: BookingRow;
   serviceName: string;
   servicePrice: number | null;
-  onWorkflowChange: () => void;   // close drawer + refetch
-  onDataRefresh?: () => void;      // refetch only, keep drawer open
+  onWorkflowChange: () => void;
+  onDataRefresh?: () => void;
+  preSelectedProviderId?: string | null;
+  preSelectedProviderShare?: number | null;
 }
 
-const OrderWorkflowPhases = ({ booking, serviceName, servicePrice, onWorkflowChange, onDataRefresh }: Props) => {
+const OrderWorkflowPhases = ({ booking, serviceName, servicePrice, onWorkflowChange, onDataRefresh, preSelectedProviderId, preSelectedProviderShare }: Props) => {
   const { t, formatCurrency } = useLanguage();
   const { isAdmin } = useAuth();
 
   const isRejected = booking.status === "REJECTED";
 
-  // Phase 1 state
-  const [clientAgreed, setClientAgreed] = useState(!!booking.deal_confirmed_at);
-  const [clientPrice, setClientPrice] = useState(booking.agreed_price ?? servicePrice ?? 0);
-  const [editingClientPrice, setEditingClientPrice] = useState(false);
-  const [savingClientPrice, setSavingClientPrice] = useState(false);
-  const [internalNote, setInternalNote] = useState(booking.internal_note || "");
-
-  // Phase 2/3 state - clear provider selection if rejected
+  // Phase 1 (Provider) state
   const [showProviders, setShowProviders] = useState(false);
   const [nearestProviders, setNearestProviders] = useState<NearestProvider[]>([]);
   const [fallbackProviders, setFallbackProviders] = useState<ProviderRow[]>([]);
   const [loadingProviders, setLoadingProviders] = useState(false);
   const [selectedProvider, setSelectedProvider] = useState<string | null>(isRejected ? null : booking.assigned_provider_id);
   const [providerAgreed, setProviderAgreed] = useState(false);
-  const [providerShare, setProviderShare] = useState(booking.provider_share ?? 0);
+  const [providerShare, setProviderShare] = useState(booking.provider_share ?? preSelectedProviderShare ?? 0);
   const [editingProviderShare, setEditingProviderShare] = useState(false);
   const [savingProviderShare, setSavingProviderShare] = useState(false);
   const [providerStats, setProviderStats] = useState<Record<string, ProviderStats>>({});
 
-  // Phase 4 state
+  // Phase 2 (Client) state
+  const [clientAgreed, setClientAgreed] = useState(!!booking.deal_confirmed_at);
+  const [clientPrice, setClientPrice] = useState(booking.agreed_price ?? servicePrice ?? 0);
+  const [editingClientPrice, setEditingClientPrice] = useState(false);
+  const [savingClientPrice, setSavingClientPrice] = useState(false);
+  const [internalNote, setInternalNote] = useState(booking.internal_note || "");
+
+  // Phase 3 state
   const [assigning, setAssigning] = useState(false);
 
   // Coordinator phones
@@ -137,16 +140,37 @@ const OrderWorkflowPhases = ({ booking, serviceName, servicePrice, onWorkflowCha
       });
   }, []);
 
+  // Auto-fetch providers on mount
+  useEffect(() => {
+    if (!showProviders && !booking.assigned_provider_id) {
+      setShowProviders(true);
+      fetchProviders();
+    }
+  }, []);
+
+  // Handle pre-selected provider from quotes
+  useEffect(() => {
+    if (preSelectedProviderId) {
+      setSelectedProvider(preSelectedProviderId);
+      if (preSelectedProviderShare != null) {
+        setProviderShare(preSelectedProviderShare);
+      }
+      if (!showProviders) {
+        setShowProviders(true);
+        fetchProviders();
+      }
+    }
+  }, [preSelectedProviderId, preSelectedProviderShare]);
+
   // Phase completion checks
   const isClientPriceSaved = booking.agreed_price != null;
   const isClientDealDone = !!booking.deal_confirmed_at;
   const isProviderShareSaved = booking.provider_share != null;
   const isAssigned = !!booking.assigned_provider_id && booking.status === "ASSIGNED";
 
-  // Refresh helper (keeps drawer open)
   const refresh = () => onDataRefresh ? onDataRefresh() : onWorkflowChange();
 
-  // Fetch providers + stats
+  // Fetch providers + stats (exclude client cancellations)
   const fetchProviders = async () => {
     setLoadingProviders(true);
     if (booking.client_lat && booking.client_lng) {
@@ -167,8 +191,16 @@ const OrderWorkflowPhases = ({ booking, serviceName, servicePrice, onWorkflowCha
     // Fetch booking stats per provider
     const { data: completedData } = await supabase
       .from("bookings")
-      .select("assigned_provider_id, status")
+      .select("id, assigned_provider_id, status")
       .in("status", ["COMPLETED", "CANCELLED", "REJECTED"]);
+
+    // Fetch client-cancelled booking IDs to exclude from provider stats
+    const { data: clientCancelledHistory } = await supabase
+      .from("booking_history")
+      .select("booking_id")
+      .eq("action", "CANCELLED")
+      .eq("performer_role", "customer");
+    const clientCancelledIds = new Set((clientCancelledHistory || []).map((h: any) => h.booking_id));
 
     const { data: ratingsData } = await supabase
       .from("provider_ratings" as any)
@@ -180,7 +212,7 @@ const OrderWorkflowPhases = ({ booking, serviceName, servicePrice, onWorkflowCha
       if (!pid) return;
       if (!statsMap[pid]) statsMap[pid] = { completed: 0, cancelled: 0, avgRating: null, ratingCount: 0 };
       if (b.status === "COMPLETED") statsMap[pid].completed++;
-      else statsMap[pid].cancelled++;
+      else if (!clientCancelledIds.has(b.id)) statsMap[pid].cancelled++;
     });
     (ratingsData || []).forEach((r: any) => {
       const pid = r.provider_id;
@@ -194,7 +226,38 @@ const OrderWorkflowPhases = ({ booking, serviceName, servicePrice, onWorkflowCha
     setLoadingProviders(false);
   };
 
-  /* ── Phase 1: Mark client agreed ── */
+  /* ── Save provider share ── */
+  const saveProviderShare = async () => {
+    if (providerShare < 0) { toast.error("حصة المزود يجب أن تكون صفر أو أكثر"); return; }
+    setSavingProviderShare(true);
+    try {
+      const { error } = await supabase
+        .from("bookings")
+        .update({ provider_share: providerShare } as any)
+        .eq("id", booking.id);
+      if (error) throw error;
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.from("booking_history").insert({
+          booking_id: booking.id,
+          action: "PROVIDER_SHARE_SET",
+          performed_by: user.id,
+          performer_role: isAdmin ? "admin" : "cs",
+          note: `حصة المزود: ${providerShare} د.أ`,
+        });
+      }
+      toast.success("تم حفظ حصة المزود ✅");
+      setEditingProviderShare(false);
+      refresh();
+    } catch (err: any) {
+      toast.error(err.message);
+    } finally {
+      setSavingProviderShare(false);
+    }
+  };
+
+  /* ── Mark client agreed ── */
   const markClientAgreed = async () => {
     setClientAgreed(true);
     try {
@@ -222,7 +285,7 @@ const OrderWorkflowPhases = ({ booking, serviceName, servicePrice, onWorkflowCha
     }
   };
 
-  /* ── Phase 1: Save client price ── */
+  /* ── Save client price ── */
   const saveClientPrice = async () => {
     if (clientPrice <= 0) { toast.error("السعر يجب أن يكون أكبر من صفر"); return; }
     setSavingClientPrice(true);
@@ -256,45 +319,7 @@ const OrderWorkflowPhases = ({ booking, serviceName, servicePrice, onWorkflowCha
     }
   };
 
-  /* ── Phase 2: Open provider list ── */
-  const openProviderList = () => {
-    setShowProviders(true);
-    fetchProviders();
-  };
-
-  /* ── Phase 3: Save provider share ── */
-  const saveProviderShare = async () => {
-    if (providerShare < 0) { toast.error("حصة المزود يجب أن تكون صفر أو أكثر"); return; }
-    if (providerShare > clientPrice) { toast.error("حصة المزود لا يمكن أن تتجاوز السعر للعميل"); return; }
-    setSavingProviderShare(true);
-    try {
-      const { error } = await supabase
-        .from("bookings")
-        .update({ provider_share: providerShare } as any)
-        .eq("id", booking.id);
-      if (error) throw error;
-
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        await supabase.from("booking_history").insert({
-          booking_id: booking.id,
-          action: "PROVIDER_SHARE_SET",
-          performed_by: user.id,
-          performer_role: isAdmin ? "admin" : "cs",
-          note: `حصة المزود: ${providerShare} د.أ`,
-        });
-      }
-      toast.success("تم حفظ حصة المزود ✅");
-      setEditingProviderShare(false);
-      refresh();
-    } catch (err: any) {
-      toast.error(err.message);
-    } finally {
-      setSavingProviderShare(false);
-    }
-  };
-
-  /* ── Phase 4: Final assignment (or re-assignment after rejection) ── */
+  /* ── Final assignment ── */
   const handleAssign = async () => {
     if (!selectedProvider) return;
     setAssigning(true);
@@ -307,7 +332,6 @@ const OrderWorkflowPhases = ({ booking, serviceName, servicePrice, onWorkflowCha
           status: "ASSIGNED",
           assigned_at: now,
           assigned_by: isAdmin ? "admin" : "cs",
-          // Clear rejection fields on re-assignment
           rejected_at: null,
           rejected_by: null,
           reject_reason: null,
@@ -327,7 +351,6 @@ const OrderWorkflowPhases = ({ booking, serviceName, servicePrice, onWorkflowCha
         });
       }
 
-      // Webhook outbox: order_assigned event
       await supabase.from("booking_outbox").insert({
         booking_id: booking.id,
         destination: "webhook",
@@ -377,7 +400,6 @@ const OrderWorkflowPhases = ({ booking, serviceName, servicePrice, onWorkflowCha
 
   const profit = (isClientPriceSaved ? booking.agreed_price! : clientPrice) - providerShare;
 
-  // Coordinator selector
   const CoordinatorSelector = () => {
     if (!coordinatorPhones.phone2) return null;
     return (
@@ -395,9 +417,10 @@ const OrderWorkflowPhases = ({ booking, serviceName, servicePrice, onWorkflowCha
     );
   };
 
-  const ProviderCard = ({ id, name, phone, city, roleType, experienceYears, distanceKm, availableNow }: {
+  const ProviderCard = ({ id, name, phone, city, roleType, experienceYears, distanceKm, availableNow, providerNumber }: {
     id: string; name: string; phone: string | null; city: string | null;
     roleType: string | null; experienceYears: number | null; distanceKm?: number; availableNow: boolean;
+    providerNumber?: number | null;
   }) => {
     const stats = providerStats[id];
     return (
@@ -410,7 +433,14 @@ const OrderWorkflowPhases = ({ booking, serviceName, servicePrice, onWorkflowCha
           onClick={() => setSelectedProvider(id)}
         >
           <div>
-            <p className="text-sm font-medium">{name || "—"}</p>
+            <div className="flex items-center gap-2">
+              <p className="text-sm font-medium">{name || "—"}</p>
+              {providerNumber && (
+                <Badge variant="outline" className="text-[9px] px-1 py-0 font-mono">
+                  #{providerNumber}
+                </Badge>
+              )}
+            </div>
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <span>{ROLE_TYPE_LABELS[roleType || ""] || ""}</span>
               {city && <><span>·</span><span>{city}</span></>}
@@ -449,7 +479,7 @@ const OrderWorkflowPhases = ({ booking, serviceName, servicePrice, onWorkflowCha
                   <span className="font-semibold">{stats?.cancelled || 0}</span>
                 </span>
               </TooltipTrigger>
-              <TooltipContent>طلبات ملغاة/مرفوضة</TooltipContent>
+              <TooltipContent>طلبات ملغاة/مرفوضة (بدون إلغاءات العميل)</TooltipContent>
             </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -490,7 +520,6 @@ const OrderWorkflowPhases = ({ booking, serviceName, servicePrice, onWorkflowCha
               </a>
             </>
           )}
-          {/* Select this provider */}
           {selectedProvider !== id && (
             <Button size="sm" variant="ghost" className="gap-1 h-6 text-[10px]" onClick={() => setSelectedProvider(id)}>
               اختيار
@@ -516,231 +545,225 @@ const OrderWorkflowPhases = ({ booking, serviceName, servicePrice, onWorkflowCha
         </div>
       )}
 
-      {/* ═══ Phase 1: Client Negotiation ═══ */}
-      <div className={`rounded-lg border p-3 space-y-3 ${(isClientDealDone || clientAgreed) && isClientPriceSaved ? "border-success/30 bg-success/5" : "border-primary/30 bg-primary/5"}`}>
+      {/* ═══ Phase 1: Provider Negotiation ═══ */}
+      <div className={`rounded-lg border p-3 space-y-3 ${isProviderShareSaved ? "border-success/30 bg-success/5" : "border-primary/30 bg-primary/5"}`}>
+        <div className="flex items-center gap-2">
+          {isProviderShareSaved
+            ? <CheckCircle className="h-4 w-4 text-success" />
+            : <Users className="h-4 w-4 text-primary" />}
+          <h4 className="text-sm font-bold">المرحلة 1: الاتفاق مع المزود</h4>
+          {isProviderShareSaved && <Badge variant="outline" className="text-[10px] bg-success/10 text-success">✓</Badge>}
+        </div>
+
+        {/* Provider list */}
+        {!isAssigned && (
+          <>
+            {loadingProviders ? (
+              <div className="flex justify-center py-4"><Loader2 className="h-5 w-5 animate-spin text-primary" /></div>
+            ) : (
+              <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                {nearestProviders.length > 0 && (
+                  <div className="space-y-1.5">
+                    <p className="text-xs text-muted-foreground font-medium">🎯 الأقرب (حسب المسافة):</p>
+                    {nearestProviders.map((p) => (
+                      <ProviderCard
+                        key={p.provider_id} id={p.provider_id} name={p.full_name}
+                        phone={p.phone} city={p.city} roleType={p.role_type}
+                        experienceYears={p.experience_years} distanceKm={p.distance_km}
+                        availableNow={p.available_now}
+                      />
+                    ))}
+                  </div>
+                )}
+                {sameCityProviders.length > 0 && (
+                  <div className="space-y-1.5">
+                    <p className="text-xs text-muted-foreground font-medium">📍 في نفس المدينة:</p>
+                    {sameCityProviders.map((p) => (
+                      <ProviderCard
+                        key={p.user_id} id={p.user_id} name={p.full_name || "—"}
+                        phone={p.phone} city={p.city} roleType={p.role_type}
+                        experienceYears={p.experience_years} availableNow={p.available_now || false}
+                        providerNumber={p.provider_number}
+                      />
+                    ))}
+                  </div>
+                )}
+                {otherCityProviders.length > 0 && (
+                  <div className="space-y-1.5">
+                    <p className="text-xs text-muted-foreground font-medium">🌍 مزوّدون في مدن أخرى:</p>
+                    {otherCityProviders.map((p) => (
+                      <ProviderCard
+                        key={p.user_id} id={p.user_id} name={p.full_name || "—"}
+                        phone={p.phone} city={p.city} roleType={p.role_type}
+                        experienceYears={p.experience_years} availableNow={p.available_now || false}
+                        providerNumber={p.provider_number}
+                      />
+                    ))}
+                  </div>
+                )}
+                {nearestProviders.length === 0 && sameCityProviders.length === 0 && otherCityProviders.length === 0 && (
+                  <p className="text-sm text-muted-foreground text-center py-4">لا يوجد مزوّدون معتمدون</p>
+                )}
+              </div>
+            )}
+
+            {/* Provider agreed button */}
+            {selectedProvider && !providerAgreed && !isProviderShareSaved && (
+              <Button size="sm" variant="outline" className="w-full gap-1.5" onClick={() => setProviderAgreed(true)}>
+                <Handshake className="h-3 w-3" /> تم الاتفاق مع المزود
+              </Button>
+            )}
+
+            {/* Provider share input */}
+            {selectedProvider && (providerAgreed || isProviderShareSaved) && (
+              <>
+                {!isProviderShareSaved || editingProviderShare ? (
+                  <div className="space-y-2">
+                    <div>
+                      <label className="text-xs font-medium">حصة المزود (د.أ) *</label>
+                      <Input
+                        type="number" min={0} step="0.5" value={providerShare}
+                        onChange={(e) => setProviderShare(Number(e.target.value))}
+                        dir="ltr" className="h-8 mt-1"
+                      />
+                    </div>
+                    <Button size="sm" className="w-full gap-1.5" onClick={saveProviderShare} disabled={savingProviderShare}>
+                      {savingProviderShare ? <Loader2 className="h-3 w-3 animate-spin" /> : <DollarSign className="h-3 w-3" />}
+                      حفظ حصة المزود
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="text-xs text-muted-foreground">حصة المزود</span>
+                      <p className="font-bold">{formatCurrency(booking.provider_share!)}</p>
+                    </div>
+                    <Button size="sm" variant="ghost" className="gap-1 h-7 text-xs" onClick={() => setEditingProviderShare(true)}>
+                      <Edit2 className="h-3 w-3" /> تعديل
+                    </Button>
+                  </div>
+                )}
+              </>
+            )}
+          </>
+        )}
+
+        {isAssigned && (
+          <p className="text-xs text-success">✅ تم اختيار المزود وحفظ حصته</p>
+        )}
+      </div>
+
+      {/* ═══ Phase 2: Client Negotiation (locked until provider share saved) ═══ */}
+      <div className={`rounded-lg border p-3 space-y-3 ${!isProviderShareSaved ? "opacity-50 pointer-events-none border-muted" : (isClientDealDone || clientAgreed) && isClientPriceSaved ? "border-success/30 bg-success/5" : "border-primary/30 bg-primary/5"}`}>
         <div className="flex items-center gap-2">
           {(isClientDealDone || clientAgreed) && isClientPriceSaved
             ? <CheckCircle className="h-4 w-4 text-success" />
-            : <Handshake className="h-4 w-4 text-primary" />}
-          <h4 className="text-sm font-bold">المرحلة 1: الاتفاق مع العميل</h4>
+            : !isProviderShareSaved ? <Lock className="h-4 w-4 text-muted-foreground" /> : <Handshake className="h-4 w-4 text-primary" />}
+          <h4 className="text-sm font-bold">المرحلة 2: الاتفاق مع العميل</h4>
           {(isClientDealDone || clientAgreed) && isClientPriceSaved && <Badge variant="outline" className="text-[10px] bg-success/10 text-success">✓</Badge>}
         </div>
 
-        {/* Client contact info */}
-        <div className="rounded-lg border border-border p-2 space-y-1">
-          <p className="text-sm font-medium">{booking.customer_name || booking.customer_display_name || "—"}</p>
-          <p className="text-sm" dir="ltr">{booking.customer_phone || "—"}</p>
-          <div className="flex gap-1.5 mt-1">
-            {booking.customer_phone && (
-              <a href={`tel:${booking.customer_phone}`}>
-                <Button size="sm" variant="outline" className="gap-1 h-6 text-[10px]">
-                  <Phone className="h-3 w-3" /> اتصال
-                </Button>
-              </a>
-            )}
-            {booking.customer_phone && (
-              <a
-                href={`https://wa.me/${booking.customer_phone.replace(/^0/, "962")}?text=${encodeURIComponent(`مرحباً ${booking.customer_name || ""}، نحن من فريق MFN.`)}`}
-                target="_blank" rel="noopener noreferrer"
-              >
-                <Button size="sm" variant="outline" className="gap-1 h-6 text-[10px]">
-                  <MessageCircle className="h-3 w-3" /> واتساب
-                </Button>
-              </a>
-            )}
-          </div>
-        </div>
-
-        {/* Client agreement button */}
-        {!isClientDealDone && !clientAgreed && (
-          <Button size="sm" className="w-full gap-1.5" onClick={markClientAgreed}>
-            <Handshake className="h-3 w-3" /> تم الاتفاق مع العميل
-          </Button>
-        )}
-
-        {/* Client price input (shown after agreement) */}
-        {(isClientDealDone || clientAgreed) && (
+        {isProviderShareSaved && (
           <>
-            {!isClientPriceSaved || editingClientPrice ? (
-              <div className="space-y-2">
-                <div>
-                  <label className="text-xs font-medium">سعر العميل (د.أ) *</label>
-                  <Input
-                    type="number" min={0} step="0.5" value={clientPrice}
-                    onChange={(e) => setClientPrice(Number(e.target.value))}
-                    dir="ltr" className="h-8 mt-1"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-medium">ملاحظة داخلية</label>
-                  <Textarea
-                    value={internalNote}
-                    onChange={(e) => setInternalNote(e.target.value)}
-                    placeholder="ملاحظة لا تظهر للمزوّد أو العميل..."
-                    rows={2} className="mt-1"
-                  />
-                </div>
-                <Button size="sm" className="w-full gap-1.5" onClick={saveClientPrice} disabled={savingClientPrice}>
-                  {savingClientPrice ? <Loader2 className="h-3 w-3 animate-spin" /> : <DollarSign className="h-3 w-3" />}
-                  حفظ سعر العميل
-                </Button>
+            {/* Client contact info */}
+            <div className="rounded-lg border border-border p-2 space-y-1">
+              <p className="text-sm font-medium">{booking.customer_name || booking.customer_display_name || "—"}</p>
+              <p className="text-sm" dir="ltr">{booking.customer_phone || "—"}</p>
+              <div className="flex gap-1.5 mt-1">
+                {booking.customer_phone && (
+                  <a href={`tel:${booking.customer_phone}`}>
+                    <Button size="sm" variant="outline" className="gap-1 h-6 text-[10px]">
+                      <Phone className="h-3 w-3" /> اتصال
+                    </Button>
+                  </a>
+                )}
+                {booking.customer_phone && (
+                  <a
+                    href={`https://wa.me/${booking.customer_phone.replace(/^0/, "962")}?text=${encodeURIComponent(`مرحباً ${booking.customer_name || ""}، نحن من فريق MFN.`)}`}
+                    target="_blank" rel="noopener noreferrer"
+                  >
+                    <Button size="sm" variant="outline" className="gap-1 h-6 text-[10px]">
+                      <MessageCircle className="h-3 w-3" /> واتساب
+                    </Button>
+                  </a>
+                )}
               </div>
-            ) : (
-              <div className="flex items-center justify-between">
-                <div>
-                  <span className="text-xs text-muted-foreground">سعر العميل</span>
-                  <p className="font-bold">{formatCurrency(booking.agreed_price!)}</p>
-                </div>
-                <Button size="sm" variant="ghost" className="gap-1 h-7 text-xs" onClick={() => setEditingClientPrice(true)}>
-                  <Edit2 className="h-3 w-3" /> تعديل
-                </Button>
-              </div>
+            </div>
+
+            {/* Client agreement button */}
+            {!isClientDealDone && !clientAgreed && (
+              <Button size="sm" className="w-full gap-1.5" onClick={markClientAgreed}>
+                <Handshake className="h-3 w-3" /> تم الاتفاق مع العميل
+              </Button>
+            )}
+
+            {/* Client price input */}
+            {(isClientDealDone || clientAgreed) && (
+              <>
+                {!isClientPriceSaved || editingClientPrice ? (
+                  <div className="space-y-2">
+                    <div>
+                      <label className="text-xs font-medium">سعر العميل (د.أ) *</label>
+                      <Input
+                        type="number" min={0} step="0.5" value={clientPrice}
+                        onChange={(e) => setClientPrice(Number(e.target.value))}
+                        dir="ltr" className="h-8 mt-1"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium">ملاحظة داخلية</label>
+                      <Textarea
+                        value={internalNote}
+                        onChange={(e) => setInternalNote(e.target.value)}
+                        placeholder="ملاحظة لا تظهر للمزوّد أو العميل..."
+                        rows={2} className="mt-1"
+                      />
+                    </div>
+                    {providerShare >= 0 && clientPrice > 0 && (
+                      <p className="text-xs text-muted-foreground">
+                        ربح المنصة: <strong className={clientPrice - providerShare >= 0 ? "text-success" : "text-destructive"}>{formatCurrency(clientPrice - providerShare)}</strong>
+                      </p>
+                    )}
+                    <Button size="sm" className="w-full gap-1.5" onClick={saveClientPrice} disabled={savingClientPrice}>
+                      {savingClientPrice ? <Loader2 className="h-3 w-3 animate-spin" /> : <DollarSign className="h-3 w-3" />}
+                      حفظ سعر العميل
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between">
+                    <div className="grid grid-cols-3 gap-2 flex-1">
+                      <div>
+                        <span className="text-xs text-muted-foreground">حصة المزود</span>
+                        <p className="font-bold text-sm">{formatCurrency(booking.provider_share!)}</p>
+                      </div>
+                      <div>
+                        <span className="text-xs text-muted-foreground">سعر العميل</span>
+                        <p className="font-bold text-sm">{formatCurrency(booking.agreed_price!)}</p>
+                      </div>
+                      <div>
+                        <span className="text-xs text-muted-foreground">ربح المنصة</span>
+                        <p className={`font-bold text-sm ${(booking.agreed_price! - booking.provider_share!) >= 0 ? "text-success" : "text-destructive"}`}>
+                          {formatCurrency(booking.agreed_price! - booking.provider_share!)}
+                        </p>
+                      </div>
+                    </div>
+                    <Button size="sm" variant="ghost" className="gap-1 h-7 text-xs" onClick={() => setEditingClientPrice(true)}>
+                      <Edit2 className="h-3 w-3" /> تعديل
+                    </Button>
+                  </div>
+                )}
+              </>
             )}
           </>
         )}
       </div>
 
-      {/* ═══ Phase 2: Assign Trigger ═══ */}
-      <div className={`rounded-lg border p-3 space-y-3 ${!isClientPriceSaved ? "opacity-50 pointer-events-none border-muted" : showProviders || isAssigned ? "border-success/30 bg-success/5" : "border-primary/30 bg-primary/5"}`}>
-        <div className="flex items-center gap-2">
-          {showProviders || isAssigned
-            ? <CheckCircle className="h-4 w-4 text-success" />
-            : !isClientPriceSaved ? <Lock className="h-4 w-4 text-muted-foreground" /> : <Users className="h-4 w-4 text-primary" />}
-          <h4 className="text-sm font-bold">المرحلة 2: إسناد الطلب</h4>
-          {isAssigned && <Badge variant="outline" className="text-[10px] bg-success/10 text-success">✓</Badge>}
-        </div>
-
-        {isClientPriceSaved && !showProviders && !isAssigned && (
-          <Button size="sm" className="w-full gap-1.5" onClick={openProviderList}>
-            <Users className="h-3 w-3" /> عرض المزودين المتاحين
-          </Button>
-        )}
-
-        {isAssigned && (
-          <p className="text-xs text-success">✅ تم إسناد الطلب</p>
-        )}
-      </div>
-
-      {/* ═══ Phase 3: Provider Negotiation ═══ */}
-      {(showProviders && !isAssigned) && (
-        <div className="rounded-lg border p-3 space-y-3 border-primary/30 bg-primary/5">
-          <div className="flex items-center gap-2">
-            <Users className="h-4 w-4 text-primary" />
-            <h4 className="text-sm font-bold">المرحلة 3: الاتفاق مع المزود</h4>
-          </div>
-
-          {/* Provider list */}
-          {loadingProviders ? (
-            <div className="flex justify-center py-4"><Loader2 className="h-5 w-5 animate-spin text-primary" /></div>
-          ) : (
-            <div className="space-y-2 max-h-[300px] overflow-y-auto">
-              {nearestProviders.length > 0 && (
-                <div className="space-y-1.5">
-                  <p className="text-xs text-muted-foreground font-medium">🎯 الأقرب (حسب المسافة):</p>
-                  {nearestProviders.map((p) => (
-                    <ProviderCard
-                      key={p.provider_id} id={p.provider_id} name={p.full_name}
-                      phone={p.phone} city={p.city} roleType={p.role_type}
-                      experienceYears={p.experience_years} distanceKm={p.distance_km}
-                      availableNow={p.available_now}
-                    />
-                  ))}
-                </div>
-              )}
-              {sameCityProviders.length > 0 && (
-                <div className="space-y-1.5">
-                  <p className="text-xs text-muted-foreground font-medium">📍 في نفس المدينة:</p>
-                  {sameCityProviders.map((p) => (
-                    <ProviderCard
-                      key={p.user_id} id={p.user_id} name={p.full_name || "—"}
-                      phone={p.phone} city={p.city} roleType={p.role_type}
-                      experienceYears={p.experience_years} availableNow={p.available_now || false}
-                    />
-                  ))}
-                </div>
-              )}
-              {otherCityProviders.length > 0 && (
-                <div className="space-y-1.5">
-                  <p className="text-xs text-muted-foreground font-medium">🌍 مزوّدون في مدن أخرى:</p>
-                  {otherCityProviders.map((p) => (
-                    <ProviderCard
-                      key={p.user_id} id={p.user_id} name={p.full_name || "—"}
-                      phone={p.phone} city={p.city} roleType={p.role_type}
-                      experienceYears={p.experience_years} availableNow={p.available_now || false}
-                    />
-                  ))}
-                </div>
-              )}
-              {nearestProviders.length === 0 && sameCityProviders.length === 0 && otherCityProviders.length === 0 && (
-                <p className="text-sm text-muted-foreground text-center py-4">لا يوجد مزوّدون معتمدون</p>
-              )}
-            </div>
-          )}
-
-          {/* Provider agreed button */}
-          {selectedProvider && !providerAgreed && !isProviderShareSaved && (
-            <Button size="sm" variant="outline" className="w-full gap-1.5" onClick={() => setProviderAgreed(true)}>
-              <Handshake className="h-3 w-3" /> تم الاتفاق مع المزود
-            </Button>
-          )}
-
-          {/* Provider share input (shown after provider agreement) */}
-          {selectedProvider && (providerAgreed || isProviderShareSaved) && (
-            <>
-              {!isProviderShareSaved || editingProviderShare ? (
-                <div className="space-y-2">
-                  <div>
-                    <label className="text-xs font-medium">حصة المزود (د.أ) *</label>
-                    <Input
-                      type="number" min={0} step="0.5" value={providerShare}
-                      onChange={(e) => setProviderShare(Number(e.target.value))}
-                      dir="ltr" className="h-8 mt-1"
-                    />
-                  </div>
-                  {clientPrice > 0 && providerShare >= 0 && (
-                    <p className="text-xs text-muted-foreground">
-                      ربح المنصة: <strong className={profit >= 0 ? "text-success" : "text-destructive"}>{formatCurrency(profit)}</strong>
-                    </p>
-                  )}
-                  <Button size="sm" className="w-full gap-1.5" onClick={saveProviderShare} disabled={savingProviderShare}>
-                    {savingProviderShare ? <Loader2 className="h-3 w-3 animate-spin" /> : <DollarSign className="h-3 w-3" />}
-                    حفظ حصة المزود
-                  </Button>
-                </div>
-              ) : (
-                <div className="flex items-center justify-between">
-                  <div className="grid grid-cols-3 gap-2 flex-1">
-                    <div>
-                      <span className="text-xs text-muted-foreground">سعر العميل</span>
-                      <p className="font-bold text-sm">{formatCurrency(booking.agreed_price!)}</p>
-                    </div>
-                    <div>
-                      <span className="text-xs text-muted-foreground">حصة المزود</span>
-                      <p className="font-bold text-sm">{formatCurrency(booking.provider_share!)}</p>
-                    </div>
-                    <div>
-                      <span className="text-xs text-muted-foreground">ربح المنصة</span>
-                      <p className={`font-bold text-sm ${(booking.agreed_price! - booking.provider_share!) >= 0 ? "text-success" : "text-destructive"}`}>
-                        {formatCurrency(booking.agreed_price! - booking.provider_share!)}
-                      </p>
-                    </div>
-                  </div>
-                  <Button size="sm" variant="ghost" className="gap-1 h-7 text-xs" onClick={() => setEditingProviderShare(true)}>
-                    <Edit2 className="h-3 w-3" /> تعديل
-                  </Button>
-                </div>
-              )}
-            </>
-          )}
-        </div>
-      )}
-
-      {/* ═══ Phase 4: Final Assignment ═══ */}
-      {showProviders && !isAssigned && selectedProvider && isProviderShareSaved && (
+      {/* ═══ Phase 3: Final Assignment ═══ */}
+      {selectedProvider && isProviderShareSaved && isClientPriceSaved && !isAssigned && (
         <div className="rounded-lg border p-3 space-y-3 border-warning/30 bg-warning/5">
           <div className="flex items-center gap-2">
             <UserCheck className="h-4 w-4 text-warning" />
-            <h4 className="text-sm font-bold">المرحلة 4: تأكيد الإسناد</h4>
+            <h4 className="text-sm font-bold">المرحلة 3: تأكيد الإسناد</h4>
           </div>
           <Button
             className="w-full gap-1.5"

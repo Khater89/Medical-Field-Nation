@@ -109,14 +109,16 @@ const ProviderDetailsDrawer = ({ provider, open, onOpenChange, onApprove, onSusp
   }, [provider?.user_id, open]);
 
   const fetchProviderStats = async (providerId: string) => {
-    const [bookingsRes, ratingsRes] = await Promise.all([
-      supabase.from("bookings").select("status").eq("assigned_provider_id", providerId).in("status", ["COMPLETED", "CANCELLED", "REJECTED"]),
+    const [bookingsRes, ratingsRes, clientCancelRes] = await Promise.all([
+      supabase.from("bookings").select("id, status").eq("assigned_provider_id", providerId).in("status", ["COMPLETED", "CANCELLED", "REJECTED"]),
       supabase.from("provider_ratings" as any).select("rating").eq("provider_id", providerId),
+      supabase.from("booking_history").select("booking_id").eq("action", "CANCELLED").eq("performer_role", "customer"),
     ]);
+    const clientCancelledIds = new Set((clientCancelRes.data || []).map((h: any) => h.booking_id));
     let completed = 0, cancelled = 0;
     (bookingsRes.data || []).forEach((b: any) => {
       if (b.status === "COMPLETED") completed++;
-      else cancelled++;
+      else if (!clientCancelledIds.has(b.id)) cancelled++;
     });
     setStatsCompleted(completed);
     setStatsCancelled(cancelled);
