@@ -849,7 +849,10 @@ const ProviderDashboard = () => {
         </Card>
 
         <Tabs defaultValue="orders" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="available" className="gap-1.5 text-xs">
+              <DollarSign className="h-4 w-4" /> طلبات متاحة
+            </TabsTrigger>
             <TabsTrigger value="orders" className="gap-1.5 text-xs">
               <ClipboardList className="h-4 w-4" /> {t("provider.dashboard.tab.orders")} ({orders.length})
             </TabsTrigger>
@@ -860,6 +863,11 @@ const ProviderDashboard = () => {
               <Wallet className="h-4 w-4" /> {t("provider.dashboard.tab.wallet")}
             </TabsTrigger>
           </TabsList>
+
+          {/* ═══ Available Bookings Tab ═══ */}
+          <TabsContent value="available" className="space-y-3">
+            <AvailableBookingsTab serviceNames={serviceNames} />
+          </TabsContent>
 
           {/* ═══ Orders Tab ═══ */}
           <TabsContent value="orders" className="space-y-3">
