@@ -231,6 +231,7 @@ const ProvidersTab = () => {
         (p.full_name || "").toLowerCase().includes(q) ||
         (p.phone || "").includes(q) ||
         (p.city || "").toLowerCase().includes(q) ||
+        (p.provider_number != null && String(p.provider_number).includes(q)) ||
         (p.specialties || []).some((s) => s.toLowerCase().includes(q))
       );
     }
@@ -306,7 +307,10 @@ const ProvidersTab = () => {
                   onClick={() => setSelectedProvider(p)}
                 >
                   <TableCell className="font-medium text-sm">
-                    {p.full_name || t("admin.providers.no_name")}
+                    <span>{p.full_name || t("admin.providers.no_name")}</span>
+                    {p.provider_number && (
+                      <span className="ms-1.5 text-[10px] font-mono text-primary">#{p.provider_number}</span>
+                    )}
                   </TableCell>
                   <TableCell className="text-xs" dir="ltr">{p.phone}</TableCell>
                   <TableCell className="text-xs">

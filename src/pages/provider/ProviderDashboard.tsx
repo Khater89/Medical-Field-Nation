@@ -47,6 +47,7 @@ interface ProviderOrder {
   client_lat: number | null;
   client_lng: number | null;
   notes: string | null;
+  payment_method: string | null;
   check_in_at: string | null;
   check_out_at: string | null;
   actual_duration_minutes: number | null;
@@ -792,7 +793,12 @@ const ProviderDashboard = () => {
             <div>
               <p className="text-[10px] font-semibold text-primary tracking-wide">{t("app.brand_name")}</p>
               <h1 className="text-sm font-bold text-foreground">{t("provider.dashboard.title")}</h1>
-              <p className="text-[10px] text-muted-foreground">{profile?.full_name || user?.email}</p>
+              <p className="text-[10px] text-muted-foreground">
+                {profile?.full_name || user?.email}
+                {(profile as any)?.provider_number && (
+                  <span className="ms-1.5 font-mono text-primary font-semibold">#{(profile as any).provider_number}</span>
+                )}
+              </p>
             </div>
           </Link>
           <Button variant="ghost" size="sm" onClick={handleSignOut} className="gap-1.5">
@@ -986,6 +992,8 @@ const ProviderDashboard = () => {
                               <span className="font-medium">{formatDate(o.scheduled_at)}</span>
                               <span className="text-muted-foreground">السعر:</span>
                               <span className="font-medium text-primary">{o.agreed_price != null ? formatCurrency(o.agreed_price) : formatCurrency(o.subtotal)}</span>
+                              <span className="text-muted-foreground">طريقة الدفع:</span>
+                              <span className="font-medium">{o.payment_method === "CLIQ" ? "CliQ" : o.payment_method === "INSURANCE" ? "تأمين طبي" : "نقداً"}</span>
                             </div>
                             {/* Phone hidden notice */}
                             <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-muted rounded p-2 mt-1">

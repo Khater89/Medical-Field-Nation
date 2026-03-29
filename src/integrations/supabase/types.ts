@@ -802,6 +802,7 @@ export type Database = {
           created_at: string
           id: string
           notes: string
+          payment_method: string
           scheduled_at: string
           service_id: string
         }[]
@@ -846,6 +847,7 @@ export type Database = {
           id: string
           notes: string
           otp_code: string
+          payment_method: string
           provider_payout: number
           scheduled_at: string
           service_id: string
