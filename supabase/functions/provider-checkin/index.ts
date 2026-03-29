@@ -21,7 +21,7 @@ function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): nu
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-const MAX_CHECKIN_DISTANCE_KM = 5; // must be within 5 km of client
+const MAX_CHECKIN_DISTANCE_KM = 10; // must be within 10 km of client
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
