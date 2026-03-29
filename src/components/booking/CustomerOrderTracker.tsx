@@ -149,19 +149,65 @@ const CustomerOrderTracker = ({ bookingId, onClose }: OrderTrackerProps) => {
         ))}
       </div>
 
-      {/* Payment Method - shown after completion */}
-      {booking.status === "COMPLETED" && booking.payment_method && (
+      {/* Payment Method Selection - shown after completion */}
+      {booking.status === "COMPLETED" && (
         <Card className="border-border">
-          <CardContent className="py-3">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">طريقة الدفع</span>
+          <CardContent className="py-4 space-y-3">
+            <h4 className="text-sm font-bold">طريقة الدفع</h4>
+            {booking.payment_status === "PAYMENT_METHOD_SET" ? (
               <Badge variant="outline" className="text-xs">
                 {booking.payment_method === "CASH" ? "💵 نقداً — للمزود" :
                  booking.payment_method === "CLIQ" ? "📱 CliQ — للمنصة" :
                  booking.payment_method === "INSURANCE" ? "🏥 تأمين طبي" :
                  booking.payment_method}
               </Badge>
-            </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { value: "CASH", label: "💵 نقداً", desc: "للمزود" },
+                    { value: "CLIQ", label: "📱 CliQ", desc: "للمنصة" },
+                    { value: "INSURANCE", label: "🏥 تأمين", desc: "طبي" },
+                  ].map((pm) => (
+                    <button
+                      key={pm.value}
+                      onClick={() => setSelectedPayment(pm.value)}
+                      className={`p-3 rounded-lg border text-center transition-all ${
+                        selectedPayment === pm.value
+                          ? "border-primary bg-primary/10 ring-2 ring-primary/30"
+                          : "border-border hover:border-primary/50"
+                      }`}
+                    >
+                      <span className="text-lg block">{pm.label}</span>
+                      <span className="text-[10px] text-muted-foreground">{pm.desc}</span>
+                    </button>
+                  ))}
+                </div>
+                <Button
+                  size="sm"
+                  disabled={!selectedPayment || savingPayment}
+                  onClick={async () => {
+                    if (!selectedPayment) return;
+                    setSavingPayment(true);
+                    const { error } = await supabase
+                      .from("bookings")
+                      .update({ payment_method: selectedPayment, payment_status: "PAYMENT_METHOD_SET" })
+                      .eq("id", bookingId);
+                    setSavingPayment(false);
+                    if (error) {
+                      toast({ title: "خطأ", description: error.message, variant: "destructive" });
+                    } else {
+                      setBooking({ ...booking, payment_method: selectedPayment, payment_status: "PAYMENT_METHOD_SET" });
+                      toast({ title: "تم حفظ طريقة الدفع ✅" });
+                    }
+                  }}
+                  className="w-full gap-1.5"
+                >
+                  {savingPayment && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                  تأكيد طريقة الدفع
+                </Button>
+              </>
+            )}
           </CardContent>
         </Card>
       )}
