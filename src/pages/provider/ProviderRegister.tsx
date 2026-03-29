@@ -324,7 +324,8 @@ const ProviderRegister = () => {
     // Check if we have an active session (auto-confirm enabled)
     const { data: sessionData } = await supabase.auth.getSession();
     if (sessionData.session) {
-      // Auto-confirm is on — update profile immediately
+      // Auto-confirm is on — upload pending certs then update profile
+      const certs = await uploadPendingCerts(newUser.id);
       await supabase
         .from("profiles")
         .update({
@@ -339,18 +340,19 @@ const ProviderRegister = () => {
           radius_km: radiusKm ? parseInt(radiusKm) : 20,
           specialties: selectedSpecialties.length > 0 ? selectedSpecialties : null,
           provider_status: "pending",
-          academic_cert_url: academicCertUrl,
-          experience_cert_url: experienceCertUrl,
+          academic_cert_url: certs.academic,
+          experience_cert_url: certs.experience,
         } as any)
         .eq("user_id", newUser.id);
 
       await refreshUserData();
       setSaving(false);
       toast({ title: t("register.submitted_success") });
+      navigate("/account-review", { replace: true });
     } else {
-      // Email confirmation required — save metadata for later, redirect to verify page
+      // Email confirmation required — save pending files as base64 for later upload
       // Store profile data in localStorage so it can be applied after email verification
-      localStorage.setItem("pending_provider_profile", JSON.stringify({
+      const pendingData: any = {
         full_name: name.trim(),
         phone: phone.trim(),
         city: city.trim(),
@@ -361,9 +363,30 @@ const ProviderRegister = () => {
         address_text: addressText.trim() || null,
         radius_km: radiusKm ? parseInt(radiusKm) : 20,
         specialties: selectedSpecialties.length > 0 ? selectedSpecialties : null,
-        academic_cert_url: academicCertUrl,
-        experience_cert_url: experienceCertUrl,
-      }));
+        provider_status: "pending",
+      };
+
+      // Store file names for later upload reference
+      if (pendingAcademicFile) {
+        const reader = new FileReader();
+        const base64 = await new Promise<string>((resolve) => {
+          reader.onload = () => resolve(reader.result as string);
+          reader.readAsDataURL(pendingAcademicFile);
+        });
+        pendingData._academicCertBase64 = base64;
+        pendingData._academicCertName = pendingAcademicFile.name;
+      }
+      if (pendingExperienceFile) {
+        const reader = new FileReader();
+        const base64 = await new Promise<string>((resolve) => {
+          reader.onload = () => resolve(reader.result as string);
+          reader.readAsDataURL(pendingExperienceFile);
+        });
+        pendingData._experienceCertBase64 = base64;
+        pendingData._experienceCertName = pendingExperienceFile.name;
+      }
+
+      localStorage.setItem("pending_provider_profile", JSON.stringify(pendingData));
       setSaving(false);
       navigate("/verify-email");
     }
