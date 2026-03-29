@@ -516,6 +516,44 @@ export type Database = {
         }
         Relationships: []
       }
+      provider_quotes: {
+        Row: {
+          booking_id: string
+          created_at: string
+          id: string
+          note: string | null
+          provider_id: string
+          quoted_price: number
+          status: string
+        }
+        Insert: {
+          booking_id: string
+          created_at?: string
+          id?: string
+          note?: string | null
+          provider_id: string
+          quoted_price: number
+          status?: string
+        }
+        Update: {
+          booking_id?: string
+          created_at?: string
+          id?: string
+          note?: string | null
+          provider_id?: string
+          quoted_price?: number
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "provider_quotes_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       provider_ratings: {
         Row: {
           booking_id: string
@@ -752,6 +790,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      available_bookings_for_providers: {
+        Args: never
+        Returns: {
+          area_public: string
+          booking_number: string
+          city: string
+          created_at: string
+          id: string
+          notes: string
+          scheduled_at: string
+          service_id: string
+        }[]
+      }
       calc_escalating_price: {
         Args: { base_price: number; duration_minutes: number }
         Returns: number
