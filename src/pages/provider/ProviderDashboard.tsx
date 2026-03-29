@@ -274,6 +274,8 @@ const ProviderDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState("ALL");
+  const [providerNotifications, setProviderNotifications] = useState<any[]>([]);
+  const [unreadNotifCount, setUnreadNotifCount] = useState(0);
   const [coordinatorPhone, setCoordinatorPhone] = useState<string | null>(null);
   const [coordinatorPhone2, setCoordinatorPhone2] = useState<string | null>(null);
   const [completeDialogOrder, setCompleteDialogOrder] = useState<string | null>(null);
@@ -363,6 +365,17 @@ const ProviderDashboard = () => {
       setDebtLimit(limit);
       setIsOnHold(bal < limit);
     }
+    // Fetch provider notifications
+    const { data: notifs } = await supabase
+      .from("staff_notifications")
+      .select("*")
+      .eq("provider_id", user.id)
+      .eq("target_role", "provider")
+      .order("created_at", { ascending: false })
+      .limit(50);
+    setProviderNotifications(notifs || []);
+    setUnreadNotifCount((notifs || []).filter((n: any) => !n.read).length);
+
     setLoading(false);
   };
 
@@ -856,24 +869,69 @@ const ProviderDashboard = () => {
         </Card>
 
         <Tabs defaultValue="orders" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="available" className="gap-1.5 text-xs">
-              <DollarSign className="h-4 w-4" /> طلبات متاحة
+          <TabsList className="grid w-full grid-cols-5">
+            <TabsTrigger value="available" className="gap-1 text-[10px] sm:text-xs">
+              <DollarSign className="h-3.5 w-3.5" /> متاحة
             </TabsTrigger>
-            <TabsTrigger value="orders" className="gap-1.5 text-xs">
-              <ClipboardList className="h-4 w-4" /> {t("provider.dashboard.tab.orders")} ({orders.length})
+            <TabsTrigger value="orders" className="gap-1 text-[10px] sm:text-xs">
+              <ClipboardList className="h-3.5 w-3.5" /> طلباتي ({orders.length})
             </TabsTrigger>
-            <TabsTrigger value="profile" className="gap-1.5 text-xs">
-              <User className="h-4 w-4" /> {t("provider.dashboard.tab.profile")}
+            <TabsTrigger value="notifications" className="gap-1 text-[10px] sm:text-xs relative">
+              <AlertTriangle className="h-3.5 w-3.5" /> تنبيهات
+              {unreadNotifCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-[9px] rounded-full h-4 w-4 flex items-center justify-center">
+                  {unreadNotifCount}
+                </span>
+              )}
             </TabsTrigger>
-            <TabsTrigger value="wallet" className="gap-1.5 text-xs">
-              <Wallet className="h-4 w-4" /> {t("provider.dashboard.tab.wallet")}
+            <TabsTrigger value="profile" className="gap-1 text-[10px] sm:text-xs">
+              <User className="h-3.5 w-3.5" /> الملف
+            </TabsTrigger>
+            <TabsTrigger value="wallet" className="gap-1 text-[10px] sm:text-xs">
+              <Wallet className="h-3.5 w-3.5" /> المحفظة
             </TabsTrigger>
           </TabsList>
 
           {/* ═══ Available Bookings Tab ═══ */}
           <TabsContent value="available" className="space-y-3">
             <AvailableBookingsTab serviceNames={serviceNames} />
+          </TabsContent>
+
+          {/* ═══ Notifications Tab ═══ */}
+          <TabsContent value="notifications" className="space-y-3">
+            {providerNotifications.length === 0 ? (
+              <p className="text-center text-muted-foreground py-6 text-sm">لا توجد تنبيهات</p>
+            ) : (
+              providerNotifications.map((n: any) => (
+                <Card key={n.id} className={`${!n.read ? "border-primary/30 bg-primary/5" : ""}`}>
+                  <CardContent className="py-3 space-y-1">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1">
+                        <p className="text-sm font-semibold">{n.title}</p>
+                        {n.body && <p className="text-xs text-muted-foreground mt-1">{n.body}</p>}
+                        <p className="text-[10px] text-muted-foreground mt-1">
+                          {new Date(n.created_at).toLocaleString("ar-JO", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                        </p>
+                      </div>
+                      {!n.read && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-6 text-[10px]"
+                          onClick={async () => {
+                            await supabase.from("staff_notifications").update({ read: true }).eq("id", n.id);
+                            setProviderNotifications((prev) => prev.map((p: any) => p.id === n.id ? { ...p, read: true } : p));
+                            setUnreadNotifCount((c) => Math.max(0, c - 1));
+                          }}
+                        >
+                          ✓ قراءة
+                        </Button>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            )}
           </TabsContent>
 
           {/* ═══ Orders Tab ═══ */}

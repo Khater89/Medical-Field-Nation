@@ -319,40 +319,7 @@ const PatientForm = ({ data, onChange }: PatientFormProps) => {
         )}
       </div>
 
-      {/* Payment Method */}
-      <div className="space-y-2">
-        <Label className="flex items-center gap-2 text-sm font-medium">
-          <CreditCard className="h-4 w-4 text-primary" />
-          {t("form.payment_method")}
-        </Label>
-        <RadioGroup
-          value={data.payment_method}
-          onValueChange={(v) => update("payment_method", v)}
-          className="flex flex-wrap gap-3"
-        >
-          {[
-            { value: "CASH", label: t("payment.CASH"), desc: t("payment.cash_desc") },
-            { value: "CLIQ", label: t("payment.CLIQ"), desc: t("payment.cliq_desc") },
-            { value: "INSURANCE", label: t("payment.INSURANCE"), desc: t("payment.insurance_desc") },
-          ].map((opt) => (
-            <Label
-              key={opt.value}
-              className={cn(
-                "flex flex-col cursor-pointer rounded-xl border px-4 py-3 transition-all flex-1 min-w-[100px]",
-                data.payment_method === opt.value
-                  ? "border-primary bg-primary/10 text-primary font-semibold"
-                  : "border-border hover:border-primary/30"
-              )}
-            >
-              <div className="flex items-center gap-2">
-                <RadioGroupItem value={opt.value} className="sr-only" />
-                <span className="text-sm">{opt.label}</span>
-              </div>
-              <span className="text-[10px] text-muted-foreground mt-0.5">{opt.desc}</span>
-            </Label>
-          ))}
-        </RadioGroup>
-      </div>
+      {/* Payment method is selected on the order tracking page after service completion */}
     </div>
   );
 };

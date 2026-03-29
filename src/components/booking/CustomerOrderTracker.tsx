@@ -147,6 +147,23 @@ const CustomerOrderTracker = ({ bookingId, onClose }: OrderTrackerProps) => {
         ))}
       </div>
 
+      {/* Payment Method - shown after completion */}
+      {booking.status === "COMPLETED" && booking.payment_method && (
+        <Card className="border-border">
+          <CardContent className="py-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium">طريقة الدفع</span>
+              <Badge variant="outline" className="text-xs">
+                {booking.payment_method === "CASH" ? "💵 نقداً — للمزود" :
+                 booking.payment_method === "CLIQ" ? "📱 CliQ — للمنصة" :
+                 booking.payment_method === "INSURANCE" ? "🏥 تأمين طبي" :
+                 booking.payment_method}
+              </Badge>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Rating Section - only for completed bookings */}
       {booking.status === "COMPLETED" && booking.assigned_provider_id && (
         <Card className="border-border">
