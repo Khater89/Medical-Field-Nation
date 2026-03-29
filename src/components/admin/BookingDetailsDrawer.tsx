@@ -682,6 +682,15 @@ const BookingDetailsDrawer = ({ booking, open, onOpenChange, serviceName, servic
           </DialogContent>
         </Dialog>
       </SheetContent>
+
+      {/* Broadcast Dialog */}
+      <BroadcastProvidersDialog
+        open={broadcastOpen}
+        onOpenChange={setBroadcastOpen}
+        booking={booking}
+        serviceName={serviceName}
+        coordinatorPhone={coordinatorPhone}
+      />
     </Sheet>
   );
 };
