@@ -629,7 +629,7 @@ const en: Record<string, string> = {
 
   // Provider Wallet
   "provider.wallet.debt_notice": "You have an outstanding balance owed to the platform",
-  "provider.wallet.debt_instructions": "Please transfer the amount via CliQ or hand it as cash to the coordinator to clear your debt.",
+  "provider.wallet.debt_instructions": "Please transfer the amount via CliQ to clear your debt.",
 
   // Provider Rejection
   "provider.reject.reason_prompt": "Please enter the reason for rejection:",

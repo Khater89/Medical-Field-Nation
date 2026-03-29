@@ -629,7 +629,7 @@ const ar: Record<string, string> = {
 
   // Provider Wallet
   "provider.wallet.debt_notice": "لديك مبلغ مستحق للمنصة",
-  "provider.wallet.debt_instructions": "يرجى تحويل المبلغ المستحق عبر CliQ أو تسليمه نقداً للمنسق لتصفير مديونيتك.",
+  "provider.wallet.debt_instructions": "يرجى تحويل المبلغ المستحق عبر CliQ لتصفير مديونيتك.",
 
   // Provider Rejection
   "provider.reject.reason_prompt": "يرجى إدخال سبب الرفض:",
