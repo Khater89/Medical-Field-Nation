@@ -444,6 +444,7 @@ export type Database = {
           profile_completed: boolean | null
           provider_agreement_accepted_at: string | null
           provider_agreement_version: string | null
+          provider_number: number | null
           provider_status: string
           radius_km: number | null
           role_type: string | null
@@ -474,6 +475,7 @@ export type Database = {
           profile_completed?: boolean | null
           provider_agreement_accepted_at?: string | null
           provider_agreement_version?: string | null
+          provider_number?: number | null
           provider_status?: string
           radius_km?: number | null
           role_type?: string | null
@@ -504,6 +506,7 @@ export type Database = {
           profile_completed?: boolean | null
           provider_agreement_accepted_at?: string | null
           provider_agreement_version?: string | null
+          provider_number?: number | null
           provider_status?: string
           radius_km?: number | null
           role_type?: string | null
