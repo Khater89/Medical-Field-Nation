@@ -54,6 +54,8 @@ const ProviderRegister = () => {
   const [experienceCertUrl, setExperienceCertUrl] = useState<string | null>(null);
   const [uploadingAcademic, setUploadingAcademic] = useState(false);
   const [uploadingExperience, setUploadingExperience] = useState(false);
+  const [pendingAcademicFile, setPendingAcademicFile] = useState<File | null>(null);
+  const [pendingExperienceFile, setPendingExperienceFile] = useState<File | null>(null);
   const academicFileRef = useRef<HTMLInputElement>(null);
   const experienceFileRef = useRef<HTMLInputElement>(null);
 
@@ -96,10 +98,21 @@ const ProviderRegister = () => {
 
   const handleCertUpload = async (file: File, type: "academic" | "experience", userId?: string) => {
     const uid = userId || user?.id;
-    if (!uid) return null;
     if (file.size > 5 * 1024 * 1024) {
       toast({ title: t("register.file_too_large"), variant: "destructive" });
       return null;
+    }
+    // If no user yet, store file for deferred upload after signup
+    if (!uid) {
+      if (type === "academic") {
+        setPendingAcademicFile(file);
+        setAcademicCertUrl("pending");
+      } else {
+        setPendingExperienceFile(file);
+        setExperienceCertUrl("pending");
+      }
+      toast({ title: t("register.uploaded") });
+      return "pending";
     }
     const setter = type === "academic" ? setUploadingAcademic : setUploadingExperience;
     setter(true);
@@ -115,6 +128,25 @@ const ProviderRegister = () => {
     else setExperienceCertUrl(path);
     toast({ title: t("register.uploaded") });
     return path;
+  };
+
+  const uploadPendingCerts = async (uid: string): Promise<{ academic: string | null; experience: string | null }> => {
+    let academic: string | null = academicCertUrl !== "pending" ? academicCertUrl : null;
+    let experience: string | null = experienceCertUrl !== "pending" ? experienceCertUrl : null;
+
+    if (pendingAcademicFile) {
+      const ext = pendingAcademicFile.name.split(".").pop();
+      const path = `${uid}/academic-${Date.now()}.${ext}`;
+      const { error } = await supabase.storage.from("provider-certificates").upload(path, pendingAcademicFile, { upsert: true });
+      if (!error) academic = path;
+    }
+    if (pendingExperienceFile) {
+      const ext = pendingExperienceFile.name.split(".").pop();
+      const path = `${uid}/experience-${Date.now()}.${ext}`;
+      const { error } = await supabase.storage.from("provider-certificates").upload(path, pendingExperienceFile, { upsert: true });
+      if (!error) experience = path;
+    }
+    return { academic, experience };
   };
 
   const passwordErrors = useMemo(() => {
@@ -292,7 +324,8 @@ const ProviderRegister = () => {
     // Check if we have an active session (auto-confirm enabled)
     const { data: sessionData } = await supabase.auth.getSession();
     if (sessionData.session) {
-      // Auto-confirm is on — update profile immediately
+      // Auto-confirm is on — upload pending certs then update profile
+      const certs = await uploadPendingCerts(newUser.id);
       await supabase
         .from("profiles")
         .update({
@@ -307,18 +340,19 @@ const ProviderRegister = () => {
           radius_km: radiusKm ? parseInt(radiusKm) : 20,
           specialties: selectedSpecialties.length > 0 ? selectedSpecialties : null,
           provider_status: "pending",
-          academic_cert_url: academicCertUrl,
-          experience_cert_url: experienceCertUrl,
+          academic_cert_url: certs.academic,
+          experience_cert_url: certs.experience,
         } as any)
         .eq("user_id", newUser.id);
 
       await refreshUserData();
       setSaving(false);
       toast({ title: t("register.submitted_success") });
+      navigate("/account-review", { replace: true });
     } else {
-      // Email confirmation required — save metadata for later, redirect to verify page
+      // Email confirmation required — save pending files as base64 for later upload
       // Store profile data in localStorage so it can be applied after email verification
-      localStorage.setItem("pending_provider_profile", JSON.stringify({
+      const pendingData: any = {
         full_name: name.trim(),
         phone: phone.trim(),
         city: city.trim(),
@@ -329,9 +363,30 @@ const ProviderRegister = () => {
         address_text: addressText.trim() || null,
         radius_km: radiusKm ? parseInt(radiusKm) : 20,
         specialties: selectedSpecialties.length > 0 ? selectedSpecialties : null,
-        academic_cert_url: academicCertUrl,
-        experience_cert_url: experienceCertUrl,
-      }));
+        provider_status: "pending",
+      };
+
+      // Store file names for later upload reference
+      if (pendingAcademicFile) {
+        const reader = new FileReader();
+        const base64 = await new Promise<string>((resolve) => {
+          reader.onload = () => resolve(reader.result as string);
+          reader.readAsDataURL(pendingAcademicFile);
+        });
+        pendingData._academicCertBase64 = base64;
+        pendingData._academicCertName = pendingAcademicFile.name;
+      }
+      if (pendingExperienceFile) {
+        const reader = new FileReader();
+        const base64 = await new Promise<string>((resolve) => {
+          reader.onload = () => resolve(reader.result as string);
+          reader.readAsDataURL(pendingExperienceFile);
+        });
+        pendingData._experienceCertBase64 = base64;
+        pendingData._experienceCertName = pendingExperienceFile.name;
+      }
+
+      localStorage.setItem("pending_provider_profile", JSON.stringify(pendingData));
       setSaving(false);
       navigate("/verify-email");
     }

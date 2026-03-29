@@ -23,10 +23,41 @@ const AuthCallback = () => {
           if (pending) {
             try {
               const profileData = JSON.parse(pending);
-              await supabase.from("profiles").upsert({
-                user_id: session.user.id,
-                ...profileData,
-              });
+              
+              // Upload any pending cert files stored as base64
+              let academicUrl: string | null = profileData.academic_cert_url || null;
+              let experienceUrl: string | null = profileData.experience_cert_url || null;
+
+              if (profileData._academicCertBase64) {
+                const response = await fetch(profileData._academicCertBase64);
+                const blob = await response.blob();
+                const ext = profileData._academicCertName?.split(".").pop() || "pdf";
+                const path = `${session.user.id}/academic-${Date.now()}.${ext}`;
+                const { error: uploadErr } = await supabase.storage
+                  .from("provider-certificates")
+                  .upload(path, blob, { upsert: true });
+                if (!uploadErr) academicUrl = path;
+              }
+              if (profileData._experienceCertBase64) {
+                const response = await fetch(profileData._experienceCertBase64);
+                const blob = await response.blob();
+                const ext = profileData._experienceCertName?.split(".").pop() || "pdf";
+                const path = `${session.user.id}/experience-${Date.now()}.${ext}`;
+                const { error: uploadErr } = await supabase.storage
+                  .from("provider-certificates")
+                  .upload(path, blob, { upsert: true });
+                if (!uploadErr) experienceUrl = path;
+              }
+
+              // Clean up internal keys before saving
+              const { _academicCertBase64, _academicCertName, _experienceCertBase64, _experienceCertName, ...cleanData } = profileData;
+
+              await supabase.from("profiles").update({
+                ...cleanData,
+                academic_cert_url: academicUrl,
+                experience_cert_url: experienceUrl,
+                provider_status: "pending",
+              }).eq("user_id", session.user.id);
             } catch {
               // ignore parse errors
             }
@@ -61,7 +92,18 @@ const AuthCallback = () => {
               navigate("/account-review", { replace: true });
             }
           } else {
-            navigate("/", { replace: true });
+            // Check if this user has pending provider registration (role_type set)
+            const { data: prof } = await supabase
+              .from("profiles")
+              .select("role_type, provider_status")
+              .eq("user_id", session.user.id)
+              .maybeSingle();
+
+            if (prof?.role_type) {
+              navigate("/account-review", { replace: true });
+            } else {
+              navigate("/", { replace: true });
+            }
           }
         }
       }
