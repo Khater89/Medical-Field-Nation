@@ -565,7 +565,6 @@ const ar: Record<string, string> = {
   "verify_email.resend": "إعادة إرسال",
   "verify_email.resent": "تم إعادة الإرسال",
   "verify_email.check_inbox": "تحقق من صندوق بريدك الإلكتروني",
-  "register.email_not_confirmed_title": "البريد غير مؤكد",
 
   // Account Review
   "review.pending_title": "الحساب قيد المراجعة",
