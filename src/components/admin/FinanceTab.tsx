@@ -450,64 +450,22 @@ const FinanceTab = () => {
               </div>
             </div>
 
-            {/* Payment method selection */}
-            <div className="space-y-3">
-              <Label className="text-sm font-medium">طريقة الدفع</Label>
-              <RadioGroup value={paymentMethod} onValueChange={(v) => setPaymentMethod(v as "cliq" | "cash")} className="gap-3">
-                <div className="flex items-center gap-2 rounded-lg border border-border p-3 cursor-pointer hover:bg-accent/50 transition-colors">
-                  <RadioGroupItem value="cliq" id="cliq" />
-                  <Label htmlFor="cliq" className="cursor-pointer flex-1">
-                    <span className="text-sm font-medium">💳 CliQ</span>
-                    <p className="text-[10px] text-muted-foreground">تسوية المبلغ الكامل عبر حوالة CliQ</p>
-                  </Label>
-                </div>
-                <div className="flex items-center gap-2 rounded-lg border border-border p-3 cursor-pointer hover:bg-accent/50 transition-colors">
-                  <RadioGroupItem value="cash" id="cash" />
-                  <Label htmlFor="cash" className="cursor-pointer flex-1">
-                    <span className="text-sm font-medium">💵 كاش</span>
-                    <p className="text-[10px] text-muted-foreground">إدخال القيمة المدفوعة نقداً</p>
-                  </Label>
-                </div>
-              </RadioGroup>
+            {/* CliQ reference field - only CliQ payment supported */}
+            <div className="space-y-2">
+              <Label htmlFor="cliq-ref" className="text-sm font-medium">
+                رقم حوالة CliQ <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="cliq-ref"
+                placeholder="أدخل رقم حوالة CliQ"
+                value={cliqReference}
+                onChange={(e) => setCliqReference(e.target.value)}
+                dir="ltr"
+              />
+              <p className="text-[10px] text-muted-foreground">
+                الدفع للمنصة حصرياً عبر CliQ
+              </p>
             </div>
-
-            {/* CliQ reference field */}
-            {paymentMethod === "cliq" && (
-              <div className="space-y-2">
-                <Label htmlFor="cliq-ref" className="text-sm font-medium">
-                  رقم حوالة CliQ <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="cliq-ref"
-                  placeholder="أدخل رقم حوالة CliQ"
-                  value={cliqReference}
-                  onChange={(e) => setCliqReference(e.target.value)}
-                  dir="ltr"
-                />
-              </div>
-            )}
-
-            {/* Cash amount field */}
-            {paymentMethod === "cash" && (
-              <div className="space-y-2">
-                <Label htmlFor="cash-amount" className="text-sm font-medium">
-                  المبلغ المدفوع نقداً <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="cash-amount"
-                  type="number"
-                  placeholder="أدخل المبلغ"
-                  value={cashAmount}
-                  onChange={(e) => setCashAmount(e.target.value)}
-                  dir="ltr"
-                  min="0"
-                  step="0.5"
-                />
-                <p className="text-[10px] text-muted-foreground">
-                  الحد الأقصى: {formatCurrency(entryAmount)}
-                </p>
-              </div>
-            )}
           </div>
 
           <DialogFooter>
