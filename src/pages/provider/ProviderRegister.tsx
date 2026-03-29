@@ -211,6 +211,7 @@ const ProviderRegister = () => {
       } else {
         await refreshUserData();
         toast({ title: t("register.submitted_success") });
+        navigate("/account-review", { replace: true });
       }
     };
 
