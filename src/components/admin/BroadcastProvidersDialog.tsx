@@ -11,13 +11,13 @@ interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   booking: {
-    booking_number: string | null;
+    booking_number?: string | null;
     service_id: string;
     city: string;
     scheduled_at: string;
-    area_public: string | null;
-    notes: string | null;
-    agreed_price: number | null;
+    area_public?: string | null;
+    notes?: string | null;
+    agreed_price?: number | null;
   };
   serviceName: string;
   coordinatorPhone: string | null;
