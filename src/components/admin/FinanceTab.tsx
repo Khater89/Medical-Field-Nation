@@ -189,7 +189,7 @@ const FinanceTab = () => {
     if (error) {
       toast({ title: t("common.error"), description: error.message, variant: "destructive" });
     } else {
-      const methodLabel = paymentMethod === "cliq" ? `CliQ: ${cliqReference.trim()}` : `كاش: ${formatCurrency(settlementAmount)}`;
+      const methodLabel = `CliQ: ${cliqReference.trim()}`;
       const bookingNum = settlementEntry.booking_number || "—";
       await supabase.from("staff_notifications").insert({
         title: `💰 تسوية: ${selectedProvider.full_name || "مزوّد"} — طلب ${bookingNum}`,
