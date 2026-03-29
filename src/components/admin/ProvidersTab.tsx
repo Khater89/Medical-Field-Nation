@@ -231,6 +231,7 @@ const ProvidersTab = () => {
         (p.full_name || "").toLowerCase().includes(q) ||
         (p.phone || "").includes(q) ||
         (p.city || "").toLowerCase().includes(q) ||
+        (p.provider_number != null && String(p.provider_number).includes(q)) ||
         (p.specialties || []).some((s) => s.toLowerCase().includes(q))
       );
     }
