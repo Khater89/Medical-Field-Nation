@@ -183,9 +183,13 @@ const ar: Record<string, string> = {
   "role_type.physiotherapist": "أخصائي علاج طبيعي",
 
   // Payment
-  "payment.CASH": "نقداً",
+  "payment.CASH": "نقداً (للمزود)",
   "payment.CLIQ": "كليك (CliQ)",
   "payment.CARD": "بطاقة",
+  "payment.INSURANCE": "تأمين طبي",
+  "payment.cash_desc": "الدفع نقداً لمقدم الخدمة",
+  "payment.cliq_desc": "تحويل عبر كليك للمنصة",
+  "payment.insurance_desc": "الدفع عبر التأمين الطبي",
   "payment.UNPAID": "غير مدفوع",
   "payment.PAID": "مدفوع",
   "payment.PARTIAL": "جزئي",
