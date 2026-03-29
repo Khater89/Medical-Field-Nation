@@ -94,6 +94,29 @@ const ProviderRegister = () => {
     );
   };
 
+  const handleCertUpload = async (file: File, type: "academic" | "experience", userId?: string) => {
+    const uid = userId || user?.id;
+    if (!uid) return null;
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ title: t("register.file_too_large"), variant: "destructive" });
+      return null;
+    }
+    const setter = type === "academic" ? setUploadingAcademic : setUploadingExperience;
+    setter(true);
+    const ext = file.name.split(".").pop();
+    const path = `${uid}/${type}-${Date.now()}.${ext}`;
+    const { error } = await supabase.storage.from("provider-certificates").upload(path, file, { upsert: true });
+    setter(false);
+    if (error) {
+      toast({ title: t("register.upload_error"), description: error.message, variant: "destructive" });
+      return null;
+    }
+    if (type === "academic") setAcademicCertUrl(path);
+    else setExperienceCertUrl(path);
+    toast({ title: t("register.uploaded") });
+    return path;
+  };
+
   const passwordErrors = useMemo(() => {
     if (!password) return [];
     const errors: string[] = [];
