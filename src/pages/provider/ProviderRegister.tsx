@@ -50,6 +50,12 @@ const ProviderRegister = () => {
   const [mode, setMode] = useState<"register" | "login">("register");
   const [googleLoading, setGoogleLoading] = useState(false);
   const [appleLoading, setAppleLoading] = useState(false);
+  const [academicCertUrl, setAcademicCertUrl] = useState<string | null>(null);
+  const [experienceCertUrl, setExperienceCertUrl] = useState<string | null>(null);
+  const [uploadingAcademic, setUploadingAcademic] = useState(false);
+  const [uploadingExperience, setUploadingExperience] = useState(false);
+  const academicFileRef = useRef<HTMLInputElement>(null);
+  const experienceFileRef = useRef<HTMLInputElement>(null);
 
   const availableSpecialties = useMemo(() => SPECIALTIES_MAP[roleType] || [], [roleType]);
 
