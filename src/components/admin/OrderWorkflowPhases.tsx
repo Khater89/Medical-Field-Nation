@@ -351,6 +351,32 @@ const OrderWorkflowPhases = ({ booking, serviceName, servicePrice, onWorkflowCha
         });
       }
 
+      // Notify other providers who submitted quotes that the booking was assigned
+      const { data: otherQuotes } = await supabase
+        .from("provider_quotes")
+        .select("provider_id")
+        .eq("booking_id", booking.id)
+        .neq("provider_id", selectedProvider);
+
+      if (otherQuotes && otherQuotes.length > 0) {
+        // Update their quote status to rejected
+        await supabase
+          .from("provider_quotes")
+          .update({ status: "rejected" })
+          .eq("booking_id", booking.id)
+          .neq("provider_id", selectedProvider);
+
+        // Send notification to each provider
+        const notifications = otherQuotes.map((q) => ({
+          title: "تم إسناد الطلب لمزود آخر",
+          body: `الطلب ${booking.booking_number || ""} (${serviceName}) تم إسناده لمزود آخر لتقديمه عرض سعر أكثر تنافسية. شكراً لاهتمامك!`,
+          target_role: "provider",
+          provider_id: q.provider_id,
+          booking_id: booking.id,
+        }));
+        await supabase.from("staff_notifications").insert(notifications);
+      }
+
       await supabase.from("booking_outbox").insert({
         booking_id: booking.id,
         destination: "webhook",
