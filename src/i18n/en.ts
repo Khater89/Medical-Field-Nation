@@ -91,6 +91,14 @@ const en: Record<string, string> = {
   "form.case_details": "Case Details",
   "form.case_details.placeholder": "Describe the medical case in detail (e.g. symptoms, medical history, current medications)...",
   "form.case_details.required": "Case details are required",
+  "form.case_classification": "Case Classification (select all that apply)",
+  "form.case_class.needs_diagnosis": "Needs Diagnosis",
+  "form.case_class.nursing": "Nursing",
+  "form.case_class.physiotherapy": "Physiotherapy",
+  "form.case_class.elderly_care": "Elderly Care",
+  "form.case_class.post_surgery": "Post-Surgery",
+  "form.case_class.emergency": "Emergency",
+  "form.case_class.other": "Other",
 
   // Time slots
   "time.morning": "Morning (8-12)",
@@ -175,9 +183,13 @@ const en: Record<string, string> = {
   "role_type.physiotherapist": "Physiotherapist",
 
   // Payment
-  "payment.CASH": "Cash",
+  "payment.CASH": "Cash (to provider)",
   "payment.CLIQ": "CliQ",
   "payment.CARD": "Card",
+  "payment.INSURANCE": "Medical Insurance",
+  "payment.cash_desc": "Pay cash to the provider",
+  "payment.cliq_desc": "Transfer via CliQ to platform",
+  "payment.insurance_desc": "Pay via medical insurance",
   "payment.UNPAID": "Unpaid",
   "payment.PAID": "Paid",
   "payment.PARTIAL": "Partial",
@@ -617,7 +629,7 @@ const en: Record<string, string> = {
 
   // Provider Wallet
   "provider.wallet.debt_notice": "You have an outstanding balance owed to the platform",
-  "provider.wallet.debt_instructions": "Please transfer the amount via CliQ or hand it as cash to the coordinator to clear your debt.",
+  "provider.wallet.debt_instructions": "Please transfer the amount via CliQ to clear your debt.",
 
   // Provider Rejection
   "provider.reject.reason_prompt": "Please enter the reason for rejection:",

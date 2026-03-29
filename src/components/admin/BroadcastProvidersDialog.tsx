@@ -18,6 +18,7 @@ interface Props {
     area_public?: string | null;
     notes?: string | null;
     agreed_price?: number | null;
+    client_address_text?: string | null;
   };
   serviceName: string;
   coordinatorPhone: string | null;
@@ -56,6 +57,8 @@ const BroadcastProvidersDialog = ({ open, onOpenChange, booking, serviceName, co
     weekday: "long", year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit",
   });
 
+  const siteUrl = "https://mfn.lovable.app";
+
   const buildMessage = (providerName: string) => {
     const lines = [
       `مرحباً ${providerName}، معك فريق أمة الحقل الطبي (MFN).`,
@@ -64,11 +67,16 @@ const BroadcastProvidersDialog = ({ open, onOpenChange, booking, serviceName, co
       `• الخدمة: ${serviceName}`,
       `• المدينة: ${booking.city}`,
       booking.area_public ? `• المنطقة: ${booking.area_public}` : null,
+      booking.client_address_text ? `• العنوان التفصيلي: ${booking.client_address_text}` : null,
       `• الموعد: ${scheduledDate}`,
-      booking.notes ? `• ملاحظات: ${booking.notes}` : null,
+      booking.notes ? `• تفاصيل الحالة: ${booking.notes}` : null,
       ``,
-      `إذا كنت متاحاً، يرجى تقديم عرض سعرك من خلال حسابك في التطبيق.`,
-      coordinatorPhone ? `للتواصل مع المنسق: ${coordinatorPhone}` : null,
+      `📌 لتقديم عرض سعرك:`,
+      `1. ادخل لحسابك في الموقع: ${siteUrl}/provider/register`,
+      `2. اذهب لخانة "الطلبات المتاحة"`,
+      `3. انقر على الطلب وقدّم عرض سعرك`,
+      ``,
+      coordinatorPhone ? `📞 للتواصل مع المنسق: ${coordinatorPhone}` : null,
       ``,
       `رقم الطلب: ${booking.booking_number || "—"}`,
     ];

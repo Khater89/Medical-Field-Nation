@@ -91,6 +91,14 @@ const ar: Record<string, string> = {
   "form.case_details": "تفاصيل الحالة",
   "form.case_details.placeholder": "اوصف الحالة الطبية بالتفصيل (مثال: الأعراض، التاريخ المرضي، الأدوية الحالية)...",
   "form.case_details.required": "تفاصيل الحالة مطلوبة",
+  "form.case_classification": "تصنيف الحالة (اختر ما ينطبق)",
+  "form.case_class.needs_diagnosis": "تحتاج تشخيص",
+  "form.case_class.nursing": "تمريض",
+  "form.case_class.physiotherapy": "علاج طبيعي",
+  "form.case_class.elderly_care": "رعاية مسنين",
+  "form.case_class.post_surgery": "ما بعد عملية",
+  "form.case_class.emergency": "طوارئ",
+  "form.case_class.other": "أخرى",
 
   // Time slots
   "time.morning": "صباحاً (8-12)",
@@ -175,9 +183,13 @@ const ar: Record<string, string> = {
   "role_type.physiotherapist": "أخصائي علاج طبيعي",
 
   // Payment
-  "payment.CASH": "نقداً",
+  "payment.CASH": "نقداً (للمزود)",
   "payment.CLIQ": "كليك (CliQ)",
   "payment.CARD": "بطاقة",
+  "payment.INSURANCE": "تأمين طبي",
+  "payment.cash_desc": "الدفع نقداً لمقدم الخدمة",
+  "payment.cliq_desc": "تحويل عبر كليك للمنصة",
+  "payment.insurance_desc": "الدفع عبر التأمين الطبي",
   "payment.UNPAID": "غير مدفوع",
   "payment.PAID": "مدفوع",
   "payment.PARTIAL": "جزئي",
@@ -617,7 +629,7 @@ const ar: Record<string, string> = {
 
   // Provider Wallet
   "provider.wallet.debt_notice": "لديك مبلغ مستحق للمنصة",
-  "provider.wallet.debt_instructions": "يرجى تحويل المبلغ المستحق عبر CliQ أو تسليمه نقداً للمنسق لتصفير مديونيتك.",
+  "provider.wallet.debt_instructions": "يرجى تحويل المبلغ المستحق عبر CliQ لتصفير مديونيتك.",
 
   // Provider Rejection
   "provider.reject.reason_prompt": "يرجى إدخال سبب الرفض:",

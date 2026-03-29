@@ -10,7 +10,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Button } from "@/components/ui/button";
 import {
   CalendarIcon, User, Phone, MapPin, Clock, Minus, Plus,
-  Navigation, Home, Users,
+  Navigation, Home, Users, CreditCard,
 } from "lucide-react";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
@@ -263,21 +263,95 @@ const PatientForm = ({ data, onChange }: PatientFormProps) => {
         </RadioGroup>
       </div>
 
-      {/* Case Details (required) */}
-      <div className="space-y-2">
+      {/* Case Details (required) — enhanced with specialty classification */}
+      <div className="space-y-3">
         <Label className="text-sm font-medium">
           {t("form.case_details")} <span className="text-destructive">*</span>
         </Label>
+
+        {/* Specialty / Need Classification */}
+        <div className="space-y-2">
+          <Label className="text-xs text-muted-foreground">{t("form.case_classification")}</Label>
+          <div className="flex flex-wrap gap-2">
+            {[
+              { value: "needs_diagnosis", label: t("form.case_class.needs_diagnosis") },
+              { value: "nursing", label: t("form.case_class.nursing") },
+              { value: "physiotherapy", label: t("form.case_class.physiotherapy") },
+              { value: "elderly_care", label: t("form.case_class.elderly_care") },
+              { value: "post_surgery", label: t("form.case_class.post_surgery") },
+              { value: "emergency", label: t("form.case_class.emergency") },
+              { value: "other", label: t("form.case_class.other") },
+            ].map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => {
+                  const current = data.case_details;
+                  const tag = `[${opt.label}]`;
+                  if (current.includes(tag)) {
+                    update("case_details", current.replace(tag, "").trim());
+                  } else {
+                    update("case_details", `${tag} ${current}`.trim());
+                  }
+                }}
+                className={cn(
+                  "rounded-full border px-3 py-1 text-xs font-medium transition-all",
+                  data.case_details.includes(`[${opt.label}]`)
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "border-border hover:border-primary/30 text-muted-foreground"
+                )}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <Textarea
           value={data.case_details}
           onChange={(e) => update("case_details", e.target.value)}
           placeholder={t("form.case_details.placeholder")}
-          rows={3}
+          rows={4}
           required
         />
         {data.case_details !== undefined && data.case_details.trim() === "" && (
           <p className="text-xs text-destructive">{t("form.case_details.required")}</p>
         )}
+      </div>
+
+      {/* Payment Method */}
+      <div className="space-y-2">
+        <Label className="flex items-center gap-2 text-sm font-medium">
+          <CreditCard className="h-4 w-4 text-primary" />
+          {t("form.payment_method")}
+        </Label>
+        <RadioGroup
+          value={data.payment_method}
+          onValueChange={(v) => update("payment_method", v)}
+          className="flex flex-wrap gap-3"
+        >
+          {[
+            { value: "CASH", label: t("payment.CASH"), desc: t("payment.cash_desc") },
+            { value: "CLIQ", label: t("payment.CLIQ"), desc: t("payment.cliq_desc") },
+            { value: "INSURANCE", label: t("payment.INSURANCE"), desc: t("payment.insurance_desc") },
+          ].map((opt) => (
+            <Label
+              key={opt.value}
+              className={cn(
+                "flex flex-col cursor-pointer rounded-xl border px-4 py-3 transition-all flex-1 min-w-[100px]",
+                data.payment_method === opt.value
+                  ? "border-primary bg-primary/10 text-primary font-semibold"
+                  : "border-border hover:border-primary/30"
+              )}
+            >
+              <div className="flex items-center gap-2">
+                <RadioGroupItem value={opt.value} className="sr-only" />
+                <span className="text-sm">{opt.label}</span>
+              </div>
+              <span className="text-[10px] text-muted-foreground mt-0.5">{opt.desc}</span>
+            </Label>
+          ))}
+        </RadioGroup>
       </div>
     </div>
   );
