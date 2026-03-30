@@ -14,6 +14,7 @@ import {
   Phone, MapPin, Briefcase, Navigation, Stethoscope,
   CheckCircle, XCircle, Wallet, Clock, Globe, Search, Loader2,
   CalendarCheck, UserCheck, Mail, Star, CheckCheck, Ban, KeyRound,
+  FileText, ExternalLink, Trash2,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -48,6 +49,9 @@ export interface ProviderProfile {
   avatar_url?: string | null;
   license_file_url?: string | null;
   provider_number?: number | null;
+  academic_cert_url?: string | null;
+  experience_cert_url?: string | null;
+  license_id?: string | null;
 }
 
 const PROVIDER_STATUS_COLORS: Record<string, string> = {
@@ -75,9 +79,10 @@ interface Props {
   onApprove: (userId: string) => void;
   onSuspend: (userId: string) => void;
   onSettlement: (userId: string) => void;
+  onReject?: (userId: string) => void;
 }
 
-const ProviderDetailsDrawer = ({ provider, open, onOpenChange, onApprove, onSuspend, onSettlement }: Props) => {
+const ProviderDetailsDrawer = ({ provider, open, onOpenChange, onApprove, onSuspend, onSettlement, onReject }: Props) => {
   const { t, formatCurrency, formatDate, formatDateShort, isRTL } = useLanguage();
   const { isAdmin: currentUserIsAdmin } = useAuth();
   const [passwordLoading, setPasswordLoading] = useState(false);
@@ -382,6 +387,51 @@ const ProviderDetailsDrawer = ({ provider, open, onOpenChange, onApprove, onSusp
                   </div>
                 </div>
 
+                {/* Certificates Review */}
+                {(provider.academic_cert_url || provider.experience_cert_url || provider.license_id) && (
+                  <div className="rounded-lg border-2 border-primary/30 bg-primary/5 p-3 space-y-3">
+                    <h4 className="text-xs font-bold text-primary uppercase tracking-wider flex items-center gap-1">
+                      <FileText className="h-3 w-3" /> الشهادات والمستندات
+                    </h4>
+                    {provider.license_id && (
+                      <div className="text-sm flex items-center gap-1.5">
+                        <span className="text-muted-foreground">رقم الترخيص:</span>
+                        <span className="font-mono font-medium">{provider.license_id}</span>
+                      </div>
+                    )}
+                    <div className="grid grid-cols-2 gap-2">
+                      {provider.academic_cert_url && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="gap-1.5 text-xs"
+                          onClick={async () => {
+                            const { data } = await supabase.storage.from("provider-certificates").createSignedUrl(provider.academic_cert_url!, 300);
+                            if (data?.signedUrl) window.open(data.signedUrl, "_blank");
+                          }}
+                        >
+                          <FileText className="h-3 w-3" /> الشهادة العلمية
+                          <ExternalLink className="h-3 w-3" />
+                        </Button>
+                      )}
+                      {provider.experience_cert_url && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="gap-1.5 text-xs"
+                          onClick={async () => {
+                            const { data } = await supabase.storage.from("provider-certificates").createSignedUrl(provider.experience_cert_url!, 300);
+                            if (data?.signedUrl) window.open(data.signedUrl, "_blank");
+                          }}
+                        >
+                          <FileText className="h-3 w-3" /> شهادة الخبرة
+                          <ExternalLink className="h-3 w-3" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 <div className="rounded-lg border border-border p-3 space-y-2">
                   <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{t("provider.details.activity")}</h4>
                   <div className="text-xs text-muted-foreground space-y-1">
@@ -434,9 +484,20 @@ const ProviderDetailsDrawer = ({ provider, open, onOpenChange, onApprove, onSusp
                 {/* Actions */}
                 <div className="flex gap-2 pt-2 flex-wrap">
                   {provider.provider_status === "pending" && (
-                    <Button size="sm" className="gap-1.5 flex-1" onClick={() => onApprove(provider.user_id)}>
-                      <CheckCircle className="h-4 w-4" /> {t("provider.details.approve")}
-                    </Button>
+                    <>
+                      <Button size="sm" className="gap-1.5 flex-1" onClick={() => onApprove(provider.user_id)}>
+                        <CheckCircle className="h-4 w-4" /> {t("provider.details.approve")}
+                      </Button>
+                      {onReject && (
+                        <Button size="sm" variant="destructive" className="gap-1.5 flex-1" onClick={() => {
+                          if (confirm("هل أنت متأكد من رفض وحذف هذا الطلب نهائياً؟")) {
+                            onReject(provider.user_id);
+                          }
+                        }}>
+                          <Trash2 className="h-4 w-4" /> رفض وحذف
+                        </Button>
+                      )}
+                    </>
                   )}
                   {provider.provider_status === "approved" && (
                     <Button size="sm" variant="destructive" className="gap-1.5 flex-1" onClick={() => onSuspend(provider.user_id)}>
