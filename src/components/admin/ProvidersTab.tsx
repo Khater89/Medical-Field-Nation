@@ -310,7 +310,7 @@ const ProvidersTab = () => {
               {filtered.map((p) => (
                 <TableRow
                   key={p.user_id}
-                  className="cursor-pointer hover:bg-accent/50 transition-colors"
+                  className={`cursor-pointer hover:bg-accent/50 transition-colors ${p.provider_status === "pending" ? "bg-yellow-50 dark:bg-yellow-950/20 border-l-4 border-l-yellow-400" : ""}`}
                   onClick={() => setSelectedProvider(p)}
                 >
                   <TableCell className="font-medium text-sm">
