@@ -78,6 +78,7 @@ interface Props {
   onApprove: (userId: string) => void;
   onSuspend: (userId: string) => void;
   onSettlement: (userId: string) => void;
+  onReject?: (userId: string) => void;
 }
 
 const ProviderDetailsDrawer = ({ provider, open, onOpenChange, onApprove, onSuspend, onSettlement }: Props) => {
