@@ -81,7 +81,7 @@ interface Props {
   onReject?: (userId: string) => void;
 }
 
-const ProviderDetailsDrawer = ({ provider, open, onOpenChange, onApprove, onSuspend, onSettlement }: Props) => {
+const ProviderDetailsDrawer = ({ provider, open, onOpenChange, onApprove, onSuspend, onSettlement, onReject }: Props) => {
   const { t, formatCurrency, formatDate, formatDateShort, isRTL } = useLanguage();
   const { isAdmin: currentUserIsAdmin } = useAuth();
   const [passwordLoading, setPasswordLoading] = useState(false);
