@@ -113,6 +113,12 @@ const ProvidersTab = () => {
       });
       toast({ title: t("provider.details.approve_success") });
       fetchProviders();
+      // Open WhatsApp link to notify provider
+      const provider = providers.find(p => p.user_id === userId);
+      if (provider?.phone) {
+        const msg = encodeURIComponent(`مرحباً ${provider.full_name || ""}،\nتم قبول طلب انضمامك كمزود خدمة في Medical Field Nation ✅\nيمكنك الآن الدخول لحسابك وإكمال ملفك الشخصي للبدء باستقبال الطلبات.\n${window.location.origin}/auth`);
+        window.open(`https://wa.me/${provider.phone.replace(/[^0-9]/g, "")}?text=${msg}`, "_blank");
+      }
     }
   };
 
