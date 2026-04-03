@@ -22,6 +22,12 @@ const SuccessView = ({ onReset, bookingNumber }: SuccessViewProps) => {
     }
   };
 
+  const shareViaWhatsApp = () => {
+    if (bookingNumber) {
+      const msg = `📋 تفاصيل طلبي في MFN:\n\n🔢 رقم الطلب: ${bookingNumber}\n📌 الحالة: تم الإرسال بنجاح\n\n🔗 تتبع الطلب:\n${window.location.origin}/track`;
+      window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank");
+    }
+  };
 
   return (
     <div className="flex flex-col items-center justify-center text-center py-16 space-y-8">
