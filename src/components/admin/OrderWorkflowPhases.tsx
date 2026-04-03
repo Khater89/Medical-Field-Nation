@@ -11,7 +11,7 @@ import { toast } from "sonner";
 import {
   Phone, MessageCircle, UserCheck, Loader2, MapPin,
   DollarSign, Handshake, Users, CheckCircle, Lock, AlertTriangle,
-  Briefcase, Edit2, Star, XCircle, CheckCheck,
+  Briefcase, Edit2, Star, XCircle, CheckCheck, Eye,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import type { BookingRow } from "./BookingDetailsDrawer";
