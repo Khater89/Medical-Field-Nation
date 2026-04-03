@@ -1,0 +1,2 @@
+ALTER TABLE public.bookings DROP CONSTRAINT bookings_payment_status_check;
+ALTER TABLE public.bookings ADD CONSTRAINT bookings_payment_status_check CHECK (payment_status IN ('UNPAID', 'PAID', 'PARTIALLY_PAID', 'REFUNDED', 'PAYMENT_METHOD_SET'));
