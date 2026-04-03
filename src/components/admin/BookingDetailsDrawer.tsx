@@ -404,6 +404,15 @@ const BookingDetailsDrawer = ({ booking, open, onOpenChange, serviceName, servic
                   await supabase.from("staff_notifications").insert(notifications);
                 }
 
+                // Notify the assigned provider
+                await supabase.from("staff_notifications").insert({
+                  title: "📋 طلب جديد بانتظارك",
+                  body: `تم إسناد الطلب ${booking.booking_number || ""} إليك بسعر ${quotedPrice} د.أ. يرجى قبول الطلب في أسرع وقت.`,
+                  target_role: "provider",
+                  provider_id: providerId,
+                  booking_id: booking.id,
+                });
+
                 toast.success(`تم إسناد الطلب لـ ${providerNameVal} بنجاح ✅`);
                 onOpenChange(false);
                 onStatusChange?.();

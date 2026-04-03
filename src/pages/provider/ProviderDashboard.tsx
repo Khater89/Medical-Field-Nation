@@ -879,6 +879,29 @@ const ProviderDashboard = () => {
           </CardContent>
         </Card>
 
+        {/* Payment Methods Guide */}
+        {!localStorage.getItem("mfn_payment_guide_dismissed") && (
+          <div className="rounded-lg border border-info/30 bg-info/5 p-4 mb-4 relative">
+            <button
+              onClick={() => {
+                localStorage.setItem("mfn_payment_guide_dismissed", "1");
+                document.getElementById("payment-guide")?.remove();
+              }}
+              className="absolute top-2 left-2 text-muted-foreground hover:text-foreground"
+            >
+              <X className="h-4 w-4" />
+            </button>
+            <h4 className="text-sm font-bold mb-2 flex items-center gap-1.5">
+              <DollarSign className="h-4 w-4 text-info" /> طرق الدفع المتاحة للعملاء
+            </h4>
+            <div className="space-y-1.5 text-xs text-muted-foreground" id="payment-guide">
+              <p>💵 <strong>نقداً:</strong> يُسلم المبلغ لك مباشرة — حصة المنصة تُسجل كمديونية في محفظتك.</p>
+              <p>🏥 <strong>تأمين طبي:</strong> يتم التحصيل لصالحك — حصة المنصة تُسجل كمديونية.</p>
+              <p>📱 <strong>CliQ:</strong> يتم التحويل مباشرة لحساب المنصة — لا مديونية عليك.</p>
+            </div>
+          </div>
+        )}
+
         <Tabs defaultValue="orders" className="space-y-4">
           <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="available" className="gap-1 text-[10px] sm:text-xs">

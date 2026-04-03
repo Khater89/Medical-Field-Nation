@@ -93,6 +93,11 @@ const TrackOrderPage = () => {
   const [submittingRating, setSubmittingRating] = useState(false);
   const [ratingSubmitted, setRatingSubmitted] = useState(false);
 
+  // Payment method state
+  const [selectedPayment, setSelectedPayment] = useState<string | null>(null);
+  const [savingPayment, setSavingPayment] = useState(false);
+  const [paymentSaved, setPaymentSaved] = useState(false);
+
   const handleTrack = async () => {
     if (!bookingNumber.trim() || !phone.trim()) {
       toast({ title: "يرجى إدخال رقم الحجز ورقم الهاتف", variant: "destructive" });
@@ -370,6 +375,71 @@ const TrackOrderPage = () => {
                     </div>
                   ))}
                 </div>
+
+                {/* Payment Method Selection - after COMPLETED */}
+                {booking.status === "COMPLETED" && (
+                  <div className="border-t pt-3 space-y-3">
+                    <div className="flex items-center gap-2">
+                      <Landmark className="h-4 w-4 text-primary" />
+                      <p className="text-sm font-bold">اختر طريقة الدفع</p>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      {[
+                        { value: "CASH", label: "💵 نقداً", desc: "يُسلم للمزود مباشرة" },
+                        { value: "INSURANCE", label: "🏥 تأمين", desc: "عبر بوليصة التأمين" },
+                        { value: "CLIQ", label: "📱 CliQ", desc: "تحويل لحساب المنصة" },
+                      ].map((pm) => (
+                        <button
+                          key={pm.value}
+                          onClick={() => !paymentSaved && setSelectedPayment(pm.value)}
+                          disabled={paymentSaved}
+                          className={`p-3 rounded-lg border text-center transition-all ${
+                            selectedPayment === pm.value
+                              ? "border-primary bg-primary/10 ring-2 ring-primary/30"
+                              : paymentSaved ? "opacity-50 border-border" : "border-border hover:border-primary/50"
+                          }`}
+                        >
+                          <span className="text-lg block">{pm.label}</span>
+                          <span className="text-[10px] text-muted-foreground">{pm.desc}</span>
+                        </button>
+                      ))}
+                    </div>
+                    {!paymentSaved ? (
+                      <Button
+                        size="sm"
+                        disabled={!selectedPayment || savingPayment}
+                        className="w-full gap-1.5"
+                        onClick={async () => {
+                          if (!selectedPayment) return;
+                          setSavingPayment(true);
+                          try {
+                            const { data, error } = await supabase.functions.invoke("track-booking-payment", {
+                              body: {
+                                booking_number: bookingNumber.trim(),
+                                phone: phone.trim(),
+                                payment_method: selectedPayment,
+                              },
+                            });
+                            if (error || data?.error) {
+                              toast({ title: "حدث خطأ في حفظ طريقة الدفع", variant: "destructive" });
+                            } else {
+                              setPaymentSaved(true);
+                              toast({ title: "تم حفظ طريقة الدفع ✅" });
+                            }
+                          } catch {
+                            toast({ title: "حدث خطأ", variant: "destructive" });
+                          }
+                          setSavingPayment(false);
+                        }}
+                      >
+                        {savingPayment ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                        تأكيد طريقة الدفع
+                      </Button>
+                    ) : (
+                      <p className="text-xs text-center text-success font-medium">✅ تم حفظ طريقة الدفع</p>
+                    )}
+                  </div>
+                )}
 
                 {/* Rating display or form */}
                 {result.rating ? (

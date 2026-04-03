@@ -377,6 +377,15 @@ const OrderWorkflowPhases = ({ booking, serviceName, servicePrice, onWorkflowCha
         await supabase.from("staff_notifications").insert(notifications);
       }
 
+      // Notify the assigned provider about the new booking
+      await supabase.from("staff_notifications").insert({
+        title: "📋 طلب جديد بانتظارك",
+        body: `تم إسناد الطلب ${booking.booking_number || ""} (${serviceName}) إليك في منطقة ${booking.city}. حصتك: ${formatCurrency(providerShare)}. يرجى قبول الطلب في أسرع وقت.`,
+        target_role: "provider",
+        provider_id: selectedProvider,
+        booking_id: booking.id,
+      });
+
       await supabase.from("booking_outbox").insert({
         booking_id: booking.id,
         destination: "webhook",
