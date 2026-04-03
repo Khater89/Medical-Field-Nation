@@ -910,8 +910,13 @@ const ProviderDashboard = () => {
 
         <Tabs defaultValue="orders" className="space-y-4">
           <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="available" className="gap-1 text-[10px] sm:text-xs">
+            <TabsTrigger value="available" className="gap-1 text-[10px] sm:text-xs relative">
               <DollarSign className="h-3.5 w-3.5" /> متاحة
+              {availableCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-[9px] rounded-full h-4 w-4 flex items-center justify-center animate-pulse">
+                  {availableCount}
+                </span>
+              )}
             </TabsTrigger>
             <TabsTrigger value="orders" className="gap-1 text-[10px] sm:text-xs">
               <ClipboardList className="h-3.5 w-3.5" /> طلباتي ({orders.length})
