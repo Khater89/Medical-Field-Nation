@@ -360,6 +360,57 @@ const BookingDetailsDrawer = ({ booking, open, onOpenChange, serviceName, servic
               setPreSelectedProviderId(providerId);
               setPreSelectedProviderShare(quotedPrice);
             }}
+            onDirectAssign={showWorkflow ? async (providerId, providerNameVal, quotedPrice) => {
+              // Direct assign from quote
+              try {
+                const { data: { user: authUser } } = await supabase.auth.getUser();
+                if (!authUser) return;
+                const { error } = await supabase
+                  .from("bookings")
+                  .update({
+                    status: "ASSIGNED",
+                    assigned_provider_id: providerId,
+                    assigned_at: new Date().toISOString(),
+                    assigned_by: authUser.id,
+                    agreed_price: quotedPrice,
+                    provider_share: quotedPrice,
+                  })
+                  .eq("id", booking.id);
+                if (error) throw error;
+
+                await supabase.from("booking_history").insert({
+                  booking_id: booking.id,
+                  action: "ASSIGNED",
+                  performed_by: authUser.id,
+                  performer_role: "admin",
+                  note: `إسناد مباشر من عرض السعر — ${providerNameVal} بسعر ${quotedPrice} JOD`,
+                });
+
+                // Notify other providers who quoted
+                const { data: otherQuotes } = await supabase
+                  .from("provider_quotes" as any)
+                  .select("provider_id")
+                  .eq("booking_id", booking.id)
+                  .neq("provider_id", providerId);
+
+                if (otherQuotes && otherQuotes.length > 0) {
+                  const notifications = (otherQuotes as any[]).map((q: any) => ({
+                    title: "📋 تم إسناد الطلب لمزود آخر",
+                    body: `تم إسناد الطلب ${booking.booking_number || ""} لمزود آخر لمطابقته مع تفاصيل الطلب ولتقديمه عرض سعر منافس.`,
+                    target_role: "provider",
+                    provider_id: q.provider_id,
+                    booking_id: booking.id,
+                  }));
+                  await supabase.from("staff_notifications").insert(notifications);
+                }
+
+                toast.success(`تم إسناد الطلب لـ ${providerNameVal} بنجاح ✅`);
+                onOpenChange(false);
+                onStatusChange?.();
+              } catch (err: any) {
+                toast.error(err.message || "حدث خطأ أثناء الإسناد");
+              }
+            } : undefined}
           />
 
           {/* Client Info */}
