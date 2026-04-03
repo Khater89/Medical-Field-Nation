@@ -118,6 +118,10 @@ const OrderWorkflowPhases = ({ booking, serviceName, servicePrice, onWorkflowCha
   const [editingProviderShare, setEditingProviderShare] = useState(false);
   const [savingProviderShare, setSavingProviderShare] = useState(false);
   const [providerStats, setProviderStats] = useState<Record<string, ProviderStats>>({});
+  const [routedProviders, setRoutedProviders] = useState<Set<string>>(new Set());
+  const [viewProfileId, setViewProfileId] = useState<string | null>(null);
+  const [viewProfileData, setViewProfileData] = useState<any>(null);
+  const [loadingProfile, setLoadingProfile] = useState(false);
 
   // Phase 2 (Client) state
   const [clientAgreed, setClientAgreed] = useState(!!booking.deal_confirmed_at);

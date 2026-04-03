@@ -786,7 +786,8 @@ const ProviderDashboard = () => {
     );
   }
 
-  const filteredOrders = statusFilter === "ALL" ? orders : orders.filter((o) => o.status === statusFilter);
+  const filteredOrders = (statusFilter === "ALL" ? orders : orders.filter((o) => o.status === statusFilter))
+    .sort((a, b) => new Date(b.scheduled_at).getTime() - new Date(a.scheduled_at).getTime());
   const isAccepted = (o: ProviderOrder) => !!o.accepted_at;
 
   const toggleSpecialty = (s: string) => {
