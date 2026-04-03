@@ -830,6 +830,68 @@ const OrderWorkflowPhases = ({ booking, serviceName, servicePrice, onWorkflowCha
           </Button>
         </div>
       )}
+
+      {/* Provider Profile Modal */}
+      {viewProfileId && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onClick={() => setViewProfileId(null)}>
+          <div className="bg-card rounded-xl border shadow-lg w-full max-w-md max-h-[80vh] overflow-y-auto p-5 space-y-4" onClick={(e) => e.stopPropagation()}>
+            {loadingProfile ? (
+              <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
+            ) : viewProfileData ? (
+              <>
+                <div className="flex items-center justify-between">
+                  <h3 className="text-base font-bold">الملف الشخصي</h3>
+                  <Button size="sm" variant="ghost" onClick={() => setViewProfileId(null)}>✕</Button>
+                </div>
+                <div className="flex items-center gap-3">
+                  {viewProfileData.avatar_url && (
+                    <img src={viewProfileData.avatar_url} alt="" className="h-14 w-14 rounded-full object-cover border" />
+                  )}
+                  <div>
+                    <p className="font-bold">{viewProfileData.full_name || "—"}</p>
+                    <p className="text-xs text-muted-foreground">{ROLE_TYPE_LABELS[viewProfileData.role_type] || viewProfileData.role_type}</p>
+                    {viewProfileData.provider_number && (
+                      <Badge variant="outline" className="text-[9px] font-mono mt-0.5">#{viewProfileData.provider_number}</Badge>
+                    )}
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div><span className="text-muted-foreground text-xs">المدينة:</span><p className="font-medium">{viewProfileData.city || "—"}</p></div>
+                  <div><span className="text-muted-foreground text-xs">سنوات الخبرة:</span><p className="font-medium">{viewProfileData.experience_years || 0}</p></div>
+                  <div><span className="text-muted-foreground text-xs">الهاتف:</span><p className="font-medium" dir="ltr">{viewProfileData.phone || "—"}</p></div>
+                  <div><span className="text-muted-foreground text-xs">نطاق العمل:</span><p className="font-medium">{viewProfileData.radius_km || 20} كم</p></div>
+                </div>
+                {viewProfileData.specialties?.length > 0 && (
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1">التخصصات:</p>
+                    <div className="flex flex-wrap gap-1">{viewProfileData.specialties.map((s: string) => <Badge key={s} variant="secondary" className="text-[10px]">{s}</Badge>)}</div>
+                  </div>
+                )}
+                {viewProfileData.tools?.length > 0 && (
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1">الأدوات:</p>
+                    <div className="flex flex-wrap gap-1">{viewProfileData.tools.map((t: string) => <Badge key={t} variant="outline" className="text-[10px]">{t}</Badge>)}</div>
+                  </div>
+                )}
+                {viewProfileData.bio && <p className="text-xs text-muted-foreground bg-muted/30 rounded p-2">{viewProfileData.bio}</p>}
+                {viewProfileData.academic_cert_url && (
+                  <a href={viewProfileData.academic_cert_url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary underline">📄 الشهادة العلمية</a>
+                )}
+                {viewProfileData.experience_cert_url && (
+                  <a href={viewProfileData.experience_cert_url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary underline ms-3">📄 شهادة الخبرة</a>
+                )}
+                <div className="pt-2 flex gap-2">
+                  <Button size="sm" className="flex-1 gap-1" onClick={() => { setSelectedProvider(viewProfileId); setViewProfileId(null); }}>
+                    <UserCheck className="h-3 w-3" /> اختيار هذا المزود
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <p className="text-center text-muted-foreground py-4">لم يتم العثور على البيانات</p>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
