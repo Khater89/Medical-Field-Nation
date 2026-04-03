@@ -377,6 +377,10 @@ const ProviderDashboard = () => {
     setProviderNotifications(notifs || []);
     setUnreadNotifCount((notifs || []).filter((n: any) => !n.read).length);
 
+    // Fetch available bookings count
+    const { data: availableData } = await supabase.rpc("available_bookings_for_providers" as any);
+    setAvailableCount((availableData as any[])?.length || 0);
+
     setLoading(false);
   };
 
