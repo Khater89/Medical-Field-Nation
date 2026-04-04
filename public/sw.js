@@ -1,10 +1,9 @@
-const CACHE_NAME = 'mfn-v1';
+const CACHE_NAME = 'mfn-static-v2';
 const PRECACHE_URLS = [
-  '/',
-  '/index.html',
   '/manifest.json',
   '/favicon.svg'
 ];
+const STATIC_ASSET_PATTERN = /\.(?:js|css|png|jpg|jpeg|svg|woff2?)$/i;
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -24,36 +23,42 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
-  
+
   const url = new URL(event.request.url);
-  
-  // Network-first for API calls and edge functions
-  if (url.pathname.startsWith('/rest/') || url.pathname.startsWith('/functions/')) {
+
+  if (url.origin !== self.location.origin) return;
+  if (event.request.mode === 'navigate') return;
+
+  // Never intercept API calls or dev-preview module requests
+  if (
+    url.pathname.startsWith('/rest/') ||
+    url.pathname.startsWith('/functions/') ||
+    url.pathname.startsWith('/@vite/') ||
+    url.pathname.startsWith('/src/')
+  ) {
     return;
   }
 
-  // Cache-first for static assets
-  if (url.pathname.match(/\.(js|css|png|jpg|svg|woff2?)$/)) {
-    event.respondWith(
-      caches.match(event.request).then((cached) =>
-        cached || fetch(event.request).then((response) => {
+  if (!STATIC_ASSET_PATTERN.test(url.pathname)) {
+    return;
+  }
+
+  event.respondWith(
+    caches.match(event.request).then((cached) => {
+      if (cached) return cached;
+
+      return fetch(event.request)
+        .then((response) => {
+          if (!response.ok) return response;
+
           const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+          event.waitUntil(
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone))
+          );
+
           return response;
         })
-      )
-    );
-    return;
-  }
-
-  // Network-first for HTML (SPA navigation)
-  event.respondWith(
-    fetch(event.request)
-      .then((response) => {
-        const clone = response.clone();
-        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
-        return response;
-      })
-      .catch(() => caches.match(event.request).then((cached) => cached || caches.match('/')))
+        .catch(() => Response.error());
+    })
   );
 });
