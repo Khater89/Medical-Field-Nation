@@ -37,6 +37,7 @@ const ServicesTab = () => {
     base_price: "",
     description: "",
     duration_minutes: "",
+    pricing_type: "fixed" as "fixed" | "hourly",
   });
 
   const fetchServices = async () => {
