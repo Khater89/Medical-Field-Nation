@@ -93,6 +93,7 @@ const ServicesTab = () => {
       base_price: parseFloat(form.base_price),
       description: form.description.trim() || null,
       duration_minutes: form.duration_minutes ? parseInt(form.duration_minutes) : null,
+      pricing_type: form.pricing_type,
     } as any;
 
     if (editing) {
