@@ -37,6 +37,7 @@ const ServicesTab = () => {
     base_price: "",
     description: "",
     duration_minutes: "",
+    pricing_type: "fixed" as "fixed" | "hourly",
   });
 
   const fetchServices = async () => {
@@ -61,7 +62,7 @@ const ServicesTab = () => {
 
   const openAdd = () => {
     setEditing(null);
-    setForm({ name: "", category: "nursing", city: "", base_price: "", description: "", duration_minutes: "" });
+    setForm({ name: "", category: "nursing", city: "", base_price: "", description: "", duration_minutes: "", pricing_type: "fixed" });
     setDialogOpen(true);
   };
 
@@ -74,6 +75,7 @@ const ServicesTab = () => {
       base_price: String(s.base_price),
       description: s.description || "",
       duration_minutes: s.duration_minutes ? String(s.duration_minutes) : "",
+      pricing_type: (s as any).pricing_type || "fixed",
     });
     setDialogOpen(true);
   };
@@ -91,6 +93,7 @@ const ServicesTab = () => {
       base_price: parseFloat(form.base_price),
       description: form.description.trim() || null,
       duration_minutes: form.duration_minutes ? parseInt(form.duration_minutes) : null,
+      pricing_type: form.pricing_type,
     } as any;
 
     if (editing) {
@@ -175,9 +178,19 @@ const ServicesTab = () => {
                 <label className="text-sm font-medium">المدينة (اختياري)</label>
                 <Input value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} placeholder="مثال: عمان" />
               </div>
+              <div>
+                <label className="text-sm font-medium">نوع التسعير *</label>
+                <Select value={form.pricing_type} onValueChange={(v) => setForm({ ...form, pricing_type: v as "fixed" | "hourly" })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="fixed">سعر ثابت (Fixed)</SelectItem>
+                    <SelectItem value="hourly">سعر بالساعة (Hourly)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-sm font-medium">السعر الأساسي (د.أ) *</label>
+                  <label className="text-sm font-medium">{form.pricing_type === "hourly" ? "سعر الساعة (د.أ) *" : "السعر الأساسي (د.أ) *"}</label>
                   <Input type="number" min="0" step="0.5" value={form.base_price} onChange={(e) => setForm({ ...form, base_price: e.target.value })} placeholder="50" dir="ltr" />
                 </div>
                 <div>
@@ -234,6 +247,7 @@ const ServicesTab = () => {
                     </div>
                     <p className="text-xs text-muted-foreground mt-0.5">
                       {s.city || "جميع المدن"} · {s.base_price} د.أ
+                      {(s as any).pricing_type === "hourly" ? " /ساعة" : " ثابت"}
                       {s.duration_minutes ? ` · ${s.duration_minutes} دقيقة` : ""}
                     </p>
                     {s.description && (

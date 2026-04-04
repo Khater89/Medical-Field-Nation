@@ -10,6 +10,7 @@ export interface DbService {
   duration_minutes: number | null;
   city: string | null;
   active: boolean;
+  pricing_type: "fixed" | "hourly";
   created_at: string;
   updated_at: string;
 }

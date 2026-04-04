@@ -300,6 +300,7 @@ const ProviderDashboard = () => {
   // Debt limit
   const [debtLimit, setDebtLimit] = useState(-20);
   const [isOnHold, setIsOnHold] = useState(false);
+  const [platformBank, setPlatformBank] = useState<{ bank_name?: string; bank_iban?: string; bank_cliq_alias?: string; bank_account_holder?: string } | null>(null);
 
   // Profile editing state
   const [availableNow, setAvailableNow] = useState(false);
@@ -365,6 +366,12 @@ const ProviderDashboard = () => {
       const limit = (settingsRes.data as any).provider_debt_limit ?? -20;
       setDebtLimit(limit);
       setIsOnHold(bal < limit);
+      setPlatformBank({
+        bank_name: (settingsRes.data as any).bank_name,
+        bank_iban: (settingsRes.data as any).bank_iban,
+        bank_cliq_alias: (settingsRes.data as any).bank_cliq_alias,
+        bank_account_holder: (settingsRes.data as any).bank_account_holder,
+      });
     }
     // Fetch provider notifications
     const { data: notifs } = await supabase
@@ -1505,6 +1512,19 @@ const ProviderDashboard = () => {
                   <div className="rounded-lg bg-destructive/10 p-3 space-y-1.5">
                     <p className="text-xs font-medium text-destructive">{t("provider.wallet.debt_notice")}</p>
                     <p className="text-xs text-muted-foreground">{t("provider.wallet.debt_instructions")}</p>
+                  </div>
+                )}
+                {/* Platform CliQ info for settling debts */}
+                {balance < 0 && platformBank && (
+                  <div className="rounded-lg border border-info/30 bg-info/5 p-3 space-y-1.5">
+                    <h5 className="text-xs font-bold flex items-center gap-1.5 text-info">
+                      <Wallet className="h-3.5 w-3.5" />
+                      بيانات تحويل حصة المنصة عبر CliQ
+                    </h5>
+                    {platformBank.bank_name && <p className="text-xs">🏦 البنك: <strong>{platformBank.bank_name}</strong></p>}
+                    {platformBank.bank_account_holder && <p className="text-xs">👤 صاحب الحساب: <strong>{platformBank.bank_account_holder}</strong></p>}
+                    {platformBank.bank_cliq_alias && <p className="text-xs">📱 CliQ Alias: <strong dir="ltr">{platformBank.bank_cliq_alias}</strong></p>}
+                    {platformBank.bank_iban && <p className="text-xs">🔢 IBAN: <strong dir="ltr">{platformBank.bank_iban}</strong></p>}
                   </div>
                 )}
               </CardContent>

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { CheckCircle, Circle, Clock, Loader2, MapPin, Phone, Star } from "lucide-react";
+import { CheckCircle, Circle, Clock, Loader2, MapPin, Phone, Star, Landmark } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
@@ -34,6 +34,7 @@ const CustomerOrderTracker = ({ bookingId, onClose }: OrderTrackerProps) => {
   const { toast } = useToast();
   const [booking, setBooking] = useState<any>(null);
   const [history, setHistory] = useState<any[]>([]);
+  const [platformSettings, setPlatformSettings] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
@@ -44,13 +45,15 @@ const CustomerOrderTracker = ({ bookingId, onClose }: OrderTrackerProps) => {
 
   useEffect(() => {
     const fetch = async () => {
-      const [bookingRes, historyRes, ratingRes] = await Promise.all([
+      const [bookingRes, historyRes, ratingRes, settingsRes] = await Promise.all([
         supabase.from("bookings").select("*").eq("id", bookingId).single(),
         supabase.from("booking_history").select("*").eq("booking_id", bookingId).order("created_at", { ascending: true }),
         supabase.from("provider_ratings").select("*").eq("booking_id", bookingId).maybeSingle(),
+        supabase.from("platform_settings").select("*").eq("id", 1).maybeSingle(),
       ]);
       setBooking(bookingRes.data);
       setHistory(historyRes.data || []);
+      if (settingsRes.data) setPlatformSettings(settingsRes.data);
       if (ratingRes.data) {
         setExistingRating(ratingRes.data);
         setRating(ratingRes.data.rating);
@@ -206,6 +209,20 @@ const CustomerOrderTracker = ({ bookingId, onClose }: OrderTrackerProps) => {
                   {savingPayment && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                   تأكيد طريقة الدفع
                 </Button>
+
+                {/* Show CliQ info when CliQ is selected */}
+                {selectedPayment === "CLIQ" && platformSettings && (
+                  <div className="rounded-lg border border-info/30 bg-info/5 p-3 space-y-1.5 mt-2">
+                    <h5 className="text-xs font-bold flex items-center gap-1.5 text-info">
+                      <Landmark className="h-3.5 w-3.5" />
+                      بيانات التحويل عبر CliQ
+                    </h5>
+                    {platformSettings.bank_name && <p className="text-xs">🏦 البنك: <strong>{platformSettings.bank_name}</strong></p>}
+                    {platformSettings.bank_account_holder && <p className="text-xs">👤 صاحب الحساب: <strong>{platformSettings.bank_account_holder}</strong></p>}
+                    {platformSettings.bank_cliq_alias && <p className="text-xs">📱 CliQ Alias: <strong dir="ltr">{platformSettings.bank_cliq_alias}</strong></p>}
+                    {platformSettings.bank_iban && <p className="text-xs">🔢 IBAN: <strong dir="ltr">{platformSettings.bank_iban}</strong></p>}
+                  </div>
+                )}
               </>
             )}
           </CardContent>

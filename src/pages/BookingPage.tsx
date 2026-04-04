@@ -201,7 +201,7 @@ const BookingPage = () => {
                   </div>
                 )}
 
-                {step === 2 && <PatientForm data={patient} onChange={setPatient} />}
+                {step === 2 && <PatientForm data={patient} onChange={setPatient} showHours={selectedService?.pricing_type === "hourly"} />}
 
                 {step === 3 && selectedService && (
                   <div className="space-y-4">

@@ -35,9 +35,10 @@ export interface PatientData {
 interface PatientFormProps {
   data: PatientData;
   onChange: (data: PatientData) => void;
+  showHours?: boolean;
 }
 
-const PatientForm = ({ data, onChange }: PatientFormProps) => {
+const PatientForm = ({ data, onChange, showHours = true }: PatientFormProps) => {
   const { t, lang } = useLanguage();
   const [locating, setLocating] = useState(false);
 
@@ -188,48 +189,50 @@ const PatientForm = ({ data, onChange }: PatientFormProps) => {
       {/* Time Picker */}
       <TimePicker value={data.time} onChange={(v) => update("time", v)} />
 
-      {/* Hours Selector */}
-      <div className="space-y-3">
-        <Label className="flex items-center gap-2 text-sm font-medium">
-          <Clock className="h-4 w-4 text-primary" />
-          {t("form.hours")}
-        </Label>
-        <div className="flex items-center justify-center gap-4">
-          <Button
-            type="button"
-            variant="outline"
-            size="icon"
-            className="h-10 w-10 rounded-full"
-            onClick={() => update("hours", Math.max(1, data.hours - 1))}
-            disabled={data.hours <= 1}
-          >
-            <Minus className="h-4 w-4" />
-          </Button>
-          <div className="text-center min-w-[80px]">
-            <span className="text-3xl font-bold text-primary">{data.hours}</span>
-            <p className="text-xs text-muted-foreground mt-1">
-              {data.hours === 1 ? t("form.hours.single") : t("form.hours.plural")}
-            </p>
+      {/* Hours Selector - only for hourly services */}
+      {showHours && (
+        <div className="space-y-3">
+          <Label className="flex items-center gap-2 text-sm font-medium">
+            <Clock className="h-4 w-4 text-primary" />
+            {t("form.hours")}
+          </Label>
+          <div className="flex items-center justify-center gap-4">
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              className="h-10 w-10 rounded-full"
+              onClick={() => update("hours", Math.max(1, data.hours - 1))}
+              disabled={data.hours <= 1}
+            >
+              <Minus className="h-4 w-4" />
+            </Button>
+            <div className="text-center min-w-[80px]">
+              <span className="text-3xl font-bold text-primary">{data.hours}</span>
+              <p className="text-xs text-muted-foreground mt-1">
+                {data.hours === 1 ? t("form.hours.single") : t("form.hours.plural")}
+              </p>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              className="h-10 w-10 rounded-full"
+              onClick={() => update("hours", Math.min(12, data.hours + 1))}
+              disabled={data.hours >= 12}
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
           </div>
-          <Button
-            type="button"
-            variant="outline"
-            size="icon"
-            className="h-10 w-10 rounded-full"
-            onClick={() => update("hours", Math.min(12, data.hours + 1))}
-            disabled={data.hours >= 12}
-          >
-            <Plus className="h-4 w-4" />
-          </Button>
-        </div>
 
-        {/* Price note */}
-        {data.time && (
-          <p className="text-xs text-muted-foreground text-center p-2 rounded-lg border border-border bg-muted/30">
-            {t("price.determined_later")}
-          </p>
-        )}
-      </div>
+          {/* Price note */}
+          {data.time && (
+            <p className="text-xs text-muted-foreground text-center p-2 rounded-lg border border-border bg-muted/30">
+              {t("price.determined_later")}
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Provider Gender Preference */}
       <div className="space-y-2">

@@ -653,6 +653,7 @@ export type Database = {
           duration_minutes: number | null
           id: string
           name: string
+          pricing_type: string
           updated_at: string
         }
         Insert: {
@@ -665,6 +666,7 @@ export type Database = {
           duration_minutes?: number | null
           id?: string
           name: string
+          pricing_type?: string
           updated_at?: string
         }
         Update: {
@@ -677,6 +679,7 @@ export type Database = {
           duration_minutes?: number | null
           id?: string
           name?: string
+          pricing_type?: string
           updated_at?: string
         }
         Relationships: []
