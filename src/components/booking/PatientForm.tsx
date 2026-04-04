@@ -38,7 +38,7 @@ interface PatientFormProps {
   showHours?: boolean;
 }
 
-const PatientForm = ({ data, onChange }: PatientFormProps) => {
+const PatientForm = ({ data, onChange, showHours = true }: PatientFormProps) => {
   const { t, lang } = useLanguage();
   const [locating, setLocating] = useState(false);
 
