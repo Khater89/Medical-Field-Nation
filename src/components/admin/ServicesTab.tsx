@@ -75,6 +75,7 @@ const ServicesTab = () => {
       base_price: String(s.base_price),
       description: s.description || "",
       duration_minutes: s.duration_minutes ? String(s.duration_minutes) : "",
+      pricing_type: (s as any).pricing_type || "fixed",
     });
     setDialogOpen(true);
   };
