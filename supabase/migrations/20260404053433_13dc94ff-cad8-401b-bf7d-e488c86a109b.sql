@@ -1,0 +1,1 @@
+ALTER TABLE public.services ADD COLUMN pricing_type text NOT NULL DEFAULT 'fixed' CHECK (pricing_type IN ('fixed', 'hourly'));
