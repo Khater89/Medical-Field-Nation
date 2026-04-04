@@ -247,6 +247,7 @@ const ServicesTab = () => {
                     </div>
                     <p className="text-xs text-muted-foreground mt-0.5">
                       {s.city || "جميع المدن"} · {s.base_price} د.أ
+                      {(s as any).pricing_type === "hourly" ? " /ساعة" : " ثابت"}
                       {s.duration_minutes ? ` · ${s.duration_minutes} دقيقة` : ""}
                     </p>
                     {s.description && (
