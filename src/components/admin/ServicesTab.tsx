@@ -62,7 +62,7 @@ const ServicesTab = () => {
 
   const openAdd = () => {
     setEditing(null);
-    setForm({ name: "", category: "nursing", city: "", base_price: "", description: "", duration_minutes: "" });
+    setForm({ name: "", category: "nursing", city: "", base_price: "", description: "", duration_minutes: "", pricing_type: "fixed" });
     setDialogOpen(true);
   };
 
