@@ -38,6 +38,7 @@ const AdminDashboard = () => {
             </div>
           </Link>
           <div className="flex items-center gap-1">
+            <LanguageToggle />
             <Button variant="outline" size="sm" className="gap-1.5" onClick={() => navigate("/booking")}>
               <PlusCircle className="h-4 w-4" />
               {t("admin.new_booking")}
