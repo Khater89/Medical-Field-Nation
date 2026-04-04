@@ -480,7 +480,7 @@ const LandingPage = () => {
         </motion.a>
         {/* WhatsApp button - coordinator 2 (رائد) */}
         <motion.a
-          href={`https://wa.me/962781343144?text=${encodeURIComponent("مرحباً، معك رائد من منصة أمة الحقل الطبي. شكراً لتواصلك معنا، كيف بقدر أساعدك اليوم؟")}`}
+          href="https://wa.me/962781343144"
           target="_blank"
           rel="noopener noreferrer"
           initial={{ scale: 0, opacity: 0 }}
