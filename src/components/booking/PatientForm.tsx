@@ -35,6 +35,7 @@ export interface PatientData {
 interface PatientFormProps {
   data: PatientData;
   onChange: (data: PatientData) => void;
+  showHours?: boolean;
 }
 
 const PatientForm = ({ data, onChange }: PatientFormProps) => {
