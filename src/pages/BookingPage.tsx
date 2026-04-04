@@ -138,7 +138,7 @@ const BookingPage = () => {
         <BookingHeader />
         <main className="flex-1 flex items-center justify-center">
           <div className="container max-w-xl py-10">
-            <SuccessView onReset={handleReset} bookingNumber={bookingNumber} />
+            <SuccessView onReset={handleReset} bookingNumber={bookingNumber} customerPhone={patient.phone} />
           </div>
         </main>
         <AppFooter />

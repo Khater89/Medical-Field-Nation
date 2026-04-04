@@ -8,9 +8,10 @@ import { useNavigate } from "react-router-dom";
 interface SuccessViewProps {
   onReset: () => void;
   bookingNumber?: string;
+  customerPhone?: string;
 }
 
-const SuccessView = ({ onReset, bookingNumber }: SuccessViewProps) => {
+const SuccessView = ({ onReset, bookingNumber, customerPhone }: SuccessViewProps) => {
   const { t } = useLanguage();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -25,7 +26,10 @@ const SuccessView = ({ onReset, bookingNumber }: SuccessViewProps) => {
   const shareViaWhatsApp = () => {
     if (bookingNumber) {
       const msg = `📋 تفاصيل طلبي في MFN:\n\n🔢 رقم الطلب: ${bookingNumber}\n📌 الحالة: تم الإرسال بنجاح\n\n🔗 تتبع الطلب:\n${window.location.origin}/track`;
-      window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank");
+      // Send to customer's own phone if available, otherwise open WhatsApp with no recipient
+      const phone = customerPhone ? customerPhone.replace(/^0/, "962").replace(/\s/g, "") : "";
+      const waUrl = phone ? `https://wa.me/${phone}?text=${encodeURIComponent(msg)}` : `https://wa.me/?text=${encodeURIComponent(msg)}`;
+      window.open(waUrl, "_blank");
     }
   };
 

@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import mfnLogo from "@/assets/mfn-logo.png";
 import AvailableBookingsTab from "@/components/provider/AvailableBookingsTab";
+import LanguageToggle from "@/components/booking/LanguageToggle";
 
 /* ── Types ── */
 
@@ -838,9 +839,12 @@ const ProviderDashboard = () => {
               </p>
             </div>
           </Link>
-          <Button variant="ghost" size="sm" onClick={handleSignOut} className="gap-1.5">
-            <LogOut className="h-4 w-4" /> {t("action.logout")}
-          </Button>
+          <div className="flex items-center gap-1">
+            <LanguageToggle />
+            <Button variant="ghost" size="sm" onClick={handleSignOut} className="gap-1.5">
+              <LogOut className="h-4 w-4" /> {t("action.logout")}
+            </Button>
+          </div>
         </div>
       </header>
 
