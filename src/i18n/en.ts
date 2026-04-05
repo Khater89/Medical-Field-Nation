@@ -376,6 +376,7 @@ const en: Record<string, string> = {
   "landing.services_sub": "A comprehensive range of medical and nursing services at your home",
   "landing.pricing_title": "Pricing",
   "landing.pricing_sub": "Competitive and transparent pricing for all our services",
+  "landing.pricing_subtitle": "Competitive and transparent pricing for all our services",
   "landing.pricing.day_label": "Daytime",
   "landing.pricing.day_time": "6:00 AM - 9:00 PM",
   "landing.pricing.night_label": "Nighttime",
