@@ -167,6 +167,7 @@ const en: Record<string, string> = {
   "status.CONFIRMED": "Confirmed",
   "status.ASSIGNED": "Assigned",
   "status.ACCEPTED": "Accepted",
+  "status.PROVIDER_ON_THE_WAY": "Provider On The Way",
   "status.COMPLETED": "Completed",
   "status.CANCELLED": "Cancelled",
   "status.IN_PROGRESS": "In Progress",

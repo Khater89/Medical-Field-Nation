@@ -167,6 +167,7 @@ const ar: Record<string, string> = {
   "status.CONFIRMED": "مؤكد",
   "status.ASSIGNED": "تم التعيين",
   "status.ACCEPTED": "مقبول",
+  "status.PROVIDER_ON_THE_WAY": "المزود في الطريق",
   "status.COMPLETED": "مكتمل",
   "status.CANCELLED": "ملغي",
   "status.IN_PROGRESS": "قيد التنفيذ",
