@@ -43,6 +43,14 @@ const CustomerOrderTracker = ({ bookingId, onClose }: OrderTrackerProps) => {
   const [existingRating, setExistingRating] = useState<any>(null);
   const [selectedPayment, setSelectedPayment] = useState<string | null>(null);
   const [savingPayment, setSavingPayment] = useState(false);
+  const [statusNotification, setStatusNotification] = useState<string | null>(null);
+
+  const STATUS_NOTIFICATIONS: Record<string, string> = {
+    ACCEPTED: "✅ تم قبول طلبك، المزود سيصلك في الوقت المحدد.",
+    IN_PROGRESS: "🏥 بدأت الخدمة الآن، نتمنى لك السلامة.",
+    COMPLETED: "🎉 تم إكمال الخدمة بنجاح، يرجى تقييم المزود وتحديد طريقة الدفع.",
+    CANCELLED: "❌ تم إلغاء الطلب.",
+  };
 
   useEffect(() => {
     const fetch = async () => {
@@ -63,6 +71,26 @@ const CustomerOrderTracker = ({ bookingId, onClose }: OrderTrackerProps) => {
       setLoading(false);
     };
     fetch();
+
+    // Realtime subscription for status changes
+    const channel = supabase
+      .channel(`booking-track-${bookingId}`)
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'bookings', filter: `id=eq.${bookingId}` },
+        (payload) => {
+          const newData = payload.new as any;
+          setBooking(newData);
+          const msg = STATUS_NOTIFICATIONS[newData.status];
+          if (msg) {
+            setStatusNotification(msg);
+            sonnerToast(msg);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
   }, [bookingId]);
 
   const handleRate = async () => {
