@@ -376,6 +376,7 @@ const ar: Record<string, string> = {
   "landing.services_sub": "نقدم مجموعة شاملة من الخدمات الطبية والتمريضية في منزلك",
   "landing.pricing_title": "الأسعار",
   "landing.pricing_sub": "أسعار تنافسية وشفافة لجميع خدماتنا",
+  "landing.pricing_subtitle": "أسعار تنافسية وشفافة لجميع خدماتنا",
   "landing.pricing.day_label": "الفترة النهارية",
   "landing.pricing.day_time": "6:00 ص - 9:00 م",
   "landing.pricing.night_label": "الفترة الليلية",
