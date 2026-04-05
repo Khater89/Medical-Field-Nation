@@ -19,12 +19,13 @@ interface OrderTrackerProps {
   onClose?: () => void;
 }
 
-const STATUS_ORDER = ["NEW", "CONFIRMED", "ASSIGNED", "ACCEPTED", "IN_PROGRESS", "COMPLETED"];
+const STATUS_ORDER = ["NEW", "CONFIRMED", "ASSIGNED", "ACCEPTED", "PROVIDER_ON_THE_WAY", "IN_PROGRESS", "COMPLETED"];
 const STATUS_LABELS: Record<string, string> = {
   NEW: "تم استلام الطلب",
   CONFIRMED: "تم تأكيد الطلب",
   ASSIGNED: "تم تعيين مقدم الخدمة",
   ACCEPTED: "المزود قبل الطلب",
+  PROVIDER_ON_THE_WAY: "المزود في الطريق",
   IN_PROGRESS: "الخدمة قيد التنفيذ",
   COMPLETED: "تم إكمال الخدمة",
   CANCELLED: "تم إلغاء الطلب",
@@ -47,6 +48,7 @@ const CustomerOrderTracker = ({ bookingId, onClose }: OrderTrackerProps) => {
 
   const STATUS_NOTIFICATIONS: Record<string, string> = {
     ACCEPTED: "✅ تم قبول طلبك، المزود سيصلك في الوقت المحدد.",
+    PROVIDER_ON_THE_WAY: "🚗 المزود في الطريق إليك الآن.",
     IN_PROGRESS: "🏥 بدأت الخدمة الآن، نتمنى لك السلامة.",
     COMPLETED: "🎉 تم إكمال الخدمة بنجاح، يرجى تقييم المزود وتحديد طريقة الدفع.",
     CANCELLED: "❌ تم إلغاء الطلب.",

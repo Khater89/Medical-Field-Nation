@@ -225,12 +225,6 @@ const PatientForm = ({ data, onChange, showHours = true }: PatientFormProps) => 
             </Button>
           </div>
 
-          {/* Price note */}
-          {data.time && (
-            <p className="text-xs text-muted-foreground text-center p-2 rounded-lg border border-border bg-muted/30">
-              {t("price.determined_later")}
-            </p>
-          )}
         </div>
       )}
 

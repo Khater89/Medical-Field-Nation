@@ -17,12 +17,13 @@ import {
   Star, Briefcase, User,
 } from "lucide-react";
 
-const STATUS_ORDER = ["NEW", "CONFIRMED", "ASSIGNED", "ACCEPTED", "IN_PROGRESS", "COMPLETED"];
+const STATUS_ORDER = ["NEW", "CONFIRMED", "ASSIGNED", "ACCEPTED", "PROVIDER_ON_THE_WAY", "IN_PROGRESS", "COMPLETED"];
 const STATUS_LABELS: Record<string, string> = {
   NEW: "تم استلام الطلب",
   CONFIRMED: "تم تأكيد الطلب",
   ASSIGNED: "تم تعيين مقدم الخدمة",
   ACCEPTED: "المزود قبل الطلب",
+  PROVIDER_ON_THE_WAY: "المزود في الطريق",
   IN_PROGRESS: "الخدمة قيد التنفيذ",
   COMPLETED: "تم إكمال الخدمة",
   CANCELLED: "تم إلغاء الطلب",
@@ -516,8 +517,8 @@ const TrackOrderPage = () => {
                   </div>
                 ) : null}
 
-                {/* Bank Payment Info - only after COMPLETED */}
-                {result.bank_info && booking.status === "COMPLETED" && (
+                {/* Bank Payment Info - only after COMPLETED and CLIQ selected */}
+                {result.bank_info && booking.status === "COMPLETED" && (selectedPayment === "CLIQ" || paymentSaved) && (
                   <div className="border-t pt-3 space-y-3 text-start">
                     <div className="flex items-center gap-2 justify-center">
                       <Landmark className="h-5 w-5 text-primary" />

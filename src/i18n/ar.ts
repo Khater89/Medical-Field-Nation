@@ -167,6 +167,7 @@ const ar: Record<string, string> = {
   "status.CONFIRMED": "مؤكد",
   "status.ASSIGNED": "تم التعيين",
   "status.ACCEPTED": "مقبول",
+  "status.PROVIDER_ON_THE_WAY": "المزود في الطريق",
   "status.COMPLETED": "مكتمل",
   "status.CANCELLED": "ملغي",
   "status.IN_PROGRESS": "قيد التنفيذ",
@@ -325,6 +326,7 @@ const ar: Record<string, string> = {
   // Provider Order Statuses (for provider dashboard)
   "provider.status.ASSIGNED": "بانتظار القبول",
   "provider.status.ACCEPTED": "مقبول",
+  "provider.status.PROVIDER_ON_THE_WAY": "في الطريق",
   "provider.status.COMPLETED": "مكتمل",
   "provider.status.CANCELLED": "ملغي",
   "provider.status.REJECTED": "مرفوض",
@@ -375,6 +377,7 @@ const ar: Record<string, string> = {
   "landing.services_sub": "نقدم مجموعة شاملة من الخدمات الطبية والتمريضية في منزلك",
   "landing.pricing_title": "الأسعار",
   "landing.pricing_sub": "أسعار تنافسية وشفافة لجميع خدماتنا",
+  "landing.pricing_subtitle": "أسعار تنافسية وشفافة لجميع خدماتنا",
   "landing.pricing.day_label": "الفترة النهارية",
   "landing.pricing.day_time": "6:00 ص - 9:00 م",
   "landing.pricing.night_label": "الفترة الليلية",

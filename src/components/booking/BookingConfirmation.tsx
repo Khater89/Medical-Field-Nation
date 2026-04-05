@@ -51,13 +51,6 @@ const BookingConfirmation = ({ service, patient }: BookingConfirmationProps) => 
         ))}
       </div>
 
-      {/* Price note */}
-      <div className="flex items-start gap-2 p-4 rounded-xl border-2 border-border bg-muted/50">
-        <Info className="h-5 w-5 text-primary mt-0.5 shrink-0" />
-        <p className="text-sm text-muted-foreground leading-relaxed">
-          {t("price.determined_later")}
-        </p>
-      </div>
     </div>
   );
 };

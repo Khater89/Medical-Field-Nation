@@ -90,15 +90,6 @@ const BookingSummary = ({ service, patient, step }: BookingSummaryProps) => {
         </div>
       )}
 
-      <Separator />
-
-      {/* Price note instead of price breakdown */}
-      <div className="flex items-start gap-2 p-3 rounded-lg bg-muted/50 border border-border">
-        <Info className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-        <p className="text-xs text-muted-foreground leading-relaxed">
-          {t("price.determined_later")}
-        </p>
-      </div>
     </div>
   );
 };

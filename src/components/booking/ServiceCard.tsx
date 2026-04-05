@@ -107,9 +107,6 @@ const ServiceCard = ({ service, isSelected, onSelect }: ServiceCardProps) => {
               {service.description}
             </p>
           )}
-          <p className="mt-2 text-xs text-muted-foreground">
-            {t("price.determined_later")}
-          </p>
         </div>
       </div>
     </button>

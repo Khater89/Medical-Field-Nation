@@ -95,13 +95,14 @@ interface Props {
   booking: BookingRow;
   serviceName: string;
   servicePrice: number | null;
+  serviceCategory?: string | null;
   onWorkflowChange: () => void;
   onDataRefresh?: () => void;
   preSelectedProviderId?: string | null;
   preSelectedProviderShare?: number | null;
 }
 
-const OrderWorkflowPhases = ({ booking, serviceName, servicePrice, onWorkflowChange, onDataRefresh, preSelectedProviderId, preSelectedProviderShare }: Props) => {
+const OrderWorkflowPhases = ({ booking, serviceName, servicePrice, serviceCategory, onWorkflowChange, onDataRefresh, preSelectedProviderId, preSelectedProviderShare }: Props) => {
   const { t, formatCurrency } = useLanguage();
   const { isAdmin } = useAuth();
 
@@ -119,6 +120,7 @@ const OrderWorkflowPhases = ({ booking, serviceName, servicePrice, onWorkflowCha
   const [savingProviderShare, setSavingProviderShare] = useState(false);
   const [providerStats, setProviderStats] = useState<Record<string, ProviderStats>>({});
   const [routedProviders, setRoutedProviders] = useState<Set<string>>(new Set());
+  const [providerSearch, setProviderSearch] = useState("");
   const [viewProfileId, setViewProfileId] = useState<string | null>(null);
   const [viewProfileData, setViewProfileData] = useState<any>(null);
   const [loadingProfile, setLoadingProfile] = useState(false);
@@ -422,13 +424,34 @@ const OrderWorkflowPhases = ({ booking, serviceName, servicePrice, onWorkflowCha
     }
   };
 
-  // Provider lists
+  // Category → role_type mapping for smart filtering
+  const CATEGORY_ROLE_MAP: Record<string, string[]> = {
+    medical: ["doctor"],
+    nursing: ["nurse", "caregiver", "midwife"],
+    packages: ["doctor", "nurse", "caregiver", "physiotherapist", "midwife"],
+  };
+  const allowedRoles = serviceCategory ? CATEGORY_ROLE_MAP[serviceCategory] || [] : [];
+
+  // Filter helpers
+  const matchesSearch = (name: string | null, providerNumber?: number | null) => {
+    if (!providerSearch.trim()) return true;
+    const q = providerSearch.trim().toLowerCase();
+    return (name?.toLowerCase().includes(q)) || (providerNumber && `#${providerNumber}`.includes(q)) || (providerNumber && String(providerNumber).includes(q));
+  };
+
+  const matchesRole = (roleType: string | null) => {
+    if (!allowedRoles.length) return true;
+    return roleType ? allowedRoles.includes(roleType) : false;
+  };
+
+  // Provider lists with search + role filtering
   const nearestIds = new Set(nearestProviders.map((p) => p.provider_id));
+  const filteredNearest = nearestProviders.filter(p => matchesRole(p.role_type) && matchesSearch(p.full_name));
   const sameCityProviders = fallbackProviders.filter(
-    (p) => !nearestIds.has(p.user_id) && citiesMatch(p.city, booking.city)
+    (p) => !nearestIds.has(p.user_id) && citiesMatch(p.city, booking.city) && matchesRole(p.role_type) && matchesSearch(p.full_name, p.provider_number)
   );
   const otherCityProviders = fallbackProviders.filter(
-    (p) => !nearestIds.has(p.user_id) && !citiesMatch(p.city, booking.city)
+    (p) => !nearestIds.has(p.user_id) && !citiesMatch(p.city, booking.city) && matchesRole(p.role_type) && matchesSearch(p.full_name, p.provider_number)
   );
 
   const coordinatorPhone = selectedCoordinator === "2" && coordinatorPhones.phone2
@@ -613,14 +636,26 @@ const OrderWorkflowPhases = ({ booking, serviceName, servicePrice, onWorkflowCha
         {/* Provider list */}
         {!isAssigned && (
           <>
+            {/* Search bar */}
+            <Input
+              placeholder="🔍 بحث بالاسم أو رقم المرجع..."
+              value={providerSearch}
+              onChange={(e) => setProviderSearch(e.target.value)}
+              className="h-8 text-sm"
+            />
+            {allowedRoles.length > 0 && (
+              <p className="text-[10px] text-muted-foreground">
+                🎯 يتم عرض {serviceCategory === "medical" ? "الأطباء فقط" : serviceCategory === "nursing" ? "الممرضين والمساعدين فقط" : "جميع التخصصات"} حسب فئة الخدمة
+              </p>
+            )}
             {loadingProviders ? (
               <div className="flex justify-center py-4"><Loader2 className="h-5 w-5 animate-spin text-primary" /></div>
             ) : (
               <div className="space-y-2 max-h-[300px] overflow-y-auto">
-                {nearestProviders.length > 0 && (
+                {filteredNearest.length > 0 && (
                   <div className="space-y-1.5">
                     <p className="text-xs text-muted-foreground font-medium">🎯 الأقرب (حسب المسافة):</p>
-                    {nearestProviders.map((p) => (
+                    {filteredNearest.map((p) => (
                       <ProviderCard
                         key={p.provider_id} id={p.provider_id} name={p.full_name}
                         phone={p.phone} city={p.city} roleType={p.role_type}

@@ -167,6 +167,7 @@ const en: Record<string, string> = {
   "status.CONFIRMED": "Confirmed",
   "status.ASSIGNED": "Assigned",
   "status.ACCEPTED": "Accepted",
+  "status.PROVIDER_ON_THE_WAY": "Provider On The Way",
   "status.COMPLETED": "Completed",
   "status.CANCELLED": "Cancelled",
   "status.IN_PROGRESS": "In Progress",
@@ -325,6 +326,7 @@ const en: Record<string, string> = {
   // Provider Order Statuses
   "provider.status.ASSIGNED": "Pending Acceptance",
   "provider.status.ACCEPTED": "Accepted",
+  "provider.status.PROVIDER_ON_THE_WAY": "On The Way",
   "provider.status.COMPLETED": "Completed",
   "provider.status.CANCELLED": "Cancelled",
   "provider.status.REJECTED": "Rejected",
@@ -375,6 +377,7 @@ const en: Record<string, string> = {
   "landing.services_sub": "A comprehensive range of medical and nursing services at your home",
   "landing.pricing_title": "Pricing",
   "landing.pricing_sub": "Competitive and transparent pricing for all our services",
+  "landing.pricing_subtitle": "Competitive and transparent pricing for all our services",
   "landing.pricing.day_label": "Daytime",
   "landing.pricing.day_time": "6:00 AM - 9:00 PM",
   "landing.pricing.night_label": "Nighttime",

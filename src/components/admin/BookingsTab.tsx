@@ -20,7 +20,7 @@ const STATUS_COLORS: Record<string, string> = {
   CANCELLED: "bg-destructive/10 text-destructive border-destructive/30",
 };
 
-const FILTER_STATUSES = ["ALL", "NEW", "CONFIRMED", "ASSIGNED", "ACCEPTED", "IN_PROGRESS", "COMPLETED", "CANCELLED", "REJECTED"];
+const FILTER_STATUSES = ["ALL", "NEW", "CONFIRMED", "ASSIGNED", "ACCEPTED", "PROVIDER_ON_THE_WAY", "IN_PROGRESS", "COMPLETED", "CANCELLED", "REJECTED"];
 
 const FILTER_COLORS: Record<string, string> = {
   ALL: "bg-muted text-foreground border-border",
@@ -28,6 +28,7 @@ const FILTER_COLORS: Record<string, string> = {
   CONFIRMED: "bg-primary/20 text-primary border-primary/30",
   ASSIGNED: "bg-warning/10 text-warning border-warning/30",
   ACCEPTED: "bg-success/10 text-success border-success/30",
+  PROVIDER_ON_THE_WAY: "bg-chart-4/20 text-chart-4 border-chart-4/30",
   IN_PROGRESS: "bg-chart-4/20 text-chart-4 border-chart-4/30",
   COMPLETED: "bg-success text-success-foreground border-success",
   CANCELLED: "bg-destructive/10 text-destructive border-destructive/30",
@@ -247,6 +248,7 @@ const BookingsTab = () => {
         onOpenChange={(open) => { if (!open) setSelectedBooking(null); }}
         serviceName={selectedBooking ? serviceNames[selectedBooking.service_id] || t("provider.dashboard.service") : ""}
         servicePrice={selectedBooking ? servicePrices[selectedBooking.service_id] ?? null : null}
+        serviceCategory={selectedBooking ? serviceCategories[selectedBooking.service_id] ?? null : null}
         providerName={selectedBooking?.assigned_provider_id ? providerNames[selectedBooking.assigned_provider_id] || null : null}
         providerPhone={selectedBooking?.assigned_provider_id ? providerPhones[selectedBooking.assigned_provider_id] || null : null}
         onStatusChange={() => { setSelectedBooking(null); fetchBookings(); }}
