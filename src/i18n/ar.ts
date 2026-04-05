@@ -326,6 +326,7 @@ const ar: Record<string, string> = {
   // Provider Order Statuses (for provider dashboard)
   "provider.status.ASSIGNED": "بانتظار القبول",
   "provider.status.ACCEPTED": "مقبول",
+  "provider.status.PROVIDER_ON_THE_WAY": "في الطريق",
   "provider.status.COMPLETED": "مكتمل",
   "provider.status.CANCELLED": "ملغي",
   "provider.status.REJECTED": "مرفوض",
