@@ -1547,6 +1547,7 @@ const ProviderDashboard = () => {
                           {entry.reason === "platform_fee" ? t("finance.reason.platform_fee") :
                            entry.reason === "commission" ? t("provider.wallet.commission") :
                            entry.reason === "settlement" ? t("provider.wallet.settlement") :
+                           entry.reason === "cliq_payment_credit" ? "💳 إيداع CliQ (حصتك)" :
                            entry.reason}
                         </p>
                         <p className="text-xs text-muted-foreground">{formatDate(entry.created_at)}</p>
