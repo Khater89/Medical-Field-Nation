@@ -32,7 +32,7 @@ Deno.serve(async (req) => {
     // Find booking by booking_number
     const { data: booking, error: bookingError } = await supabase
       .from("bookings")
-      .select("id, booking_number, status, service_id, city, scheduled_at, created_at, rejected_at, completed_at, assigned_provider_id, subtotal, agreed_price, calculated_total, check_in_at")
+      .select("id, booking_number, status, service_id, city, scheduled_at, created_at, rejected_at, completed_at, assigned_provider_id, subtotal, agreed_price, calculated_total, check_in_at, payment_status, payment_method")
       .eq("booking_number", booking_number.trim().toUpperCase())
       .single();
 
@@ -152,6 +152,8 @@ Deno.serve(async (req) => {
         service_name: service?.name || "خدمة",
         subtotal: booking.agreed_price || booking.subtotal,
         calculated_total: booking.calculated_total,
+        payment_status: booking.payment_status,
+        payment_method: booking.payment_method,
       },
       history: history || [],
       rating,
