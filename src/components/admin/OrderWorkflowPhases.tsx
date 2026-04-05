@@ -636,14 +636,26 @@ const OrderWorkflowPhases = ({ booking, serviceName, servicePrice, serviceCatego
         {/* Provider list */}
         {!isAssigned && (
           <>
+            {/* Search bar */}
+            <Input
+              placeholder="🔍 بحث بالاسم أو رقم المرجع..."
+              value={providerSearch}
+              onChange={(e) => setProviderSearch(e.target.value)}
+              className="h-8 text-sm"
+            />
+            {allowedRoles.length > 0 && (
+              <p className="text-[10px] text-muted-foreground">
+                🎯 يتم عرض {serviceCategory === "medical" ? "الأطباء فقط" : serviceCategory === "nursing" ? "الممرضين والمساعدين فقط" : "جميع التخصصات"} حسب فئة الخدمة
+              </p>
+            )}
             {loadingProviders ? (
               <div className="flex justify-center py-4"><Loader2 className="h-5 w-5 animate-spin text-primary" /></div>
             ) : (
               <div className="space-y-2 max-h-[300px] overflow-y-auto">
-                {nearestProviders.length > 0 && (
+                {filteredNearest.length > 0 && (
                   <div className="space-y-1.5">
                     <p className="text-xs text-muted-foreground font-medium">🎯 الأقرب (حسب المسافة):</p>
-                    {nearestProviders.map((p) => (
+                    {filteredNearest.map((p) => (
                       <ProviderCard
                         key={p.provider_id} id={p.provider_id} name={p.full_name}
                         phone={p.phone} city={p.city} roleType={p.role_type}
