@@ -1,0 +1,2 @@
+ALTER TABLE public.bookings DROP CONSTRAINT bookings_payment_method_check;
+ALTER TABLE public.bookings ADD CONSTRAINT bookings_payment_method_check CHECK (payment_method = ANY (ARRAY['CASH'::text, 'CARD'::text, 'CLIQ'::text, 'CASH_DEPOSIT'::text, 'INSURANCE'::text]));
