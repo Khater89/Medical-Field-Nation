@@ -95,13 +95,14 @@ interface Props {
   booking: BookingRow;
   serviceName: string;
   servicePrice: number | null;
+  serviceCategory?: string | null;
   onWorkflowChange: () => void;
   onDataRefresh?: () => void;
   preSelectedProviderId?: string | null;
   preSelectedProviderShare?: number | null;
 }
 
-const OrderWorkflowPhases = ({ booking, serviceName, servicePrice, onWorkflowChange, onDataRefresh, preSelectedProviderId, preSelectedProviderShare }: Props) => {
+const OrderWorkflowPhases = ({ booking, serviceName, servicePrice, serviceCategory, onWorkflowChange, onDataRefresh, preSelectedProviderId, preSelectedProviderShare }: Props) => {
   const { t, formatCurrency } = useLanguage();
   const { isAdmin } = useAuth();
 
@@ -119,6 +120,7 @@ const OrderWorkflowPhases = ({ booking, serviceName, servicePrice, onWorkflowCha
   const [savingProviderShare, setSavingProviderShare] = useState(false);
   const [providerStats, setProviderStats] = useState<Record<string, ProviderStats>>({});
   const [routedProviders, setRoutedProviders] = useState<Set<string>>(new Set());
+  const [providerSearch, setProviderSearch] = useState("");
   const [viewProfileId, setViewProfileId] = useState<string | null>(null);
   const [viewProfileData, setViewProfileData] = useState<any>(null);
   const [loadingProfile, setLoadingProfile] = useState(false);
