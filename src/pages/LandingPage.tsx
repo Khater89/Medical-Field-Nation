@@ -419,7 +419,7 @@ const LandingPage = () => {
             className="text-center space-y-4 bg-card border border-border rounded-2xl p-10"
           >
             <h2 className="text-2xl sm:text-3xl font-black text-foreground">{t("landing.pricing_title")}</h2>
-            <p className="text-muted-foreground max-w-xl mx-auto">{t("price.determined_later")}</p>
+            <p className="text-muted-foreground max-w-xl mx-auto">{t("landing.pricing_subtitle")}</p>
             <Link to="/booking">
               <Button size="lg" className="gap-2 rounded-full px-8 mt-4">
                 {t("landing.cta")}
