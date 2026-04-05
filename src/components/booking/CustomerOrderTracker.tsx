@@ -1,11 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { CheckCircle, Circle, Clock, Loader2, MapPin, Phone, Star, Landmark } from "lucide-react";
+import { CheckCircle, Circle, Clock, Loader2, MapPin, Phone, Star, Landmark, Bell, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { toast as sonnerToast } from "sonner";
 
 interface TimelineStep {
   label: string;
