@@ -67,6 +67,7 @@ const STATUS_COLORS: Record<string, string> = {
   CONFIRMED: "bg-primary/20 text-primary border-primary/30",
   ASSIGNED: "bg-warning/10 text-warning border-warning/30",
   ACCEPTED: "bg-success/10 text-success border-success/30",
+  PROVIDER_ON_THE_WAY: "bg-chart-4/20 text-chart-4 border-chart-4/30",
   IN_PROGRESS: "bg-primary/10 text-primary border-primary/30",
   COMPLETED: "bg-success text-success-foreground",
   CANCELLED: "bg-destructive/10 text-destructive border-destructive/30",
