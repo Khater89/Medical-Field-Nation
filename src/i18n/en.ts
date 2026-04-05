@@ -326,6 +326,7 @@ const en: Record<string, string> = {
   // Provider Order Statuses
   "provider.status.ASSIGNED": "Pending Acceptance",
   "provider.status.ACCEPTED": "Accepted",
+  "provider.status.PROVIDER_ON_THE_WAY": "On The Way",
   "provider.status.COMPLETED": "Completed",
   "provider.status.CANCELLED": "Cancelled",
   "provider.status.REJECTED": "Rejected",
