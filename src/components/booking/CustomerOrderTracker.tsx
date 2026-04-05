@@ -1,11 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { CheckCircle, Circle, Clock, Loader2, MapPin, Phone, Star, Landmark } from "lucide-react";
+import { CheckCircle, Circle, Clock, Loader2, MapPin, Phone, Star, Landmark, Bell, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { toast as sonnerToast } from "sonner";
 
 interface TimelineStep {
   label: string;
@@ -42,6 +43,14 @@ const CustomerOrderTracker = ({ bookingId, onClose }: OrderTrackerProps) => {
   const [existingRating, setExistingRating] = useState<any>(null);
   const [selectedPayment, setSelectedPayment] = useState<string | null>(null);
   const [savingPayment, setSavingPayment] = useState(false);
+  const [statusNotification, setStatusNotification] = useState<string | null>(null);
+
+  const STATUS_NOTIFICATIONS: Record<string, string> = {
+    ACCEPTED: "✅ تم قبول طلبك، المزود سيصلك في الوقت المحدد.",
+    IN_PROGRESS: "🏥 بدأت الخدمة الآن، نتمنى لك السلامة.",
+    COMPLETED: "🎉 تم إكمال الخدمة بنجاح، يرجى تقييم المزود وتحديد طريقة الدفع.",
+    CANCELLED: "❌ تم إلغاء الطلب.",
+  };
 
   useEffect(() => {
     const fetch = async () => {
@@ -62,6 +71,26 @@ const CustomerOrderTracker = ({ bookingId, onClose }: OrderTrackerProps) => {
       setLoading(false);
     };
     fetch();
+
+    // Realtime subscription for status changes
+    const channel = supabase
+      .channel(`booking-track-${bookingId}`)
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'bookings', filter: `id=eq.${bookingId}` },
+        (payload) => {
+          const newData = payload.new as any;
+          setBooking(newData);
+          const msg = STATUS_NOTIFICATIONS[newData.status];
+          if (msg) {
+            setStatusNotification(msg);
+            sonnerToast(msg);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
   }, [bookingId]);
 
   const handleRate = async () => {
@@ -118,6 +147,17 @@ const CustomerOrderTracker = ({ bookingId, onClose }: OrderTrackerProps) => {
           {STATUS_LABELS[booking.status] || booking.status}
         </Badge>
       </div>
+
+      {/* Status Notification Banner */}
+      {statusNotification && (
+        <div className="flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/5 p-3 animate-in fade-in slide-in-from-top-2">
+          <Bell className="h-4 w-4 text-primary shrink-0" />
+          <p className="text-sm font-medium flex-1">{statusNotification}</p>
+          <button onClick={() => setStatusNotification(null)} className="shrink-0">
+            <X className="h-4 w-4 text-muted-foreground hover:text-foreground" />
+          </button>
+        </div>
+      )}
 
       {/* Timeline */}
       <div className="relative space-y-0 pr-4">

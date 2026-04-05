@@ -81,7 +81,7 @@ const BroadcastProvidersDialog = ({ open, onOpenChange, booking, serviceName, co
       booking.notes ? `• تفاصيل الحالة: ${booking.notes}` : null,
       ``,
       `📌 لتقديم عرض سعرك:`,
-      `1. ادخل لحسابك في الموقع: ${siteUrl}/provider/register`,
+      `1. ادخل لحسابك في الموقع: ${siteUrl}/auth`,
       `2. اذهب لخانة "الطلبات المتاحة"`,
       `3. انقر على الطلب وقدّم عرض سعرك`,
       ``,
