@@ -1235,9 +1235,16 @@ const ProviderDashboard = () => {
                       {/* Expanded details for accepted orders */}
                       {accepted && isExpanded && (
                         <div className="space-y-3 pt-2 border-t border-border" onClick={(e) => e.stopPropagation()}>
-                          {/* Countdown timer for ACCEPTED orders (before check-in) */}
-                          {o.status === "ACCEPTED" && !o.check_in_at && (
+                          {/* Countdown timer for ACCEPTED/ON_THE_WAY orders (before check-in) */}
+                          {(o.status === "ACCEPTED" || o.status === "PROVIDER_ON_THE_WAY") && !o.check_in_at && (
                             <CountdownBadge scheduledAt={o.scheduled_at} />
+                          )}
+                          {/* On the way indicator */}
+                          {o.status === "PROVIDER_ON_THE_WAY" && (
+                            <div className="rounded-lg p-2.5 bg-info/10 border border-info/30 flex items-center gap-2">
+                              <Navigation className="h-4 w-4 text-info" />
+                              <span className="text-xs font-medium text-info">أنت في الطريق إلى العميل — سجل الوصول عند الوصول</span>
+                            </div>
                           )}
 
                           {/* Contact Details with phone */}
