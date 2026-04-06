@@ -20,7 +20,7 @@ import {
   CalendarDays, MapPin, ClipboardList, Phone,
   MessageCircle, ShieldCheck, Eye, Lock, User, X,
   History, Play, Square, KeyRound, Clock, Camera, Edit2,
-  AlertTriangle, Timer, DollarSign,
+  AlertTriangle, Timer, DollarSign, Navigation,
 } from "lucide-react";
 import mfnLogo from "@/assets/mfn-logo.png";
 import AvailableBookingsTab from "@/components/provider/AvailableBookingsTab";
@@ -67,6 +67,7 @@ interface LedgerEntry {
 const STATUS_COLORS: Record<string, string> = {
   ASSIGNED: "bg-warning/10 text-warning border-warning/30",
   ACCEPTED: "bg-info/10 text-info border-info/30",
+  PROVIDER_ON_THE_WAY: "bg-info/10 text-info border-info/30",
   IN_PROGRESS: "bg-primary/10 text-primary border-primary/30",
   COMPLETED: "bg-success/10 text-success border-success/30",
   CANCELLED: "bg-destructive/10 text-destructive border-destructive/30",
