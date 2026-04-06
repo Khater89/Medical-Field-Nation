@@ -69,7 +69,7 @@ Deno.serve(async (req) => {
         status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    if (booking.status !== "ACCEPTED") {
+    if (booking.status !== "ACCEPTED" && booking.status !== "PROVIDER_ON_THE_WAY") {
       return new Response(JSON.stringify({ error: "الطلب ليس في حالة مقبول" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
