@@ -1285,8 +1285,16 @@ const ProviderDashboard = () => {
 
                           {/* Action buttons */}
                           <div className="flex gap-2 flex-wrap">
-                            {/* Check-in button: only for ACCEPTED, no check_in yet */}
+                            {/* "On the way" button: only for ACCEPTED, no check_in yet */}
                             {o.status === "ACCEPTED" && !o.check_in_at && (
+                              <Button size="sm" className="gap-1 h-8 text-xs flex-1 bg-info hover:bg-info/90 text-white" onClick={() => startOnTheWay(o.id)} disabled={actionLoading === o.id}>
+                                {actionLoading === o.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Navigation className="h-3 w-3" />}
+                                بدأت التحرك للعميل 🚗
+                              </Button>
+                            )}
+
+                            {/* Check-in button: for ACCEPTED or PROVIDER_ON_THE_WAY, no check_in yet */}
+                            {(o.status === "ACCEPTED" || o.status === "PROVIDER_ON_THE_WAY") && !o.check_in_at && (
                               <Button size="sm" className="gap-1 h-8 text-xs flex-1 bg-primary hover:bg-primary/90" onClick={() => checkIn(o.id)} disabled={actionLoading === o.id}>
                                 {actionLoading === o.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Play className="h-3 w-3" />}
                                 {t("provider.checkin.btn")}
