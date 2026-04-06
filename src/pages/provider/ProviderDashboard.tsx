@@ -523,6 +523,41 @@ const ProviderDashboard = () => {
     setActionLoading(null);
   };
 
+  /* ── Provider On The Way ── */
+  const startOnTheWay = async (id: string) => {
+    if (!user) return;
+    setActionLoading(id);
+    try {
+      const { data: updated, error } = await supabase.from("bookings").update({
+        status: "PROVIDER_ON_THE_WAY",
+      } as any).eq("id", id).eq("assigned_provider_id", user.id).eq("status", "ACCEPTED").select().maybeSingle();
+
+      if (error) throw error;
+      if (!updated) throw new Error("لم يتم تحديث الطلب");
+
+      setOrders((prev) => prev.map((o) => o.id === id ? { ...o, status: "PROVIDER_ON_THE_WAY" } : o));
+      await logHistory(id, "PROVIDER_ON_THE_WAY", "المزود بدأ التحرك نحو العميل");
+
+      // Notify admin
+      const order = orders.find((o) => o.id === id);
+      await supabase.from("staff_notifications").insert({
+        title: `🚗 المزود في الطريق — ${order?.booking_number || ""}`,
+        body: `المزود ${profile?.full_name || ""} بدأ التحرك للعميل.`,
+        target_role: "admin",
+        booking_id: id,
+        provider_id: user.id,
+      });
+
+      toast({ title: "تم تسجيل بدء التحرك 🚗" });
+
+      const { data: ordersData } = await supabase.rpc("get_provider_bookings" as any);
+      if (ordersData) setOrders(ordersData as unknown as ProviderOrder[]);
+    } catch (err: any) {
+      toast({ title: t("common.error"), description: err.message, variant: "destructive" });
+    }
+    setActionLoading(null);
+  };
+
   /* ── Check-in (with GPS validation) ── */
   const checkIn = async (id: string) => {
     if (!user) return;
