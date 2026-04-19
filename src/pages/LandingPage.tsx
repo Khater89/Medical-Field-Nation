@@ -465,9 +465,9 @@ const LandingPage = () => {
 
       {/* ═══════ FLOATING CONTACT BUTTONS ═══════ */}
       <div className="fixed bottom-6 end-6 z-50 flex flex-col gap-3 items-center">
-        {/* Call button - second coordinator */}
+        {/* Call button - main coordinator */}
         <motion.a
-          href="tel:+962781343144"
+          href="tel:+962790619770"
           initial={{ scale: 0, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ delay: 1.4, type: "spring", stiffness: 200 }}
@@ -477,23 +477,6 @@ const LandingPage = () => {
           aria-label="اتصل بنا"
         >
           <Phone className="h-6 w-6 text-primary-foreground" />
-        </motion.a>
-        {/* WhatsApp button - coordinator 2 (رائد) */}
-        <motion.a
-          href="https://wa.me/962781343144"
-          target="_blank"
-          rel="noopener noreferrer"
-          initial={{ scale: 0, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ delay: 1.2, type: "spring", stiffness: 200 }}
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.95 }}
-          className="h-11 w-11 rounded-full bg-[#25D366] flex items-center justify-center shadow-lg hover:shadow-xl transition-shadow"
-          aria-label="واتساب المنسق رائد"
-        >
-          <svg viewBox="0 0 32 32" className="h-5 w-5 fill-white">
-            <path d="M16.004 0h-.008C7.174 0 0 7.176 0 16.004c0 3.5 1.128 6.744 3.046 9.378L1.054 31.29l6.118-1.958A15.924 15.924 0 0016.004 32C24.826 32 32 24.826 32 16.004 32 7.176 24.826 0 16.004 0zm9.338 22.618c-.394 1.11-1.946 2.032-3.192 2.3-.854.182-1.968.326-5.72-1.23-4.802-1.99-7.892-6.862-8.132-7.18-.23-.318-1.936-2.578-1.936-4.916s1.226-3.49 1.662-3.968c.436-.478.952-.598 1.27-.598.316 0 .632.002.908.016.292.014.684-.11 1.07.816.394.952 1.338 3.27 1.456 3.508.118.238.198.516.04.834-.158.318-.238.516-.476.794-.238.278-.5.62-.714.832-.238.238-.486.496-.208.972.278.476 1.236 2.038 2.654 3.302 1.822 1.624 3.358 2.126 3.834 2.364.476.238.754.198 1.032-.118.278-.318 1.19-1.388 1.508-1.866.318-.476.634-.396 1.07-.238.436.158 2.754 1.298 3.23 1.536.476.238.794.356.912.554.118.198.118 1.15-.276 2.26z" />
-          </svg>
         </motion.a>
         {/* WhatsApp button - coordinator 1 (عبد الرحمن) */}
         <motion.a

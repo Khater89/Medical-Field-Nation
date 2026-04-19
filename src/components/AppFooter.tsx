@@ -49,9 +49,9 @@ const AppFooter = () => {
                 <Phone className="h-3.5 w-3.5 shrink-0" />
                 <span dir="ltr">+962 79 061 9770</span>
               </a>
-              <a href="https://wa.me/962781343144" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors">
+              <a href="https://wa.me/962790619770" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors">
                 <Phone className="h-3.5 w-3.5 shrink-0" />
-                <span dir="ltr">+962 78 134 3144</span>
+                <span dir="ltr">واتساب المنسق</span>
               </a>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <MapPin className="h-3.5 w-3.5 shrink-0" />

@@ -359,6 +359,7 @@ const CSBookingsTab = () => {
           onAssigned={() => { setAssignBooking(null); fetchData(); }}
           serviceName={serviceNames[assignBooking.service_id] || "خدمة"}
           servicePrice={servicePrices[assignBooking.service_id] ?? null}
+          serviceCategory={serviceCategories[assignBooking.service_id] ?? null}
         />
       )}
 
