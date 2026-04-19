@@ -4,8 +4,11 @@ import AppFooter from "@/components/AppFooter";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
+import { QRCodeSVG } from "qrcode.react";
 import ImageGallery from "@/components/landing/ImageGallery";
 import heroMedicalImg from "@/assets/hero-medical.jpg";
+import MFNLogo from "@/components/MFNLogo";
+import { Smartphone, ScanLine } from "lucide-react";
 import {
   ShieldCheck,
   Zap,
@@ -428,6 +431,101 @@ const LandingPage = () => {
             </Link>
           </motion.div>
         </div>
+      </section>
+
+      {/* ═══════ QR CODE SECTION ═══════ */}
+      <section className="py-20 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-primary-glow/5" />
+        <div className="absolute top-1/2 left-1/4 w-72 h-72 bg-primary/10 rounded-full blur-3xl -translate-y-1/2" />
+        <div className="absolute top-1/2 right-1/4 w-72 h-72 bg-primary-glow/10 rounded-full blur-3xl -translate-y-1/2" />
+
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.3 }}
+          variants={stagger}
+          className="container max-w-5xl relative"
+        >
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
+            {/* Text side */}
+            <motion.div variants={fadeUp} transition={{ duration: 0.6 }} className="space-y-6 text-center lg:text-start">
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20">
+                <Smartphone className="h-4 w-4 text-primary" />
+                <span className="text-xs font-bold text-primary uppercase tracking-wider">
+                  امسح وابدأ
+                </span>
+              </div>
+              <h2 className="text-3xl sm:text-4xl font-black text-foreground leading-tight">
+                احجز خدمتك الطبية{" "}
+                <span className="brand-text-animated">بمسحة واحدة</span>
+              </h2>
+              <p className="text-lg text-muted-foreground leading-relaxed">
+                امسح رمز QR بكاميرا هاتفك للوصول الفوري إلى منصة <strong className="text-foreground">أمة الحقل الطبي</strong> وحجز خدماتك الطبية المنزلية بكل سهولة وأمان.
+              </p>
+              <div className="flex items-center justify-center lg:justify-start gap-3 text-sm text-muted-foreground">
+                <ScanLine className="h-5 w-5 text-primary animate-pulse" />
+                <span>افتح كاميرا الهاتف ووجّهها نحو الرمز</span>
+              </div>
+            </motion.div>
+
+            {/* QR Card */}
+            <motion.div
+              variants={fadeUp}
+              transition={{ duration: 0.7 }}
+              whileHover={{ scale: 1.02, rotate: -1 }}
+              className="flex justify-center"
+            >
+              <div className="relative group">
+                {/* Glow effect */}
+                <div className="absolute -inset-4 bg-gradient-to-br from-primary/30 to-primary-glow/30 rounded-[2.5rem] blur-2xl opacity-60 group-hover:opacity-90 transition-opacity" />
+
+                {/* Card */}
+                <div className="relative bg-white rounded-3xl p-8 shadow-2xl border border-primary/10 backdrop-blur-sm">
+                  {/* Brand header */}
+                  <div className="flex items-center justify-center gap-2 mb-5 pb-5 border-b border-gray-100">
+                    <MFNLogo size={32} />
+                    <div className="text-start">
+                      <div className="text-sm font-black text-gray-900">MFN</div>
+                      <div className="text-[10px] text-gray-500 font-medium">أمة الحقل الطبي</div>
+                    </div>
+                  </div>
+
+                  {/* QR Code */}
+                  <div className="relative bg-white p-3 rounded-2xl">
+                    <QRCodeSVG
+                      value="https://www.getmfn.com"
+                      size={220}
+                      bgColor="#ffffff"
+                      fgColor="#0a4d3c"
+                      level="H"
+                      includeMargin={false}
+                    />
+                    {/* Center logo overlay */}
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white p-2 rounded-xl shadow-md">
+                      <MFNLogo size={32} />
+                    </div>
+                  </div>
+
+                  {/* URL */}
+                  <div className="mt-5 pt-5 border-t border-gray-100 text-center">
+                    <p className="text-[10px] text-gray-500 uppercase tracking-widest font-mono mb-1">
+                      Scan to Visit
+                    </p>
+                    <p className="text-sm font-bold text-gray-900" dir="ltr">
+                      www.getmfn.com
+                    </p>
+                  </div>
+
+                  {/* Corner accents */}
+                  <div className="absolute top-4 left-4 w-3 h-3 border-t-2 border-l-2 border-primary rounded-tl-lg" />
+                  <div className="absolute top-4 right-4 w-3 h-3 border-t-2 border-r-2 border-primary rounded-tr-lg" />
+                  <div className="absolute bottom-4 left-4 w-3 h-3 border-b-2 border-l-2 border-primary rounded-bl-lg" />
+                  <div className="absolute bottom-4 right-4 w-3 h-3 border-b-2 border-r-2 border-primary rounded-br-lg" />
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        </motion.div>
       </section>
 
       {/* ═══════ CTA ═══════ */}
