@@ -16,6 +16,7 @@ import {
   MapPin, CalendarDays, Landmark, Copy, AlertTriangle,
   Star, Briefcase, User,
 } from "lucide-react";
+import ApplePayButton from "@/components/booking/ApplePayButton";
 
 const STATUS_ORDER = ["NEW", "CONFIRMED", "ASSIGNED", "ACCEPTED", "PROVIDER_ON_THE_WAY", "IN_PROGRESS", "COMPLETED"];
 const STATUS_LABELS: Record<string, string> = {
