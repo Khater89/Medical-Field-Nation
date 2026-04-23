@@ -57,7 +57,7 @@ const BroadcastProvidersDialog = ({ open, onOpenChange, booking, serviceName, co
     weekday: "long", year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit",
   });
 
-  const siteUrl = "https://mfn.lovable.app";
+  const siteUrl = "https://www.getmfn.com";
 
   const getTitlePrefix = (roleType: string | null) => {
     if (roleType === "طبيب" || roleType === "doctor") return "دكتور";
