@@ -426,6 +426,7 @@ const ProviderRegister = () => {
       }
 
       localStorage.setItem(PENDING_PROVIDER_PROFILE_KEY, JSON.stringify(pendingData));
+      try { localStorage.removeItem("mfn_provider_wizard_draft"); } catch {/* ignore */}
       setSaving(false);
       navigate("/verify-email");
     }
