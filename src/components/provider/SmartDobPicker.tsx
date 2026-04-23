@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useLanguage } from "@/contexts/LanguageContext";
 
@@ -26,7 +26,19 @@ const SmartDobPicker = ({ value, onChange }: SmartDobPickerProps) => {
     [currentYear]
   );
 
-  const [y = "", m = "", d = ""] = value ? value.split("-") : [];
+  // Local state preserves partial selections so user can see what's missing
+  const initialParts = value ? value.split("-") : [];
+  const [y, setY] = useState(initialParts[0] || "");
+  const [m, setM] = useState(initialParts[1] || "");
+  const [d, setD] = useState(initialParts[2] || "");
+
+  // Sync if parent resets value externally
+  useEffect(() => {
+    const p = value ? value.split("-") : [];
+    setY(p[0] || "");
+    setM(p[1] || "");
+    setD(p[2] || "");
+  }, [value]);
 
   const daysInMonth = useMemo(() => {
     if (!y || !m) return 31;
@@ -38,7 +50,7 @@ const SmartDobPicker = ({ value, onChange }: SmartDobPickerProps) => {
     [daysInMonth]
   );
 
-  const handleChange = (newY: string, newM: string, newD: string) => {
+  const emit = (newY: string, newM: string, newD: string) => {
     if (newY && newM && newD) {
       onChange(`${newY}-${newM.padStart(2, "0")}-${newD.padStart(2, "0")}`);
     } else {
@@ -46,46 +58,56 @@ const SmartDobPicker = ({ value, onChange }: SmartDobPickerProps) => {
     }
   };
 
+  const isComplete = !!(y && m && d);
+  const triggerClass = `h-11 ${isComplete ? "border-success focus-visible:ring-success/30" : ""}`;
+
   return (
-    <div className="grid grid-cols-3 gap-2">
-      <Select value={y} onValueChange={(v) => handleChange(v, m, d)}>
-        <SelectTrigger className="h-11">
-          <SelectValue placeholder={isRTL ? "السنة" : "Year"} />
-        </SelectTrigger>
-        <SelectContent className="max-h-64">
-          {years.map((year) => (
-            <SelectItem key={year} value={String(year)}>
-              {year}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+    <div className="space-y-2">
+      <div className="grid grid-cols-3 gap-2">
+        <Select value={y} onValueChange={(v) => { setY(v); emit(v, m, d); }}>
+          <SelectTrigger className={triggerClass}>
+            <SelectValue placeholder={isRTL ? "السنة" : "Year"} />
+          </SelectTrigger>
+          <SelectContent className="max-h-64">
+            {years.map((year) => (
+              <SelectItem key={year} value={String(year)}>
+                {year}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
-      <Select value={m} onValueChange={(v) => handleChange(y, v, d)}>
-        <SelectTrigger className="h-11">
-          <SelectValue placeholder={isRTL ? "الشهر" : "Month"} />
-        </SelectTrigger>
-        <SelectContent className="max-h-64">
-          {months.map((mn, idx) => (
-            <SelectItem key={idx} value={String(idx + 1).padStart(2, "0")}>
-              {mn}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+        <Select value={m} onValueChange={(v) => { setM(v); emit(y, v, d); }}>
+          <SelectTrigger className={triggerClass}>
+            <SelectValue placeholder={isRTL ? "الشهر" : "Month"} />
+          </SelectTrigger>
+          <SelectContent className="max-h-64">
+            {months.map((mn, idx) => (
+              <SelectItem key={idx} value={String(idx + 1).padStart(2, "0")}>
+                {mn}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
-      <Select value={d} onValueChange={(v) => handleChange(y, m, v)}>
-        <SelectTrigger className="h-11">
-          <SelectValue placeholder={isRTL ? "اليوم" : "Day"} />
-        </SelectTrigger>
-        <SelectContent className="max-h-64">
-          {days.map((day) => (
-            <SelectItem key={day} value={String(day).padStart(2, "0")}>
-              {day}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+        <Select value={d} onValueChange={(v) => { setD(v); emit(y, m, v); }}>
+          <SelectTrigger className={triggerClass}>
+            <SelectValue placeholder={isRTL ? "اليوم" : "Day"} />
+          </SelectTrigger>
+          <SelectContent className="max-h-64">
+            {days.map((day) => (
+              <SelectItem key={day} value={String(day).padStart(2, "0")}>
+                {day}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      {!isComplete && (y || m || d) && (
+        <p className="text-xs text-destructive">
+          {isRTL ? "يرجى اختيار السنة والشهر واليوم معاً" : "Please select Year, Month, and Day"}
+        </p>
+      )}
     </div>
   );
 };

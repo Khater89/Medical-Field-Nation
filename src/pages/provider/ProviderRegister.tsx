@@ -511,12 +511,26 @@ const ProviderRegister = () => {
 
   // Wizard step navigation
   const validateStep1 = () => {
-    if (!name.trim() || !phone.trim() || !dob || !city.trim()) {
-      toast({ title: t("register.wizard.step1_required"), variant: "destructive" });
+    const missing: string[] = [];
+    if (!name.trim() || name.trim().length < 2) missing.push(isRTL ? "الاسم الكامل" : "Full name");
+    if (!phone.trim()) missing.push(isRTL ? "رقم الهاتف" : "Phone");
+    if (!dob || dob.split("-").filter(Boolean).length < 3) missing.push(isRTL ? "تاريخ الميلاد (السنة/الشهر/اليوم)" : "Date of birth (Year/Month/Day)");
+    if (!city.trim()) missing.push(isRTL ? "المدينة" : "City");
+
+    if (missing.length > 0) {
+      toast({
+        title: isRTL ? "حقول ناقصة" : "Missing fields",
+        description: (isRTL ? "يرجى إكمال: " : "Please complete: ") + missing.join("، "),
+        variant: "destructive",
+      });
       return false;
     }
     if (!isPhoneValid) {
-      toast({ title: t("common.error"), description: "07XXXXXXXX", variant: "destructive" });
+      toast({
+        title: isRTL ? "صيغة رقم الهاتف غير صحيحة" : "Invalid phone format",
+        description: isRTL ? "يجب أن يبدأ بـ 07 ويتكون من 10 أرقام (مثال: 0790000000)" : "Must start with 07 and be 10 digits (e.g. 0790000000)",
+        variant: "destructive",
+      });
       return false;
     }
     return true;
