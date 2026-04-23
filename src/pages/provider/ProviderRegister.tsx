@@ -560,34 +560,6 @@ const ProviderRegister = () => {
     await submitRegistration();
   };
 
-  // Persist wizard state across reloads (so users don't lose data)
-  const WIZARD_DRAFT_KEY = "mfn_provider_wizard_draft";
-  useEffect(() => {
-    if (user) return; // only for unauthenticated wizard
-    try {
-      const raw = localStorage.getItem(WIZARD_DRAFT_KEY);
-      if (!raw) return;
-      const d = JSON.parse(raw);
-      if (d.name) setName(d.name);
-      if (d.phone) setPhone(d.phone);
-      if (d.city) setCity(d.city);
-      if (d.dob) setDob(d.dob);
-      if (d.roleType) setRoleType(d.roleType);
-      if (d.licenseId) setLicenseId(d.licenseId);
-      if (d.experienceYears) setExperienceYears(d.experienceYears);
-      if (d.addressText) setAddressText(d.addressText);
-      if (d.radiusKm) setRadiusKm(d.radiusKm);
-      if (Array.isArray(d.selectedSpecialties)) setSelectedSpecialties(d.selectedSpecialties);
-      if (typeof d.step === "number") setStep(d.step as 1 | 2 | 3);
-    } catch {/* ignore */}
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
-    if (user) return;
-    const draft = { name, phone, city, dob, roleType, licenseId, experienceYears, addressText, radiusKm, selectedSpecialties, step };
-    try { localStorage.setItem(WIZARD_DRAFT_KEY, JSON.stringify(draft)); } catch {/* ignore */}
-  }, [user, name, phone, city, dob, roleType, licenseId, experienceYears, addressText, radiusKm, selectedSpecialties, step]);
 
   // ---- Legacy fields (used by logged-in completion form) ----
   function renderLegacyProfileFields() {
