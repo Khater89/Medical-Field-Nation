@@ -101,6 +101,35 @@ const ProviderRegister = () => {
     }
   }, [isProvider, profile, navigate]);
 
+  // Persist wizard draft across reloads (only for unauthenticated users).
+  // Hooks placed BEFORE the auth/user early-returns to keep hook order stable.
+  const WIZARD_DRAFT_KEY = "mfn_provider_wizard_draft";
+  useEffect(() => {
+    if (user) return;
+    try {
+      const raw = localStorage.getItem(WIZARD_DRAFT_KEY);
+      if (!raw) return;
+      const d = JSON.parse(raw);
+      if (d.name) setName(d.name);
+      if (d.phone) setPhone(d.phone);
+      if (d.city) setCity(d.city);
+      if (d.dob) setDob(d.dob);
+      if (d.roleType) setRoleType(d.roleType);
+      if (d.licenseId) setLicenseId(d.licenseId);
+      if (d.experienceYears) setExperienceYears(d.experienceYears);
+      if (d.addressText) setAddressText(d.addressText);
+      if (d.radiusKm) setRadiusKm(d.radiusKm);
+      if (Array.isArray(d.selectedSpecialties)) setSelectedSpecialties(d.selectedSpecialties);
+      if (typeof d.step === "number") setStep(d.step as 1 | 2 | 3);
+    } catch {/* ignore */}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  useEffect(() => {
+    if (user) return;
+    const draft = { name, phone, city, dob, roleType, licenseId, experienceYears, addressText, radiusKm, selectedSpecialties, step };
+    try { localStorage.setItem(WIZARD_DRAFT_KEY, JSON.stringify(draft)); } catch {/* ignore */}
+  }, [user, name, phone, city, dob, roleType, licenseId, experienceYears, addressText, radiusKm, selectedSpecialties, step]);
+
   const toggleSpecialty = (spec: string) => {
     setSelectedSpecialties((prev) =>
       prev.includes(spec) ? prev.filter((s) => s !== spec) : [...prev, spec]
@@ -359,6 +388,7 @@ const ProviderRegister = () => {
       });
 
       await refreshUserData();
+      try { localStorage.removeItem("mfn_provider_wizard_draft"); } catch {/* ignore */}
       setSaving(false);
       toast({ title: t("register.submitted_success") });
       navigate("/account-review", { replace: true });
@@ -397,6 +427,7 @@ const ProviderRegister = () => {
       }
 
       localStorage.setItem(PENDING_PROVIDER_PROFILE_KEY, JSON.stringify(pendingData));
+      try { localStorage.removeItem("mfn_provider_wizard_draft"); } catch {/* ignore */}
       setSaving(false);
       navigate("/verify-email");
     }
@@ -513,6 +544,13 @@ const ProviderRegister = () => {
 
   const handleWizardSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    e.stopPropagation();
+    // SAFETY: only allow real submission on the final step. This prevents
+    // any accidental Enter-key submit on steps 1/2 from triggering signUp.
+    if (step !== 3) {
+      handleNext();
+      return;
+    }
     if (!isEmailValid || !PASSWORD_REGEX.test(password)) {
       toast({ title: t("common.error"), description: t("register.password.weak"), variant: "destructive" });
       return;
@@ -523,6 +561,7 @@ const ProviderRegister = () => {
     }
     await submitRegistration();
   };
+
 
   // ---- Legacy fields (used by logged-in completion form) ----
   function renderLegacyProfileFields() {
