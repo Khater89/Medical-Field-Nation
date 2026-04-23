@@ -213,10 +213,11 @@ const AppHeader = () => {
             </DropdownMenu>
           ) : (
             <Link to="/auth" className="z-10">
-              <Button size="sm" className="gap-1.5 text-xs rounded-full bg-gradient-to-r from-primary to-primary/80 text-primary-foreground hover:from-primary/90 hover:to-primary/70 font-semibold shadow-md hover:shadow-lg transition-all">
-                <User className="h-3.5 w-3.5" />
+              <Button
+                size="lg"
+                className="h-11 px-7 rounded-full bg-gradient-to-br from-primary via-primary to-primary/85 text-primary-foreground font-semibold tracking-tight text-sm shadow-[0_4px_20px_-4px_hsl(var(--primary)/0.45)] hover:shadow-[0_8px_28px_-6px_hsl(var(--primary)/0.6)] hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300 ease-out"
+              >
                 {t("landing.login")}
-                <ArrowIcon className="h-3 w-3" />
               </Button>
             </Link>
           )}

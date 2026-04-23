@@ -20,6 +20,7 @@ import WizardStepper from "@/components/provider/WizardStepper";
 import SmartDobPicker from "@/components/provider/SmartDobPicker";
 import DropZoneUploader from "@/components/provider/DropZoneUploader";
 import LiveProfilePreview from "@/components/provider/LiveProfilePreview";
+import LanguageToggle from "@/components/booking/LanguageToggle";
 
 const ROLE_TYPES = ["doctor", "nurse", "physiotherapist"];
 
@@ -878,6 +879,12 @@ const ProviderRegister = () => {
       <div className="relative w-full max-w-6xl grid lg:grid-cols-[1fr_360px] gap-6 items-start">
         {/* Left: Form Card */}
         <div className="space-y-5 order-2 lg:order-1">
+          <div className="flex items-center justify-between gap-3">
+            <Link to="/" className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+              ← {t("register.back_home")}
+            </Link>
+            <LanguageToggle />
+          </div>
           <div className="text-center">
             <img src={mfnLogo} alt="MFN" className="h-11 mx-auto mb-2" />
             <h1 className="text-2xl font-bold tracking-tight">
