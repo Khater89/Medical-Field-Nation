@@ -1143,7 +1143,7 @@ const ProviderDashboard = () => {
                               <span className="text-muted-foreground">السعر:</span>
                               <span className="font-medium text-primary">{o.agreed_price != null ? formatCurrency(o.agreed_price) : formatCurrency(o.subtotal)}</span>
                               <span className="text-muted-foreground">طريقة الدفع:</span>
-                              <span className="font-medium">{o.payment_method === "CLIQ" ? "CliQ" : o.payment_method === "INSURANCE" ? "تأمين طبي" : "نقداً"}</span>
+                              <span className="font-medium">{o.payment_method === "CLIQ" ? "CliQ" : o.payment_method === "APPLE_PAY" ? "Apple Pay (CliQ)" : o.payment_method === "INSURANCE" ? "تأمين طبي" : "نقداً"}</span>
                             </div>
                             {/* Phone hidden notice */}
                             <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-muted rounded p-2 mt-1">
