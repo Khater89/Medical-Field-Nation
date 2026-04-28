@@ -69,7 +69,8 @@ const ProviderRegister = () => {
   const experienceFileRef = useRef<HTMLInputElement>(null);
 
   // Wizard state (only used in registration mode for non-logged users)
-  const [step, setStep] = useState<1 | 2 | 3>(1);
+  // Simplified: 2 steps only — Identity, Account. Professional details deferred to onboarding.
+  const [step, setStep] = useState<1 | 2>(1);
 
   const availableSpecialties = useMemo(() => SPECIALTIES_MAP[roleType] || [], [roleType]);
 
