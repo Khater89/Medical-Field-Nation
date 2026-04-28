@@ -812,23 +812,39 @@ const ProviderDashboard = () => {
   }
 
   if (!isProfileReady) {
+    const needsCompletion = !profile?.profile_completed;
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <Card className="w-full max-w-md text-center">
-          <CardContent className="py-10 space-y-4">
-            <p className="text-sm text-muted-foreground">
-              {profile?.provider_status !== "approved"
-                ? t("provider.dashboard.pending_review")
-                : t("provider.dashboard.complete_profile")}
-            </p>
-            {profile?.provider_status === "approved" && !profile?.profile_completed && (
-              <Link to="/provider/onboarding"><Button>{t("provider.dashboard.go_complete_profile")}</Button></Link>
-            )}
-            <div>
-              <Button variant="ghost" size="sm" onClick={handleSignOut} className="gap-1.5 mt-2">
-                <LogOut className="h-4 w-4" /> {t("action.logout")}
-              </Button>
+        <Card className="w-full max-w-md text-center border-primary/30 shadow-xl">
+          <CardContent className="py-8 space-y-5">
+            <div className="mx-auto h-14 w-14 rounded-full bg-primary/10 flex items-center justify-center">
+              {needsCompletion ? (
+                <AlertTriangle className="h-7 w-7 text-primary" />
+              ) : (
+                <Clock className="h-7 w-7 text-primary" />
+              )}
             </div>
+            <div className="space-y-2">
+              <h2 className="text-lg font-bold text-foreground">
+                {needsCompletion ? "أكمل بيانات ملفك الشخصي لتفعيل الحساب" : "حسابك قيد المراجعة"}
+              </h2>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                {needsCompletion
+                  ? "لتتمكن من استقبال الطلبات، يرجى رفع الشهادة العلمية، رقم المزاولة المهنية، وإكمال بياناتك المهنية."
+                  : "نقوم حالياً بمراجعة بياناتك. سيتم إعلامك فور تفعيل حسابك."}
+              </p>
+            </div>
+            {needsCompletion && (
+              <Link to="/provider/onboarding" className="block">
+                <Button className="w-full h-11 gap-2 bg-primary hover:bg-primary/90 shadow-lg shadow-primary/25 animate-pulse-subtle">
+                  <ShieldCheck className="h-4 w-4" />
+                  إكمال الملف الشخصي الآن
+                </Button>
+              </Link>
+            )}
+            <Button variant="ghost" size="sm" onClick={handleSignOut} className="gap-1.5">
+              <LogOut className="h-4 w-4" /> {t("action.logout")}
+            </Button>
           </CardContent>
         </Card>
       </div>

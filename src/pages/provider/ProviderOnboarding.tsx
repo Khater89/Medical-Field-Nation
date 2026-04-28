@@ -8,9 +8,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, CheckCircle, MapPin, Clock, Briefcase, X, Stethoscope, Upload, FileText } from "lucide-react";
+import { Loader2, CheckCircle, MapPin, Clock, Briefcase, X, Stethoscope, Upload, FileText, GraduationCap, Award, ShieldCheck } from "lucide-react";
 import mfnLogo from "@/assets/mfn-logo.png";
+
+const ROLE_TYPES = [
+  { value: "doctor", label: "طبيب" },
+  { value: "nurse", label: "ممرض/ة" },
+  { value: "physiotherapist", label: "أخصائي علاج طبيعي" },
+];
 
 const TOOL_SUGGESTIONS = ["جهاز ضغط", "سماعة طبية", "جهاز سكر", "أدوات تضميد", "جهاز أكسجين", "حقن وريدي"];
 const LANGUAGE_OPTIONS = ["العربية", "الإنجليزية", "التركية", "الفرنسية"];
@@ -39,6 +46,34 @@ const ProviderOnboarding = () => {
   const [licenseUrl, setLicenseUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Deferred professional fields (moved here from initial signup)
+  const [roleType, setRoleType] = useState<string>("");
+  const [licenseId, setLicenseId] = useState<string>("");
+  const [academicCertUrl, setAcademicCertUrl] = useState<string | null>(null);
+  const [experienceCertUrl, setExperienceCertUrl] = useState<string | null>(null);
+  const [uploadingAcademic, setUploadingAcademic] = useState(false);
+  const [uploadingExperience, setUploadingExperience] = useState(false);
+  const academicFileRef = useRef<HTMLInputElement>(null);
+  const experienceFileRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (profile) {
+      setExperienceYears(profile.experience_years || 0);
+      setTools(profile.tools || []);
+      setLanguages(profile.languages || ["العربية"]);
+      setSpecialties(profile.specialties || []);
+      setAvailableNow(profile.available_now || false);
+      setRadiusKm(profile.radius_km || 20);
+      setAddressText(profile.address_text || "");
+      setBio((profile as any).bio || "");
+      setLicenseUrl((profile as any).license_file_url || null);
+      setRoleType((profile as any).role_type || "");
+      setLicenseId((profile as any).license_id || "");
+      setAcademicCertUrl((profile as any).academic_cert_url || null);
+      setExperienceCertUrl((profile as any).experience_cert_url || null);
+    }
+  }, [profile]);
 
   useEffect(() => {
     if (profile) {
@@ -91,7 +126,6 @@ const ProviderOnboarding = () => {
     if (error) {
       toast({ title: "خطأ في رفع الملف", description: error.message, variant: "destructive" });
     } else {
-      const { data: urlData } = supabase.storage.from("provider-licenses").getPublicUrl(path);
       setLicenseUrl(path);
       setLicenseFile(file);
       toast({ title: "تم رفع الملف بنجاح ✅" });
@@ -99,9 +133,44 @@ const ProviderOnboarding = () => {
     setUploading(false);
   };
 
+  const handleCertUpload = async (file: File, type: "academic" | "experience") => {
+    if (!user) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ title: "حجم الملف كبير جداً (الحد الأقصى 5MB)", variant: "destructive" });
+      return;
+    }
+    const setter = type === "academic" ? setUploadingAcademic : setUploadingExperience;
+    setter(true);
+    const ext = file.name.split(".").pop();
+    const path = `${user.id}/${type}-${Date.now()}.${ext}`;
+    const { error } = await supabase.storage.from("provider-certificates").upload(path, file, { upsert: true });
+    setter(false);
+    if (error) {
+      toast({ title: "خطأ في رفع الملف", description: error.message, variant: "destructive" });
+      return;
+    }
+    if (type === "academic") setAcademicCertUrl(path);
+    else setExperienceCertUrl(path);
+    toast({ title: "تم رفع الملف بنجاح ✅" });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
+
+    // Required deferred professional fields
+    if (!roleType) {
+      toast({ title: "يرجى اختيار التخصص المهني", variant: "destructive" });
+      return;
+    }
+    if (!licenseId.trim()) {
+      toast({ title: "يرجى إدخال رقم المزاولة المهنية", variant: "destructive" });
+      return;
+    }
+    if (!academicCertUrl) {
+      toast({ title: "يرجى رفع الشهادة العلمية", variant: "destructive" });
+      return;
+    }
     if (!addressText.trim()) {
       toast({ title: "يرجى إدخال عنوان الموقع", variant: "destructive" });
       return;
@@ -111,6 +180,10 @@ const ProviderOnboarding = () => {
     const { error } = await supabase
       .from("profiles")
       .update({
+        role_type: roleType,
+        license_id: licenseId.trim(),
+        academic_cert_url: academicCertUrl,
+        experience_cert_url: experienceCertUrl,
         experience_years: experienceYears,
         tools: tools.length > 0 ? tools : null,
         languages: languages.length > 0 ? languages : null,
@@ -121,6 +194,7 @@ const ProviderOnboarding = () => {
         bio: bio.trim() || null,
         license_file_url: licenseUrl,
         profile_completed: true,
+        provider_status: profile?.provider_status === "approved" ? "approved" : "pending",
       } as any)
       .eq("user_id", user.id);
 
@@ -128,12 +202,22 @@ const ProviderOnboarding = () => {
     if (error) {
       toast({ title: "خطأ", description: error.message, variant: "destructive" });
     } else {
+      // Notify admin that documents have been submitted for review
+      try {
+        await supabase.from("staff_notifications" as any).insert({
+          title: "📋 طلب مراجعة وثائق مزود",
+          body: `قام ${profile?.full_name || "مزود"} بإكمال ملفه الشخصي ورفع الوثائق المهنية. يرجى المراجعة.`,
+          target_role: "admin",
+          provider_id: user.id,
+        });
+      } catch {/* non-fatal */}
+
       await refreshUserData();
       toast({ title: "تم إكمال الملف الشخصي بنجاح! ✅" });
       if (profile?.provider_status === "approved") {
         navigate("/provider");
       } else {
-        navigate("/provider/register");
+        navigate("/account-review", { replace: true });
       }
     }
   };
@@ -144,10 +228,108 @@ const ProviderOnboarding = () => {
         <div className="text-center">
           <img src={mfnLogo} alt="MFN" className="h-10 mx-auto mb-3" />
           <h1 className="text-xl font-bold">إكمال الملف الشخصي</h1>
-          <p className="text-sm text-muted-foreground mt-1">أكمل بياناتك المهنية لبدء استقبال الطلبات</p>
+          <p className="text-sm text-muted-foreground mt-1">أكمل بياناتك المهنية لتفعيل حسابك واستقبال الطلبات</p>
+        </div>
+
+        {/* Why this is required banner */}
+        <div className="rounded-xl border border-primary/30 bg-primary/5 p-4 flex items-start gap-3">
+          <ShieldCheck className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+          <div className="text-xs text-foreground/80 leading-relaxed">
+            <p className="font-semibold text-primary mb-1">حسابك بانتظار التفعيل</p>
+            <p>لتفعيل الحساب وبدء استقبال الطلبات، يرجى إكمال البيانات المهنية ورفع الشهادة العلمية ورقم المزاولة.</p>
+          </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Required Professional Identity */}
+          <Card className="border-primary/40">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <GraduationCap className="h-4 w-4 text-primary" /> الهوية المهنية والوثائق
+                <Badge variant="destructive" className="text-[10px] mr-auto">مطلوب</Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <label className="text-sm font-medium">التخصص المهني *</label>
+                <Select value={roleType} onValueChange={setRoleType}>
+                  <SelectTrigger className="mt-1"><SelectValue placeholder="اختر التخصص..." /></SelectTrigger>
+                  <SelectContent>
+                    {ROLE_TYPES.map((rt) => (
+                      <SelectItem key={rt.value} value={rt.value}>{rt.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <label className="text-sm font-medium">رقم المزاولة المهنية *</label>
+                <Input
+                  value={licenseId}
+                  onChange={(e) => setLicenseId(e.target.value)}
+                  placeholder="مثال: JMA-12345"
+                  dir="ltr"
+                  className="mt-1"
+                />
+              </div>
+
+              {/* Academic certificate (required) */}
+              <div>
+                <label className="text-sm font-medium flex items-center gap-1">
+                  <Award className="h-3.5 w-3.5" /> الشهادة العلمية *
+                </label>
+                <p className="text-xs text-muted-foreground mt-0.5 mb-2">PDF, JPG أو PNG — حتى 5MB</p>
+                <input
+                  ref={academicFileRef}
+                  type="file"
+                  accept=".pdf,.jpg,.jpeg,.png,.webp"
+                  className="hidden"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) handleCertUpload(f, "academic");
+                  }}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full gap-2"
+                  onClick={() => academicFileRef.current?.click()}
+                  disabled={uploadingAcademic}
+                >
+                  {uploadingAcademic ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                  {uploadingAcademic ? "جارٍ الرفع..." : academicCertUrl ? "تم الرفع ✅ — اضغط لتغيير الملف" : "رفع الشهادة العلمية"}
+                </Button>
+              </div>
+
+              {/* Experience certificate (optional) */}
+              <div>
+                <label className="text-sm font-medium flex items-center gap-1">
+                  <FileText className="h-3.5 w-3.5" /> شهادة الخبرة (اختياري)
+                </label>
+                <p className="text-xs text-muted-foreground mt-0.5 mb-2">PDF, JPG أو PNG — حتى 5MB</p>
+                <input
+                  ref={experienceFileRef}
+                  type="file"
+                  accept=".pdf,.jpg,.jpeg,.png,.webp"
+                  className="hidden"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) handleCertUpload(f, "experience");
+                  }}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full gap-2"
+                  onClick={() => experienceFileRef.current?.click()}
+                  disabled={uploadingExperience}
+                >
+                  {uploadingExperience ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                  {uploadingExperience ? "جارٍ الرفع..." : experienceCertUrl ? "تم الرفع ✅ — اضغط لتغيير الملف" : "رفع شهادة الخبرة"}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Experience */}
           <Card>
             <CardHeader className="pb-3">

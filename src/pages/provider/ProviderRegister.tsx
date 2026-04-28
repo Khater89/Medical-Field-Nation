@@ -69,7 +69,8 @@ const ProviderRegister = () => {
   const experienceFileRef = useRef<HTMLInputElement>(null);
 
   // Wizard state (only used in registration mode for non-logged users)
-  const [step, setStep] = useState<1 | 2 | 3>(1);
+  // Simplified: 2 steps only — Identity, Account. Professional details deferred to onboarding.
+  const [step, setStep] = useState<1 | 2>(1);
 
   const availableSpecialties = useMemo(() => SPECIALTIES_MAP[roleType] || [], [roleType]);
 
@@ -121,7 +122,7 @@ const ProviderRegister = () => {
       if (d.addressText) setAddressText(d.addressText);
       if (d.radiusKm) setRadiusKm(d.radiusKm);
       if (Array.isArray(d.selectedSpecialties)) setSelectedSpecialties(d.selectedSpecialties);
-      if (typeof d.step === "number") setStep(d.step as 1 | 2 | 3);
+      if (typeof d.step === "number" && (d.step === 1 || d.step === 2)) setStep(d.step as 1 | 2);
     } catch {/* ignore */}
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -537,32 +538,18 @@ const ProviderRegister = () => {
     return true;
   };
 
-  const validateStep2 = () => {
-    if (!roleType || !licenseId.trim()) {
-      toast({ title: t("register.wizard.step2_required"), variant: "destructive" });
-      return false;
-    }
-    if (!academicCertUrl) {
-      toast({ title: t("register.academic_required"), variant: "destructive" });
-      return false;
-    }
-    return true;
-  };
-
   const handleNext = () => {
     if (step === 1 && !validateStep1()) return;
-    if (step === 2 && !validateStep2()) return;
-    setStep((s) => (Math.min(3, (s + 1) as any) as 1 | 2 | 3));
+    setStep((s) => (Math.min(2, (s + 1) as any) as 1 | 2));
   };
 
-  const handleBack = () => setStep((s) => (Math.max(1, (s - 1) as any) as 1 | 2 | 3));
+  const handleBack = () => setStep((s) => (Math.max(1, (s - 1) as any) as 1 | 2));
 
   const handleWizardSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    // SAFETY: only allow real submission on the final step. This prevents
-    // any accidental Enter-key submit on steps 1/2 from triggering signUp.
-    if (step !== 3) {
+    // SAFETY: only allow real submission on the final (account) step.
+    if (step !== 2) {
       handleNext();
       return;
     }
@@ -903,7 +890,6 @@ const ProviderRegister = () => {
                     currentStep={step}
                     steps={[
                       t("register.wizard.step1"),
-                      t("register.wizard.step2"),
                       t("register.wizard.step3"),
                     ]}
                   />
@@ -911,8 +897,7 @@ const ProviderRegister = () => {
                   <form onSubmit={handleWizardSubmit} className="mt-7 space-y-5">
                     <AnimatePresence mode="wait">
                       {step === 1 && renderStep1()}
-                      {step === 2 && renderStep2()}
-                      {step === 3 && renderStep3()}
+                      {step === 2 && renderStep3()}
                     </AnimatePresence>
 
                     <div className="flex items-center gap-3 pt-2">
@@ -928,7 +913,7 @@ const ProviderRegister = () => {
                         </Button>
                       )}
                       <div className="flex-1" />
-                      {step < 3 ? (
+                      {step < 2 ? (
                         <Button
                           type="button"
                           onClick={handleNext}
