@@ -27,6 +27,8 @@ import {
   ClipboardList,
   CalendarDays,
   Home,
+  UserPlus,
+  Briefcase,
 } from "lucide-react";
 
 /* ── animation variants ── */
@@ -164,6 +166,18 @@ const LandingPage = () => {
                   >
                     <ClipboardList className="h-4 w-4" />
                     تتبع طلبك
+                  </Button>
+                </Link>
+                {/* Static "Join as Provider" CTA */}
+                <Link to="/provider/register">
+                  <Button
+                    size="lg"
+                    variant="secondary"
+                    className="gap-2 text-base px-8 h-14 rounded-full shadow-md hover:shadow-xl transition-all hover:scale-[1.02] active:scale-[0.98] border-2 border-primary/30 bg-primary/5 text-primary hover:bg-primary/10 font-bold"
+                  >
+                    <Briefcase className="h-5 w-5" />
+                    انضم كمزوّد خدمة
+                    <ArrowIcon className="h-4 w-4" />
                   </Button>
                 </Link>
               </motion.div>
@@ -594,6 +608,43 @@ const LandingPage = () => {
           </svg>
         </motion.a>
       </div>
+
+      {/* ═══════ FLOATING "JOIN AS PROVIDER" CTA ═══════ */}
+      <motion.div
+        initial={{ y: 100, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 1.6, type: "spring", stiffness: 180, damping: 18 }}
+        className="fixed bottom-6 start-6 z-50"
+      >
+        <Link to="/provider/register" aria-label="انضم كمزوّد خدمة">
+          <motion.div
+            animate={{
+              scale: [1, 1.06, 1],
+              boxShadow: [
+                "0 8px 24px -6px hsl(var(--primary) / 0.45)",
+                "0 12px 36px -4px hsl(var(--primary) / 0.7)",
+                "0 8px 24px -6px hsl(var(--primary) / 0.45)",
+              ],
+            }}
+            transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
+            whileHover={{ scale: 1.08 }}
+            whileTap={{ scale: 0.95 }}
+            className="relative flex items-center gap-2 h-14 ps-4 pe-5 rounded-full bg-gradient-to-r from-primary via-primary to-primary/85 text-primary-foreground font-bold text-sm shadow-xl overflow-hidden"
+          >
+            {/* Shine sweep */}
+            <motion.span
+              aria-hidden
+              className="absolute inset-y-0 -inset-x-4 bg-gradient-to-r from-transparent via-white/30 to-transparent skew-x-12 pointer-events-none"
+              animate={{ x: ["-120%", "220%"] }}
+              transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut", repeatDelay: 0.6 }}
+            />
+            <span className="relative flex h-9 w-9 items-center justify-center rounded-full bg-white/15 backdrop-blur-sm">
+              <UserPlus className="h-5 w-5" />
+            </span>
+            <span className="relative whitespace-nowrap">انضم كمزوّد خدمة</span>
+          </motion.div>
+        </Link>
+      </motion.div>
     </div>
   );
 };
