@@ -22,6 +22,7 @@ interface Props {
   };
   serviceName: string;
   coordinatorPhone: string | null;
+  serviceCategory?: string | null;
 }
 
 interface ProviderInfo {
@@ -31,6 +32,7 @@ interface ProviderInfo {
   city: string | null;
   role_type: string | null;
   available_now: boolean | null;
+  specialties: string[] | null;
 }
 
 const BroadcastProvidersDialog = ({ open, onOpenChange, booking, serviceName, coordinatorPhone }: Props) => {
