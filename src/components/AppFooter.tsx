@@ -1,7 +1,7 @@
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Link } from "react-router-dom";
 import MFNLogo from "@/components/MFNLogo";
-import { Phone, Mail, MapPin } from "lucide-react";
+import { Mail, MapPin } from "lucide-react";
 
 const AppFooter = () => {
   const { t } = useLanguage();
