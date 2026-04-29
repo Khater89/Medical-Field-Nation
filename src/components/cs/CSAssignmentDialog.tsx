@@ -282,8 +282,8 @@ const CSAssignmentDialog = ({ booking, open, onOpenChange, onAssigned, serviceNa
   const nearestIds = new Set(nearestProviders.map((p) => p.provider_id));
   const filteredNearest = useMemo(() =>
     nearestProviders
-      .filter(p => matchesRole(p.role_type) && matchesSearch(p.full_name)),
-    [nearestProviders, allowedRoles, search]
+      .filter(p => matchesRole(p.role_type) && matchesSearch(p.full_name) && matchesEmergency(p.provider_id)),
+    [nearestProviders, allowedRoles, search, isEmergency, emergencyProviderIds]
   );
   const sameCityProviders = useMemo(() =>
     fallbackProviders.filter(
@@ -291,8 +291,9 @@ const CSAssignmentDialog = ({ booking, open, onOpenChange, onAssigned, serviceNa
         && citiesMatch(p.city, booking.city)
         && matchesRole(p.role_type)
         && matchesSearch(p.full_name, p.provider_number)
+        && matchesEmergency(p.user_id)
     ),
-    [fallbackProviders, nearestIds, booking.city, allowedRoles, search]
+    [fallbackProviders, nearestIds, booking.city, allowedRoles, search, isEmergency, emergencyProviderIds]
   );
 
   // Apply quick filter on combined list
