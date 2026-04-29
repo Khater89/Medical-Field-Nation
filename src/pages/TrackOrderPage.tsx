@@ -14,9 +14,12 @@ import {
 import {
   Search, Loader2, CheckCircle, Circle, Clock,
   MapPin, CalendarDays, Landmark, Copy, AlertTriangle,
-  Star, Briefcase, User,
+  Star, Briefcase, User, Phone, MessageCircle,
 } from "lucide-react";
 import ApplePayButton from "@/components/booking/ApplePayButton";
+
+const COORDINATOR_PHONE = "+962781343144";
+const COORDINATOR_WA = "962781343144";
 
 const STATUS_ORDER = ["NEW", "CONFIRMED", "ASSIGNED", "ACCEPTED", "PROVIDER_ON_THE_WAY", "IN_PROGRESS", "COMPLETED"];
 const STATUS_LABELS: Record<string, string> = {
@@ -277,6 +280,29 @@ const TrackOrderPage = () => {
                   <span className="font-medium text-primary">
                     {booking.calculated_total || booking.subtotal} د.أ
                   </span>
+                </div>
+
+                {/* Coordinator contact buttons — visible only after a booking is found */}
+                <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 space-y-2">
+                  <p className="text-xs font-bold text-foreground">للتواصل المباشر مع المنسق:</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <a
+                      href={`tel:${COORDINATOR_PHONE}`}
+                      className="flex items-center justify-center gap-2 h-10 rounded-lg bg-primary text-primary-foreground font-bold text-sm shadow hover:shadow-md transition-shadow"
+                    >
+                      <Phone className="h-4 w-4" />
+                      اتصال
+                    </a>
+                    <a
+                      href={`https://wa.me/${COORDINATOR_WA}?text=${encodeURIComponent(`مرحباً، استفسار عن الحجز رقم ${booking.booking_number}`)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-center gap-2 h-10 rounded-lg bg-[#25D366] text-white font-bold text-sm shadow hover:shadow-md transition-shadow"
+                    >
+                      <MessageCircle className="h-4 w-4" />
+                      واتساب
+                    </a>
+                  </div>
                 </div>
 
                 {/* Late provider alert */}

@@ -1,9 +1,14 @@
+import { useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { supabase } from "@/integrations/supabase/client";
 import AppHeader from "@/components/AppHeader";
 import AppFooter from "@/components/AppFooter";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { motion } from "framer-motion";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent } from "@/components/ui/card";
+import { useToast } from "@/hooks/use-toast";
+import { motion, AnimatePresence } from "framer-motion";
 import { QRCodeSVG } from "qrcode.react";
 import ImageGallery from "@/components/landing/ImageGallery";
 import heroMedicalImg from "@/assets/hero-medical.jpg";
@@ -29,7 +34,14 @@ import {
   Home,
   UserPlus,
   Briefcase,
+  Siren,
+  Loader2,
+  MessageCircle,
 } from "lucide-react";
+
+const EMERGENCY_SERVICE_ID = "bb83aac4-e7da-41ee-83bd-b54da4e23569";
+const COORDINATOR_PHONE = "+962781343144";
+const COORDINATOR_WA = "962781343144";
 
 /* ── animation variants ── */
 const fadeUp = {
@@ -51,7 +63,51 @@ const staggerFast = {
 
 const LandingPage = () => {
   const { t, isRTL } = useLanguage();
+  const { toast } = useToast();
   const ArrowIcon = isRTL ? ArrowLeft : ArrowRight;
+
+  // Emergency quick-booking state
+  const [emName, setEmName] = useState("");
+  const [emAddress, setEmAddress] = useState("");
+  const [emPhone, setEmPhone] = useState("");
+  const [emSubmitting, setEmSubmitting] = useState(false);
+  const [emBookingNumber, setEmBookingNumber] = useState<string | null>(null);
+
+  const handleEmergencySubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!emName.trim() || !emAddress.trim() || !emPhone.trim()) {
+      toast({ title: "يرجى إدخال الاسم والعنوان ورقم الهاتف", variant: "destructive" });
+      return;
+    }
+    setEmSubmitting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("create-guest-booking", {
+        body: {
+          customer_name: emName.trim(),
+          customer_phone: emPhone.trim(),
+          city: "طوارئ",
+          client_address_text: emAddress.trim(),
+          client_lat: null,
+          client_lng: null,
+          service_id: EMERGENCY_SERVICE_ID,
+          scheduled_at: new Date().toISOString(),
+          hours: 1,
+          time_slot: "morning",
+          notes: `🚨 طلب طوارئ — العنوان: ${emAddress.trim()}`,
+          payment_method: "CASH",
+        },
+      });
+      if (error || !data?.success) {
+        toast({ title: "تعذّر إرسال الطلب", description: data?.error || error?.message, variant: "destructive" });
+      } else {
+        setEmBookingNumber(data.booking_number || "تم");
+        toast({ title: "تم استلام طلب الطوارئ ✓", description: "اتصل بالمنسق الآن لتسريع الاستجابة" });
+      }
+    } catch (err: any) {
+      toast({ title: "خطأ في الاتصال", description: err?.message, variant: "destructive" });
+    }
+    setEmSubmitting(false);
+  };
 
   /* ── data ── */
   const features = [
@@ -105,16 +161,15 @@ const LandingPage = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
             {/* Text content */}
             <div className="text-center lg:text-start space-y-6 order-2 lg:order-1">
-              {/* pill badge - clickable phone */}
-              <motion.a
-                href="tel:+962781343144"
+              {/* pill badge - 24/7 availability (no contact icons) */}
+              <motion.div
                 variants={fadeUp}
                 transition={{ duration: 0.5 }}
-                className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-1.5 rounded-full text-sm font-semibold hover:bg-primary/20 transition-colors cursor-pointer"
+                className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-1.5 rounded-full text-sm font-semibold"
               >
-                <Phone className="h-4 w-4 animate-pulse" />
+                <Clock className="h-4 w-4" />
                 {t("landing.feature4")}
-              </motion.a>
+              </motion.div>
 
               <motion.h1
                 variants={fadeUp}
@@ -239,6 +294,141 @@ const LandingPage = () => {
       </section>
 
       {/* ═══════ PROMO VIDEO ═══════ */}
+      {/* EMERGENCY QUICK BOOKING */}
+      <section id="emergency" className="py-16 relative overflow-hidden scroll-mt-20">
+        <div className="absolute inset-0 bg-gradient-to-br from-destructive/5 via-background to-destructive/10" />
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.2 }}
+          variants={stagger}
+          className="container max-w-3xl relative"
+        >
+          <motion.div variants={fadeUp} transition={{ duration: 0.5 }} className="text-center space-y-3 mb-8">
+            <div className="inline-flex items-center gap-2 bg-destructive/10 border border-destructive/30 text-destructive px-4 py-1.5 rounded-full text-sm font-bold">
+              <Siren className="h-4 w-4 animate-pulse" />
+              حجز طوارئ سريع
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-black text-foreground">
+              تحتاج خدمة طبية <span className="text-destructive">عاجلة الآن؟</span>
+            </h2>
+            <p className="text-sm text-muted-foreground max-w-lg mx-auto">
+              املأ الاسم والعنوان فقط — سنستلم طلبك فوراً وسيظهر لك زر الاتصال والواتساب بالمنسق مباشرة بعد الإرسال.
+            </p>
+          </motion.div>
+
+          <motion.div variants={fadeUp} transition={{ duration: 0.6 }}>
+            <Card className="border-2 border-destructive/30 shadow-xl">
+              <CardContent className="py-6">
+                <AnimatePresence mode="wait">
+                  {!emBookingNumber ? (
+                    <motion.form
+                      key="form"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      onSubmit={handleEmergencySubmit}
+                      className="space-y-4"
+                    >
+                      <div>
+                        <label className="text-sm font-semibold mb-1 block">الاسم الكامل *</label>
+                        <Input
+                          value={emName}
+                          onChange={(e) => setEmName(e.target.value.slice(0, 100))}
+                          placeholder="مثال: أحمد محمد"
+                          required
+                          maxLength={100}
+                        />
+                      </div>
+                      <div>
+                        <label className="text-sm font-semibold mb-1 block">العنوان التفصيلي *</label>
+                        <Input
+                          value={emAddress}
+                          onChange={(e) => setEmAddress(e.target.value.slice(0, 300))}
+                          placeholder="المدينة، الحي، الشارع، رقم المبنى"
+                          required
+                          maxLength={300}
+                        />
+                      </div>
+                      <div>
+                        <label className="text-sm font-semibold mb-1 block">رقم الهاتف *</label>
+                        <Input
+                          value={emPhone}
+                          onChange={(e) => setEmPhone(e.target.value.slice(0, 20))}
+                          placeholder="07XXXXXXXX"
+                          required
+                          dir="ltr"
+                          type="tel"
+                          maxLength={20}
+                        />
+                      </div>
+                      <Button
+                        type="submit"
+                        disabled={emSubmitting}
+                        size="lg"
+                        className="w-full gap-2 bg-destructive hover:bg-destructive/90 text-destructive-foreground font-bold h-12"
+                      >
+                        {emSubmitting ? <Loader2 className="h-5 w-5 animate-spin" /> : <Siren className="h-5 w-5" />}
+                        {emSubmitting ? "جاري الإرسال..." : "احجز الطوارئ الآن"}
+                      </Button>
+                    </motion.form>
+                  ) : (
+                    <motion.div
+                      key="success"
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="space-y-5 text-center"
+                    >
+                      <div className="flex justify-center">
+                        <div className="h-16 w-16 rounded-full bg-green-500/15 flex items-center justify-center">
+                          <CheckCircle className="h-9 w-9 text-green-600" />
+                        </div>
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-black text-foreground">تم استلام طلبك ✓</h3>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          رقم الحجز: <span className="font-mono font-bold text-primary" dir="ltr">{emBookingNumber}</span>
+                        </p>
+                      </div>
+                      <div className="rounded-xl bg-primary/5 border border-primary/20 p-4 space-y-3">
+                        <p className="text-sm font-bold text-foreground">للاستجابة الفورية، تواصل مع المنسق الآن:</p>
+                        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                          <a
+                            href={`tel:${COORDINATOR_PHONE}`}
+                            className="flex items-center justify-center gap-2 h-12 px-5 rounded-full bg-primary text-primary-foreground font-bold shadow-md hover:shadow-lg transition-shadow"
+                          >
+                            <Phone className="h-5 w-5" />
+                            اتصل بالمنسق
+                          </a>
+                          <a
+                            href={`https://wa.me/${COORDINATOR_WA}?text=${encodeURIComponent(`مرحباً، طلب طوارئ رقم ${emBookingNumber} باسم ${emName}`)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center justify-center gap-2 h-12 px-5 rounded-full bg-[#25D366] text-white font-bold shadow-md hover:shadow-lg transition-shadow"
+                          >
+                            <MessageCircle className="h-5 w-5" />
+                            واتساب المنسق
+                          </a>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => {
+                          setEmBookingNumber(null);
+                          setEmName(""); setEmAddress(""); setEmPhone("");
+                        }}
+                        className="text-xs text-muted-foreground hover:text-primary underline"
+                      >
+                        إرسال طلب طوارئ آخر
+                      </button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </motion.div>
+      </section>
+
       <section className="py-16 bg-card/40">
         <div className="container max-w-5xl space-y-8">
           <motion.div
@@ -575,39 +765,7 @@ const LandingPage = () => {
       {/* ═══════ FOOTER ═══════ */}
       <AppFooter />
 
-      {/* ═══════ FLOATING CONTACT BUTTONS ═══════ */}
-      <div className="fixed bottom-6 end-6 z-50 flex flex-col gap-3 items-center">
-        {/* Call button - main coordinator */}
-        <motion.a
-          href="tel:+962781343144"
-          initial={{ scale: 0, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ delay: 1.4, type: "spring", stiffness: 200 }}
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.95 }}
-          className="h-12 w-12 rounded-full bg-primary flex items-center justify-center shadow-lg hover:shadow-xl transition-shadow"
-          aria-label="اتصل بنا"
-        >
-          <Phone className="h-6 w-6 text-primary-foreground" />
-        </motion.a>
-        {/* WhatsApp button - coordinator 1 (عبد الرحمن) */}
-        <motion.a
-          href="https://wa.me/962781343144"
-          target="_blank"
-          rel="noopener noreferrer"
-          initial={{ scale: 0, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ delay: 1, type: "spring", stiffness: 200 }}
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.95 }}
-          className="h-14 w-14 rounded-full bg-[#25D366] flex items-center justify-center shadow-lg hover:shadow-xl transition-shadow"
-          aria-label="واتساب المنسق عبد الرحمن"
-        >
-          <svg viewBox="0 0 32 32" className="h-7 w-7 fill-white">
-            <path d="M16.004 0h-.008C7.174 0 0 7.176 0 16.004c0 3.5 1.128 6.744 3.046 9.378L1.054 31.29l6.118-1.958A15.924 15.924 0 0016.004 32C24.826 32 32 24.826 32 16.004 32 7.176 24.826 0 16.004 0zm9.338 22.618c-.394 1.11-1.946 2.032-3.192 2.3-.854.182-1.968.326-5.72-1.23-4.802-1.99-7.892-6.862-8.132-7.18-.23-.318-1.936-2.578-1.936-4.916s1.226-3.49 1.662-3.968c.436-.478.952-.598 1.27-.598.316 0 .632.002.908.016.292.014.684-.11 1.07.816.394.952 1.338 3.27 1.456 3.508.118.238.198.516.04.834-.158.318-.238.516-.476.794-.238.278-.5.62-.714.832-.238.238-.486.496-.208.972.278.476 1.236 2.038 2.654 3.302 1.822 1.624 3.358 2.126 3.834 2.364.476.238.754.198 1.032-.118.278-.318 1.19-1.388 1.508-1.866.318-.476.634-.396 1.07-.238.436.158 2.754 1.298 3.23 1.536.476.238.794.356.912.554.118.198.118 1.15-.276 2.26z" />
-          </svg>
-        </motion.a>
-      </div>
+      {/* Floating call/whatsapp icons hidden on landing — they appear after booking only */}
 
       {/* ═══════ FLOATING "JOIN AS PROVIDER" CTA ═══════ */}
       <motion.div
