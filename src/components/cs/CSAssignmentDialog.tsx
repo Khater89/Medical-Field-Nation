@@ -101,6 +101,20 @@ const CSAssignmentDialog = ({ booking, open, onOpenChange, onAssigned, serviceNa
   const [providerRatings, setProviderRatings] = useState<Record<string, number>>({});
 
   const allowedRoles = serviceCategory ? CATEGORY_ROLE_MAP[serviceCategory] || [] : [];
+  const isEmergency =
+    (serviceCategory || "").toLowerCase() === "emergency" ||
+    (serviceName || "").includes("طوارئ") ||
+    (serviceName || "").toLowerCase().includes("emergency");
+  const emergencyProviderIds = useMemo(() => {
+    const set = new Set<string>();
+    fallbackProviders.forEach((p) => {
+      if ((p.specialties || []).some((s) => (s || "").toLowerCase().includes("emergency") || s?.includes("طوارئ"))) {
+        set.add(p.user_id);
+      }
+    });
+    return set;
+  }, [fallbackProviders]);
+  const matchesEmergency = (id: string) => !isEmergency || emergencyProviderIds.has(id);
 
   useEffect(() => {
     if (!open) return;
