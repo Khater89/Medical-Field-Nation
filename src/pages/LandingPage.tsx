@@ -168,6 +168,18 @@ const LandingPage = () => {
                     تتبع طلبك
                   </Button>
                 </Link>
+                {/* Static "Join as Provider" CTA */}
+                <Link to="/provider/register">
+                  <Button
+                    size="lg"
+                    variant="secondary"
+                    className="gap-2 text-base px-8 h-14 rounded-full shadow-md hover:shadow-xl transition-all hover:scale-[1.02] active:scale-[0.98] border-2 border-primary/30 bg-primary/5 text-primary hover:bg-primary/10 font-bold"
+                  >
+                    <Briefcase className="h-5 w-5" />
+                    انضم كمزوّد خدمة
+                    <ArrowIcon className="h-4 w-4" />
+                  </Button>
+                </Link>
               </motion.div>
 
               {/* stats */}
