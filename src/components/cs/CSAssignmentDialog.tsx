@@ -328,6 +328,11 @@ const CSAssignmentDialog = ({ booking, open, onOpenChange, onAssigned, serviceNa
           </DialogDescription>
         </DialogHeader>
 
+        {isEmergency && (
+          <div className="rounded-lg bg-destructive/10 border border-destructive/30 text-destructive text-xs p-2 font-semibold text-center">
+            🚨 طلب طوارئ — يتم عرض المزودين العاملين في الطوارئ فقط
+          </div>
+        )}
         <div className="space-y-4">
           {/* Price Setting — glass card */}
           <div className="rounded-xl border border-border/40 bg-card/60 backdrop-blur-md p-3 space-y-3 shadow-sm">
