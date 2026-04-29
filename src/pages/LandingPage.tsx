@@ -806,6 +806,43 @@ const LandingPage = () => {
 
       {/* Floating call/whatsapp icons hidden on landing — they appear after booking only */}
 
+      {/* ═══════ FLOATING "EMERGENCY" CTA ═══════ */}
+      <motion.div
+        initial={{ y: 100, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 1.4, type: "spring", stiffness: 180, damping: 18 }}
+        className="fixed bottom-6 end-6 z-50"
+      >
+        <a href="#emergency" aria-label={t("landing.emergency.fab")}>
+          <motion.div
+            animate={{
+              scale: [1, 1.08, 1],
+              boxShadow: [
+                "0 8px 24px -6px hsl(var(--destructive) / 0.5)",
+                "0 14px 40px -4px hsl(var(--destructive) / 0.8)",
+                "0 8px 24px -6px hsl(var(--destructive) / 0.5)",
+              ],
+            }}
+            transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.95 }}
+            className="relative flex items-center gap-2 h-14 ps-4 pe-5 rounded-full bg-gradient-to-r from-destructive via-destructive to-destructive/85 text-destructive-foreground font-bold text-sm shadow-xl overflow-hidden"
+          >
+            <motion.span
+              aria-hidden
+              className="absolute inset-y-0 -inset-x-4 bg-gradient-to-r from-transparent via-white/30 to-transparent skew-x-12 pointer-events-none"
+              animate={{ x: ["-120%", "220%"] }}
+              transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut", repeatDelay: 0.4 }}
+            />
+            <span className="relative flex h-9 w-9 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm">
+              <Siren className="h-5 w-5 animate-pulse" />
+            </span>
+            <span className="relative whitespace-nowrap">{t("landing.emergency.fab")}</span>
+          </motion.div>
+        </a>
+      </motion.div>
+
+
       {/* ═══════ FLOATING "JOIN AS PROVIDER" CTA ═══════ */}
       <motion.div
         initial={{ y: 100, opacity: 0 }}
