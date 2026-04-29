@@ -107,7 +107,7 @@ const LandingPage = () => {
             <div className="text-center lg:text-start space-y-6 order-2 lg:order-1">
               {/* pill badge - clickable phone */}
               <motion.a
-                href="tel:+962790619770"
+                href="tel:+962781343144"
                 variants={fadeUp}
                 transition={{ duration: 0.5 }}
                 className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-1.5 rounded-full text-sm font-semibold hover:bg-primary/20 transition-colors cursor-pointer"
@@ -579,7 +579,7 @@ const LandingPage = () => {
       <div className="fixed bottom-6 end-6 z-50 flex flex-col gap-3 items-center">
         {/* Call button - main coordinator */}
         <motion.a
-          href="tel:+962790619770"
+          href="tel:+962781343144"
           initial={{ scale: 0, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ delay: 1.4, type: "spring", stiffness: 200 }}
@@ -592,7 +592,7 @@ const LandingPage = () => {
         </motion.a>
         {/* WhatsApp button - coordinator 1 (عبد الرحمن) */}
         <motion.a
-          href="https://wa.me/962790619770"
+          href="https://wa.me/962781343144"
           target="_blank"
           rel="noopener noreferrer"
           initial={{ scale: 0, opacity: 0 }}
