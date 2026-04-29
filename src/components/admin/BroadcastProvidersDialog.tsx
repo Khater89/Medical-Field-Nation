@@ -35,9 +35,14 @@ interface ProviderInfo {
   specialties: string[] | null;
 }
 
-const BroadcastProvidersDialog = ({ open, onOpenChange, booking, serviceName, coordinatorPhone }: Props) => {
+const BroadcastProvidersDialog = ({ open, onOpenChange, booking, serviceName, coordinatorPhone, serviceCategory }: Props) => {
   const [providers, setProviders] = useState<ProviderInfo[]>([]);
   const [loading, setLoading] = useState(false);
+
+  const isEmergency =
+    (serviceCategory || "").toLowerCase() === "emergency" ||
+    (serviceName || "").includes("طوارئ") ||
+    (serviceName || "").toLowerCase().includes("emergency");
 
   useEffect(() => {
     if (!open) return;
@@ -45,15 +50,21 @@ const BroadcastProvidersDialog = ({ open, onOpenChange, booking, serviceName, co
       setLoading(true);
       const { data } = await supabase
         .from("profiles")
-        .select("user_id, full_name, phone, city, role_type, available_now")
+        .select("user_id, full_name, phone, city, role_type, available_now, specialties")
         .eq("provider_status", "approved")
         .eq("profile_completed", true)
         .not("phone", "is", null);
-      setProviders((data as ProviderInfo[]) || []);
+      let list = (data as ProviderInfo[]) || [];
+      if (isEmergency) {
+        list = list.filter((p) =>
+          (p.specialties || []).some((s) => (s || "").toLowerCase().includes("emergency") || s?.includes("طوارئ"))
+        );
+      }
+      setProviders(list);
       setLoading(false);
     };
     fetch();
-  }, [open]);
+  }, [open, isEmergency]);
 
   const scheduledDate = new Date(booking.scheduled_at).toLocaleString("ar-JO", {
     weekday: "long", year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit",
