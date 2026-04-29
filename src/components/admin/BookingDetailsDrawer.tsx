@@ -776,6 +776,7 @@ const BookingDetailsDrawer = ({ booking, open, onOpenChange, serviceName, servic
         booking={booking}
         serviceName={serviceName}
         coordinatorPhone={coordinatorPhone}
+        serviceCategory={serviceCategory}
       />
     </Sheet>
   );
