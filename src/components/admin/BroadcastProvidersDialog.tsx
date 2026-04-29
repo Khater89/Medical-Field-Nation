@@ -137,10 +137,17 @@ const BroadcastProvidersDialog = ({ open, onOpenChange, booking, serviceName, co
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
           </div>
         ) : providers.length === 0 ? (
-          <p className="text-center text-sm text-muted-foreground py-4">لا يوجد مزودين معتمدين حالياً</p>
+          <p className="text-center text-sm text-muted-foreground py-4">
+            {isEmergency ? "لا يوجد مزودون معتمدون لخدمة الطوارئ حالياً" : "لا يوجد مزودين معتمدين حالياً"}
+          </p>
         ) : (
           <div className="space-y-2">
-            <p className="text-xs text-muted-foreground">{providers.length} مزود معتمد</p>
+            {isEmergency && (
+              <div className="rounded-lg bg-destructive/10 border border-destructive/30 text-destructive text-xs p-2 font-semibold text-center">
+                🚨 يتم عرض مزودي الطوارئ فقط
+              </div>
+            )}
+            <p className="text-xs text-muted-foreground">{providers.length} مزود</p>
             {providers.map((p) => (
               <div key={p.user_id} className="flex items-center justify-between rounded-lg border border-border p-2.5 hover:bg-muted/30 transition-colors">
                 <div className="flex-1 min-w-0">
