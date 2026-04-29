@@ -294,6 +294,141 @@ const LandingPage = () => {
       </section>
 
       {/* ═══════ PROMO VIDEO ═══════ */}
+      {/* EMERGENCY QUICK BOOKING */}
+      <section id="emergency" className="py-16 relative overflow-hidden scroll-mt-20">
+        <div className="absolute inset-0 bg-gradient-to-br from-destructive/5 via-background to-destructive/10" />
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.2 }}
+          variants={stagger}
+          className="container max-w-3xl relative"
+        >
+          <motion.div variants={fadeUp} transition={{ duration: 0.5 }} className="text-center space-y-3 mb-8">
+            <div className="inline-flex items-center gap-2 bg-destructive/10 border border-destructive/30 text-destructive px-4 py-1.5 rounded-full text-sm font-bold">
+              <Siren className="h-4 w-4 animate-pulse" />
+              حجز طوارئ سريع
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-black text-foreground">
+              تحتاج خدمة طبية <span className="text-destructive">عاجلة الآن؟</span>
+            </h2>
+            <p className="text-sm text-muted-foreground max-w-lg mx-auto">
+              املأ الاسم والعنوان فقط — سنستلم طلبك فوراً وسيظهر لك زر الاتصال والواتساب بالمنسق مباشرة بعد الإرسال.
+            </p>
+          </motion.div>
+
+          <motion.div variants={fadeUp} transition={{ duration: 0.6 }}>
+            <Card className="border-2 border-destructive/30 shadow-xl">
+              <CardContent className="py-6">
+                <AnimatePresence mode="wait">
+                  {!emBookingNumber ? (
+                    <motion.form
+                      key="form"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      onSubmit={handleEmergencySubmit}
+                      className="space-y-4"
+                    >
+                      <div>
+                        <label className="text-sm font-semibold mb-1 block">الاسم الكامل *</label>
+                        <Input
+                          value={emName}
+                          onChange={(e) => setEmName(e.target.value.slice(0, 100))}
+                          placeholder="مثال: أحمد محمد"
+                          required
+                          maxLength={100}
+                        />
+                      </div>
+                      <div>
+                        <label className="text-sm font-semibold mb-1 block">العنوان التفصيلي *</label>
+                        <Input
+                          value={emAddress}
+                          onChange={(e) => setEmAddress(e.target.value.slice(0, 300))}
+                          placeholder="المدينة، الحي، الشارع، رقم المبنى"
+                          required
+                          maxLength={300}
+                        />
+                      </div>
+                      <div>
+                        <label className="text-sm font-semibold mb-1 block">رقم الهاتف *</label>
+                        <Input
+                          value={emPhone}
+                          onChange={(e) => setEmPhone(e.target.value.slice(0, 20))}
+                          placeholder="07XXXXXXXX"
+                          required
+                          dir="ltr"
+                          type="tel"
+                          maxLength={20}
+                        />
+                      </div>
+                      <Button
+                        type="submit"
+                        disabled={emSubmitting}
+                        size="lg"
+                        className="w-full gap-2 bg-destructive hover:bg-destructive/90 text-destructive-foreground font-bold h-12"
+                      >
+                        {emSubmitting ? <Loader2 className="h-5 w-5 animate-spin" /> : <Siren className="h-5 w-5" />}
+                        {emSubmitting ? "جاري الإرسال..." : "احجز الطوارئ الآن"}
+                      </Button>
+                    </motion.form>
+                  ) : (
+                    <motion.div
+                      key="success"
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="space-y-5 text-center"
+                    >
+                      <div className="flex justify-center">
+                        <div className="h-16 w-16 rounded-full bg-green-500/15 flex items-center justify-center">
+                          <CheckCircle className="h-9 w-9 text-green-600" />
+                        </div>
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-black text-foreground">تم استلام طلبك ✓</h3>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          رقم الحجز: <span className="font-mono font-bold text-primary" dir="ltr">{emBookingNumber}</span>
+                        </p>
+                      </div>
+                      <div className="rounded-xl bg-primary/5 border border-primary/20 p-4 space-y-3">
+                        <p className="text-sm font-bold text-foreground">للاستجابة الفورية، تواصل مع المنسق الآن:</p>
+                        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                          <a
+                            href={`tel:${COORDINATOR_PHONE}`}
+                            className="flex items-center justify-center gap-2 h-12 px-5 rounded-full bg-primary text-primary-foreground font-bold shadow-md hover:shadow-lg transition-shadow"
+                          >
+                            <Phone className="h-5 w-5" />
+                            اتصل بالمنسق
+                          </a>
+                          <a
+                            href={`https://wa.me/${COORDINATOR_WA}?text=${encodeURIComponent(`مرحباً، طلب طوارئ رقم ${emBookingNumber} باسم ${emName}`)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center justify-center gap-2 h-12 px-5 rounded-full bg-[#25D366] text-white font-bold shadow-md hover:shadow-lg transition-shadow"
+                          >
+                            <MessageCircle className="h-5 w-5" />
+                            واتساب المنسق
+                          </a>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => {
+                          setEmBookingNumber(null);
+                          setEmName(""); setEmAddress(""); setEmPhone("");
+                        }}
+                        className="text-xs text-muted-foreground hover:text-primary underline"
+                      >
+                        إرسال طلب طوارئ آخر
+                      </button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </motion.div>
+      </section>
+
       <section className="py-16 bg-card/40">
         <div className="container max-w-5xl space-y-8">
           <motion.div
