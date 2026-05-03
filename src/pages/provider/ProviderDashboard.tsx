@@ -1533,12 +1533,13 @@ const ProviderDashboard = () => {
                       placeholder="اكتب نبذة مختصرة عن خبرتك..."
                       rows={3}
                       className="mt-1"
+                      disabled={!editMode}
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="text-xs font-medium text-muted-foreground">{t("admin.providers.col.type")}</label>
-                      <Select value={editRoleType} onValueChange={setEditRoleType}>
+                      <Select value={editRoleType} onValueChange={setEditRoleType} disabled={!editMode}>
                         <SelectTrigger className="mt-1">
                           <SelectValue placeholder="—" />
                         </SelectTrigger>
@@ -1561,6 +1562,7 @@ const ProviderDashboard = () => {
                         onChange={(e) => setEditExperienceYears(Math.max(0, parseInt(e.target.value) || 0))}
                         className="mt-1"
                         dir="ltr"
+                        disabled={!editMode}
                       />
                     </div>
                   </div>
