@@ -59,6 +59,8 @@ interface Props {
   /** Customer mode only: target a specific provider */
   defaultTargetProviderId?: string | null;
   onTargetProviderClick?: (providerId: string) => void;
+  /** Guest mode (no auth): use edge functions with booking_number + phone */
+  guestMode?: { bookingNumber: string; phone: string; displayName?: string };
 }
 
 const ROLE_LABELS: Record<string, string> = {
@@ -67,7 +69,7 @@ const ROLE_LABELS: Record<string, string> = {
 
 export default function BookingChat({
   bookingId, viewerRole, viewerId, viewerName,
-  allowQuote, defaultTargetProviderId, onTargetProviderClick,
+  allowQuote, defaultTargetProviderId, onTargetProviderClick, guestMode,
 }: Props) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [quotes, setQuotes] = useState<Quote[]>([]);
@@ -79,25 +81,40 @@ export default function BookingChat({
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const fetchAll = async () => {
-    const [{ data: msgs }, { data: qts }] = await Promise.all([
-      supabase.rpc("list_booking_messages" as any, { _booking_id: bookingId }),
-      supabase.rpc("booking_quotes_public" as any, { _booking_id: bookingId }),
-    ]);
-    setMessages((msgs as any) || []);
-    setQuotes((qts as any) || []);
+    if (guestMode) {
+      const { data, error } = await supabase.functions.invoke("guest-list-messages", {
+        body: { booking_number: guestMode.bookingNumber, phone: guestMode.phone },
+      });
+      if (!error && data) {
+        setMessages((data.messages as any) || []);
+        setQuotes((data.quotes as any) || []);
+      }
+    } else {
+      const [{ data: msgs }, { data: qts }] = await Promise.all([
+        supabase.rpc("list_booking_messages" as any, { _booking_id: bookingId }),
+        supabase.rpc("booking_quotes_public" as any, { _booking_id: bookingId }),
+      ]);
+      setMessages((msgs as any) || []);
+      setQuotes((qts as any) || []);
+    }
     setLoading(false);
     setTimeout(() => scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" }), 100);
   };
 
   useEffect(() => {
     fetchAll();
+    if (guestMode) {
+      // Guests poll every 5s for new messages
+      const t = setInterval(fetchAll, 5000);
+      return () => clearInterval(t);
+    }
     const ch = supabase.channel(`booking_messages:${bookingId}`)
       .on("postgres_changes",
         { event: "INSERT", schema: "public", table: "booking_messages", filter: `booking_id=eq.${bookingId}` },
         () => fetchAll()
       ).subscribe();
     return () => { supabase.removeChannel(ch); };
-  }, [bookingId]);
+  }, [bookingId, guestMode?.bookingNumber, guestMode?.phone]);
 
   const send = async () => {
     if (!body.trim()) return;
