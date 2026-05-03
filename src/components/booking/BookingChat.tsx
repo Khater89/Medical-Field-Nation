@@ -102,14 +102,33 @@ export default function BookingChat({
   const send = async () => {
     if (!body.trim()) return;
     setSending(true);
+    const priceNum = price ? parseFloat(price) : null;
+    const tempId = `temp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const optimistic: Message = {
+      id: tempId,
+      sender_id: viewerId,
+      sender_role: viewerRole,
+      sender_display_name: viewerName || (viewerRole === "customer" ? "أنت" : "أنت"),
+      body: body.trim(),
+      quoted_price: priceNum,
+      target_provider_id: viewerRole === "customer" ? target : null,
+      created_at: new Date().toISOString(),
+      sender_avatar: null,
+      _pending: true,
+      _tempId: tempId,
+    };
+    setMessages((prev) => [...prev, optimistic]);
+    const sentBody = body.trim();
+    setBody(""); setPrice("");
+    setTimeout(() => scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" }), 50);
+
     try {
-      const priceNum = price ? parseFloat(price) : null;
       const { error } = await supabase.from("booking_messages" as any).insert({
         booking_id: bookingId,
         sender_id: viewerId,
         sender_role: viewerRole,
         sender_display_name: viewerName || null,
-        body: body.trim(),
+        body: sentBody,
         quoted_price: priceNum,
         target_provider_id: viewerRole === "customer" ? target : null,
       });
@@ -118,12 +137,14 @@ export default function BookingChat({
       // If provider attached a price, also insert a formal quote (best-effort)
       if (viewerRole === "provider" && priceNum && priceNum > 0) {
         await supabase.from("provider_quotes" as any).insert({
-          booking_id: bookingId, provider_id: viewerId, quoted_price: priceNum, note: body.trim(),
+          booking_id: bookingId, provider_id: viewerId, quoted_price: priceNum, note: sentBody,
         });
       }
-      setBody(""); setPrice("");
       await fetchAll();
     } catch (e: any) {
+      // Remove optimistic on failure
+      setMessages((prev) => prev.filter((m) => m._tempId !== tempId));
+      setBody(sentBody);
       toast.error(e.message || "تعذّر الإرسال");
     } finally { setSending(false); }
   };
