@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
-import { Send, Loader2, Star, DollarSign, MessageCircle, User, Phone } from "lucide-react";
+import { Send, Loader2, Star, DollarSign, MessageCircle, User, Phone, Check, CheckCheck, Clock } from "lucide-react";
 
 interface Message {
   id: string;
@@ -18,7 +18,24 @@ interface Message {
   target_provider_id: string | null;
   created_at: string;
   sender_avatar: string | null;
+  /** Local-only: optimistic pending message */
+  _pending?: boolean;
+  _tempId?: string;
 }
+
+const formatTime = (iso: string) =>
+  new Date(iso).toLocaleTimeString("ar-JO", { hour: "2-digit", minute: "2-digit" });
+
+const formatDateLabel = (iso: string) => {
+  const d = new Date(iso);
+  const today = new Date();
+  const yesterday = new Date(); yesterday.setDate(today.getDate() - 1);
+  const same = (a: Date, b: Date) =>
+    a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+  if (same(d, today)) return "اليوم";
+  if (same(d, yesterday)) return "أمس";
+  return d.toLocaleDateString("ar-JO", { day: "2-digit", month: "short", year: "numeric" });
+};
 
 interface Quote {
   id: string;
@@ -85,14 +102,33 @@ export default function BookingChat({
   const send = async () => {
     if (!body.trim()) return;
     setSending(true);
+    const priceNum = price ? parseFloat(price) : null;
+    const tempId = `temp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const optimistic: Message = {
+      id: tempId,
+      sender_id: viewerId,
+      sender_role: viewerRole,
+      sender_display_name: viewerName || (viewerRole === "customer" ? "أنت" : "أنت"),
+      body: body.trim(),
+      quoted_price: priceNum,
+      target_provider_id: viewerRole === "customer" ? target : null,
+      created_at: new Date().toISOString(),
+      sender_avatar: null,
+      _pending: true,
+      _tempId: tempId,
+    };
+    setMessages((prev) => [...prev, optimistic]);
+    const sentBody = body.trim();
+    setBody(""); setPrice("");
+    setTimeout(() => scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" }), 50);
+
     try {
-      const priceNum = price ? parseFloat(price) : null;
       const { error } = await supabase.from("booking_messages" as any).insert({
         booking_id: bookingId,
         sender_id: viewerId,
         sender_role: viewerRole,
         sender_display_name: viewerName || null,
-        body: body.trim(),
+        body: sentBody,
         quoted_price: priceNum,
         target_provider_id: viewerRole === "customer" ? target : null,
       });
@@ -101,12 +137,14 @@ export default function BookingChat({
       // If provider attached a price, also insert a formal quote (best-effort)
       if (viewerRole === "provider" && priceNum && priceNum > 0) {
         await supabase.from("provider_quotes" as any).insert({
-          booking_id: bookingId, provider_id: viewerId, quoted_price: priceNum, note: body.trim(),
+          booking_id: bookingId, provider_id: viewerId, quoted_price: priceNum, note: sentBody,
         });
       }
-      setBody(""); setPrice("");
       await fetchAll();
     } catch (e: any) {
+      // Remove optimistic on failure
+      setMessages((prev) => prev.filter((m) => m._tempId !== tempId));
+      setBody(sentBody);
       toast.error(e.message || "تعذّر الإرسال");
     } finally { setSending(false); }
   };
@@ -174,39 +212,86 @@ export default function BookingChat({
               لا توجد رسائل بعد — ابدأ المحادثة
             </div>
           )}
-          {messages.map((m) => {
-            const mine = m.sender_id === viewerId;
-            const isPrivate = m.target_provider_id != null;
-            const hidden = isPrivate && viewerRole === "provider" && m.target_provider_id !== viewerId && !mine;
-            if (hidden) return null;
-            return (
-              <div key={m.id} className={`flex gap-2 ${mine ? "flex-row-reverse" : ""}`}>
-                <Avatar className="h-7 w-7 shrink-0">
-                  <AvatarImage src={m.sender_avatar || undefined} />
-                  <AvatarFallback className="text-[10px]">
-                    {m.sender_role === "customer" ? "👤" : "🩺"}
-                  </AvatarFallback>
-                </Avatar>
-                <div className={`max-w-[75%] rounded-lg px-3 py-2 text-sm ${
-                  mine ? "bg-primary text-primary-foreground" : "bg-muted"
-                }`}>
-                  <div className="flex items-center gap-1 mb-0.5">
-                    <span className="text-[10px] opacity-70 font-medium">{m.sender_display_name}</span>
-                    {isPrivate && <Badge variant="outline" className="text-[9px] px-1 py-0 h-3.5">خاص</Badge>}
-                  </div>
-                  <p className="break-words whitespace-pre-wrap">{m.body}</p>
-                  {m.quoted_price && (
-                    <Badge variant="outline" className={`mt-1 text-[10px] gap-0.5 ${mine ? "bg-primary-foreground/20 border-primary-foreground/30" : ""}`}>
-                      <DollarSign className="h-2.5 w-2.5" />السعر المقترح: {m.quoted_price} JOD
-                    </Badge>
+          {(() => {
+            // Compute timestamp of latest message from any *other* participant —
+            // used to mark our own earlier messages as "delivered".
+            const latestOtherTs = messages
+              .filter((x) => x.sender_id !== viewerId && !x._pending)
+              .reduce<number>((acc, x) => Math.max(acc, new Date(x.created_at).getTime()), 0);
+
+            let lastDateLabel = "";
+            return messages.map((m) => {
+              const mine = m.sender_id === viewerId;
+              const isPrivate = m.target_provider_id != null;
+              const hidden = isPrivate && viewerRole === "provider" && m.target_provider_id !== viewerId && !mine;
+              if (hidden) return null;
+
+              const dateLabel = formatDateLabel(m.created_at);
+              const showDate = dateLabel !== lastDateLabel;
+              lastDateLabel = dateLabel;
+
+              // Status: pending (clock) → sent (single check) → delivered (double check)
+              let status: "pending" | "sent" | "delivered" = "sent";
+              if (m._pending) status = "pending";
+              else if (mine && new Date(m.created_at).getTime() < latestOtherTs) status = "delivered";
+
+              return (
+                <div key={m.id}>
+                  {showDate && (
+                    <div className="flex justify-center my-2">
+                      <span className="text-[10px] bg-muted text-muted-foreground rounded-full px-2 py-0.5">
+                        {dateLabel}
+                      </span>
+                    </div>
                   )}
-                  <p className="text-[9px] opacity-60 mt-0.5">
-                    {new Date(m.created_at).toLocaleTimeString("ar-JO", { hour: "2-digit", minute: "2-digit" })}
-                  </p>
+                  <div className={`flex gap-2 ${mine ? "flex-row-reverse" : ""} ${m._pending ? "opacity-70" : ""}`}>
+                    <Avatar className="h-7 w-7 shrink-0">
+                      <AvatarImage src={m.sender_avatar || undefined} />
+                      <AvatarFallback className="text-[10px]">
+                        {m.sender_role === "customer" ? "👤" : "🩺"}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className={`max-w-[75%] rounded-lg px-3 py-2 text-sm ${
+                      mine ? "bg-primary text-primary-foreground" : "bg-muted"
+                    }`}>
+                      <div className="flex items-center gap-1 mb-0.5">
+                        <span className="text-[10px] opacity-70 font-medium">{m.sender_display_name}</span>
+                        {isPrivate && <Badge variant="outline" className="text-[9px] px-1 py-0 h-3.5">خاص</Badge>}
+                      </div>
+                      <p className="break-words whitespace-pre-wrap">{m.body}</p>
+                      {m.quoted_price && (
+                        <Badge variant="outline" className={`mt-1 text-[10px] gap-0.5 ${mine ? "bg-primary-foreground/20 border-primary-foreground/30" : ""}`}>
+                          <DollarSign className="h-2.5 w-2.5" />السعر المقترح: {m.quoted_price} JOD
+                        </Badge>
+                      )}
+                      <div className={`flex items-center gap-1 mt-1 ${mine ? "justify-start flex-row-reverse" : "justify-start"}`}>
+                        <span className="text-[9px] opacity-60">{formatTime(m.created_at)}</span>
+                        {mine && (
+                          <span
+                            className="text-[10px] opacity-80 inline-flex items-center"
+                            title={
+                              status === "pending" ? "جارٍ الإرسال..."
+                              : status === "delivered" ? "تم التسليم"
+                              : "تم الإرسال"
+                            }
+                            aria-label={
+                              status === "pending" ? "جارٍ الإرسال"
+                              : status === "delivered" ? "تم التسليم"
+                              : "تم الإرسال"
+                            }
+                          >
+                            {status === "pending" && <Clock className="h-3 w-3" />}
+                            {status === "sent" && <Check className="h-3 w-3" />}
+                            {status === "delivered" && <CheckCheck className="h-3 w-3" />}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            });
+          })()}
         </div>
       </ScrollArea>
 
