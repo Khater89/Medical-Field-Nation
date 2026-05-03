@@ -683,6 +683,58 @@ const ProviderRegister = () => {
           className={cn("h-11", city.trim().length > 1 && "border-success focus-visible:ring-success/30")}
         />
       </div>
+
+      {/* Provider Type — Standard vs Emergency */}
+      <div className="space-y-2 pt-2">
+        <label className="text-sm font-medium block">
+          {isRTL ? "نوع المزوّد" : "Provider type"} <span className="text-destructive">*</span>
+        </label>
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={() => setProviderType("standard")}
+            className={cn(
+              "rounded-xl border-2 p-3 text-start transition-all",
+              providerType === "standard"
+                ? "border-primary bg-primary/5 shadow-sm"
+                : "border-border hover:border-primary/40"
+            )}
+          >
+            <div className="flex items-center gap-2 font-bold text-sm">
+              <UserPlus className="h-4 w-4 text-primary" />
+              {isRTL ? "مزوّد عادي" : "Standard"}
+            </div>
+            <p className="text-[11px] text-muted-foreground mt-1">
+              {isRTL ? "حجوزات مجدولة بأوقات محددة" : "Scheduled bookings"}
+            </p>
+          </button>
+          <button
+            type="button"
+            onClick={() => setProviderType("emergency")}
+            className={cn(
+              "rounded-xl border-2 p-3 text-start transition-all relative overflow-hidden",
+              providerType === "emergency"
+                ? "border-destructive bg-destructive/5 shadow-sm"
+                : "border-border hover:border-destructive/40"
+            )}
+          >
+            <div className="flex items-center gap-2 font-bold text-sm">
+              <span className="h-2 w-2 rounded-full bg-destructive animate-pulse" />
+              {isRTL ? "مزوّد طوارئ" : "Emergency"}
+            </div>
+            <p className="text-[11px] text-muted-foreground mt-1">
+              {isRTL ? "استجابة فورية 24/7 — شروط خاصة" : "24/7 rapid response"}
+            </p>
+          </button>
+        </div>
+        {providerType === "emergency" && (
+          <p className="text-[11px] text-destructive bg-destructive/5 border border-destructive/20 rounded p-2">
+            {isRTL
+              ? "⚠️ مزوّد الطوارئ ملزم بسرعة الاستجابة (≤15 دقيقة) والتواجد على مدار الساعة."
+              : "⚠️ Emergency providers must respond within 15 minutes and remain available 24/7."}
+          </p>
+        )}
+      </div>
     </motion.div>
   );
 
