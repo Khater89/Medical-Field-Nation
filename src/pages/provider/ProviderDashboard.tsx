@@ -1450,7 +1450,34 @@ const ProviderDashboard = () => {
 
           {/* ═══ Profile Tab ═══ */}
           <TabsContent value="profile" className="space-y-4">
-            {/* Avatar & Personal Info */}
+            {/* Edit Mode Toggle Bar */}
+            <Card className={editMode ? "border-primary/40 bg-primary/5" : ""}>
+              <CardContent className="py-3 px-4 flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  {editMode ? (
+                    <>
+                      <Edit2 className="h-4 w-4 text-primary" />
+                      <span className="text-sm font-medium">وضع التعديل مفعّل — قم بإجراء تغييراتك ثم اضغط حفظ</span>
+                    </>
+                  ) : (
+                    <>
+                      <Lock className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm text-muted-foreground">الحقول للقراءة فقط — اضغط "تعديل" لتغيير بياناتك</span>
+                    </>
+                  )}
+                </div>
+                {!editMode ? (
+                  <Button size="sm" variant="default" className="gap-1.5 shrink-0" onClick={() => setEditMode(true)}>
+                    <Edit2 className="h-3.5 w-3.5" /> تعديل الملف الشخصي
+                  </Button>
+                ) : (
+                  <Button size="sm" variant="ghost" className="gap-1.5 shrink-0" onClick={cancelEdit} disabled={profileSaving}>
+                    <X className="h-3.5 w-3.5" /> إلغاء
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
+
             <Card>
               <CardContent className="py-6 space-y-5">
                 {/* Avatar Upload */}
