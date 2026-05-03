@@ -93,6 +93,9 @@ const TrackOrderPage = () => {
   const [result, setResult] = useState<TrackingResult | null>(null);
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [cancelling, setCancelling] = useState(false);
+  const [quotes, setQuotes] = useState<any[]>([]);
+  const [acceptingQuote, setAcceptingQuote] = useState<string | null>(null);
+  const [bookingDbId, setBookingDbId] = useState<string | null>(null);
 
   // Rating state
   const [ratingValue, setRatingValue] = useState(0);
