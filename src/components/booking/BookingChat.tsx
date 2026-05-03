@@ -212,39 +212,86 @@ export default function BookingChat({
               لا توجد رسائل بعد — ابدأ المحادثة
             </div>
           )}
-          {messages.map((m) => {
-            const mine = m.sender_id === viewerId;
-            const isPrivate = m.target_provider_id != null;
-            const hidden = isPrivate && viewerRole === "provider" && m.target_provider_id !== viewerId && !mine;
-            if (hidden) return null;
-            return (
-              <div key={m.id} className={`flex gap-2 ${mine ? "flex-row-reverse" : ""}`}>
-                <Avatar className="h-7 w-7 shrink-0">
-                  <AvatarImage src={m.sender_avatar || undefined} />
-                  <AvatarFallback className="text-[10px]">
-                    {m.sender_role === "customer" ? "👤" : "🩺"}
-                  </AvatarFallback>
-                </Avatar>
-                <div className={`max-w-[75%] rounded-lg px-3 py-2 text-sm ${
-                  mine ? "bg-primary text-primary-foreground" : "bg-muted"
-                }`}>
-                  <div className="flex items-center gap-1 mb-0.5">
-                    <span className="text-[10px] opacity-70 font-medium">{m.sender_display_name}</span>
-                    {isPrivate && <Badge variant="outline" className="text-[9px] px-1 py-0 h-3.5">خاص</Badge>}
-                  </div>
-                  <p className="break-words whitespace-pre-wrap">{m.body}</p>
-                  {m.quoted_price && (
-                    <Badge variant="outline" className={`mt-1 text-[10px] gap-0.5 ${mine ? "bg-primary-foreground/20 border-primary-foreground/30" : ""}`}>
-                      <DollarSign className="h-2.5 w-2.5" />السعر المقترح: {m.quoted_price} JOD
-                    </Badge>
+          {(() => {
+            // Compute timestamp of latest message from any *other* participant —
+            // used to mark our own earlier messages as "delivered".
+            const latestOtherTs = messages
+              .filter((x) => x.sender_id !== viewerId && !x._pending)
+              .reduce<number>((acc, x) => Math.max(acc, new Date(x.created_at).getTime()), 0);
+
+            let lastDateLabel = "";
+            return messages.map((m) => {
+              const mine = m.sender_id === viewerId;
+              const isPrivate = m.target_provider_id != null;
+              const hidden = isPrivate && viewerRole === "provider" && m.target_provider_id !== viewerId && !mine;
+              if (hidden) return null;
+
+              const dateLabel = formatDateLabel(m.created_at);
+              const showDate = dateLabel !== lastDateLabel;
+              lastDateLabel = dateLabel;
+
+              // Status: pending (clock) → sent (single check) → delivered (double check)
+              let status: "pending" | "sent" | "delivered" = "sent";
+              if (m._pending) status = "pending";
+              else if (mine && new Date(m.created_at).getTime() < latestOtherTs) status = "delivered";
+
+              return (
+                <div key={m.id}>
+                  {showDate && (
+                    <div className="flex justify-center my-2">
+                      <span className="text-[10px] bg-muted text-muted-foreground rounded-full px-2 py-0.5">
+                        {dateLabel}
+                      </span>
+                    </div>
                   )}
-                  <p className="text-[9px] opacity-60 mt-0.5">
-                    {new Date(m.created_at).toLocaleTimeString("ar-JO", { hour: "2-digit", minute: "2-digit" })}
-                  </p>
+                  <div className={`flex gap-2 ${mine ? "flex-row-reverse" : ""} ${m._pending ? "opacity-70" : ""}`}>
+                    <Avatar className="h-7 w-7 shrink-0">
+                      <AvatarImage src={m.sender_avatar || undefined} />
+                      <AvatarFallback className="text-[10px]">
+                        {m.sender_role === "customer" ? "👤" : "🩺"}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className={`max-w-[75%] rounded-lg px-3 py-2 text-sm ${
+                      mine ? "bg-primary text-primary-foreground" : "bg-muted"
+                    }`}>
+                      <div className="flex items-center gap-1 mb-0.5">
+                        <span className="text-[10px] opacity-70 font-medium">{m.sender_display_name}</span>
+                        {isPrivate && <Badge variant="outline" className="text-[9px] px-1 py-0 h-3.5">خاص</Badge>}
+                      </div>
+                      <p className="break-words whitespace-pre-wrap">{m.body}</p>
+                      {m.quoted_price && (
+                        <Badge variant="outline" className={`mt-1 text-[10px] gap-0.5 ${mine ? "bg-primary-foreground/20 border-primary-foreground/30" : ""}`}>
+                          <DollarSign className="h-2.5 w-2.5" />السعر المقترح: {m.quoted_price} JOD
+                        </Badge>
+                      )}
+                      <div className={`flex items-center gap-1 mt-1 ${mine ? "justify-start flex-row-reverse" : "justify-start"}`}>
+                        <span className="text-[9px] opacity-60">{formatTime(m.created_at)}</span>
+                        {mine && (
+                          <span
+                            className="text-[10px] opacity-80 inline-flex items-center"
+                            title={
+                              status === "pending" ? "جارٍ الإرسال..."
+                              : status === "delivered" ? "تم التسليم"
+                              : "تم الإرسال"
+                            }
+                            aria-label={
+                              status === "pending" ? "جارٍ الإرسال"
+                              : status === "delivered" ? "تم التسليم"
+                              : "تم الإرسال"
+                            }
+                          >
+                            {status === "pending" && <Clock className="h-3 w-3" />}
+                            {status === "sent" && <Check className="h-3 w-3" />}
+                            {status === "delivered" && <CheckCheck className="h-3 w-3" />}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            });
+          })()}
         </div>
       </ScrollArea>
 
