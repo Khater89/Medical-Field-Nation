@@ -14,9 +14,12 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
+} from "@/components/ui/dialog";
+import {
   Search, Loader2, CheckCircle, Circle, Clock,
   MapPin, CalendarDays, Landmark, Copy, AlertTriangle,
-  Star, Briefcase, User, Phone, MessageCircle,
+  Star, Briefcase, User, Phone, MessageCircle, Languages, Wrench, BadgeCheck,
 } from "lucide-react";
 import ApplePayButton from "@/components/booking/ApplePayButton";
 
@@ -39,12 +42,19 @@ const STATUS_LABELS: Record<string, string> = {
 const CANCELLABLE_STATUSES = ["NEW", "CONFIRMED", "ASSIGNED", "ACCEPTED"];
 
 interface ProviderInfo {
+  provider_id?: string;
   full_name: string | null;
   avatar_url: string | null;
   role_type: string | null;
   specialties: string[] | null;
   experience_years: number | null;
   city: string | null;
+  phone: string | null;
+  bio: string | null;
+  languages: string[] | null;
+  tools: string[] | null;
+  provider_number: number | null;
+  completed_count: number;
   avg_rating: string | null;
   total_ratings: number;
 }
@@ -107,6 +117,7 @@ const TrackOrderPage = () => {
   const [selectedPayment, setSelectedPayment] = useState<string | null>(null);
   const [savingPayment, setSavingPayment] = useState(false);
   const [paymentSaved, setPaymentSaved] = useState(false);
+  const [providerDialogOpen, setProviderDialogOpen] = useState(false);
 
   const handleTrack = async () => {
     if (!bookingNumber.trim() || !phone.trim()) {
