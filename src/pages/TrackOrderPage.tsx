@@ -385,6 +385,23 @@ const TrackOrderPage = () => {
                   </div>
                 )}
 
+                {/* Booking Chat — visible to logged-in customer */}
+                {user && booking.id && !isCancelled && (
+                  <div className="border-t pt-3 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-bold">المحادثة والعروض</p>
+                      <span className="text-[10px] text-muted-foreground">
+                        تواصل مع المزودين المهتمين بطلبك
+                      </span>
+                    </div>
+                    <BookingChat
+                      bookingId={booking.id}
+                      viewerRole="customer"
+                      viewerId={user.id}
+                    />
+                  </div>
+                )}
+
                 {/* Timeline */}
                 <div className="relative space-y-0 pr-4 pt-2">
                   {steps.map((step, i) => (
