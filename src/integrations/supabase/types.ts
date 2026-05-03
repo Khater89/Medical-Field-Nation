@@ -84,6 +84,42 @@ export type Database = {
           },
         ]
       }
+      booking_messages: {
+        Row: {
+          body: string
+          booking_id: string
+          created_at: string
+          id: string
+          quoted_price: number | null
+          sender_display_name: string | null
+          sender_id: string
+          sender_role: string
+          target_provider_id: string | null
+        }
+        Insert: {
+          body: string
+          booking_id: string
+          created_at?: string
+          id?: string
+          quoted_price?: number | null
+          sender_display_name?: string | null
+          sender_id: string
+          sender_role: string
+          target_provider_id?: string | null
+        }
+        Update: {
+          body?: string
+          booking_id?: string
+          created_at?: string
+          id?: string
+          quoted_price?: number | null
+          sender_display_name?: string | null
+          sender_id?: string
+          sender_role?: string
+          target_provider_id?: string | null
+        }
+        Relationships: []
+      }
       booking_outbox: {
         Row: {
           attempts: number
@@ -180,6 +216,8 @@ export type Database = {
           rejected_at: string | null
           rejected_by: string | null
           remaining_cash_amount: number | null
+          reserved_at: string | null
+          reserved_provider_id: string | null
           reveal_contact_allowed: boolean | null
           scheduled_at: string
           service_id: string
@@ -240,6 +278,8 @@ export type Database = {
           rejected_at?: string | null
           rejected_by?: string | null
           remaining_cash_amount?: number | null
+          reserved_at?: string | null
+          reserved_provider_id?: string | null
           reveal_contact_allowed?: boolean | null
           scheduled_at: string
           service_id: string
@@ -300,6 +340,8 @@ export type Database = {
           rejected_at?: string | null
           rejected_by?: string | null
           remaining_cash_amount?: number | null
+          reserved_at?: string | null
+          reserved_provider_id?: string | null
           reveal_contact_allowed?: boolean | null
           scheduled_at?: string
           service_id?: string
@@ -812,6 +854,7 @@ export type Database = {
         Args: never
         Returns: {
           area_public: string
+          base_price: number
           booking_number: string
           city: string
           created_at: string
@@ -820,8 +863,25 @@ export type Database = {
           is_emergency: boolean
           notes: string
           payment_method: string
+          quote_count: number
           scheduled_at: string
           service_id: string
+          service_name: string
+          viewer_count: number
+        }[]
+      }
+      booking_quotes_public: {
+        Args: { _booking_id: string }
+        Returns: {
+          created_at: string
+          id: string
+          is_mine: boolean
+          note: string
+          provider_avatar: string
+          provider_id: string
+          provider_name: string
+          provider_role: string
+          quoted_price: number
         }[]
       }
       calc_escalating_price: {
@@ -901,7 +961,25 @@ export type Database = {
       is_cs: { Args: never; Returns: boolean }
       is_customer: { Args: never; Returns: boolean }
       is_provider: { Args: never; Returns: boolean }
+      list_booking_messages: {
+        Args: { _booking_id: string }
+        Returns: {
+          body: string
+          created_at: string
+          id: string
+          quoted_price: number
+          sender_avatar: string
+          sender_display_name: string
+          sender_id: string
+          sender_role: string
+          target_provider_id: string
+        }[]
+      }
       mfn_is_staff: { Args: never; Returns: boolean }
+      provider_confirm_agreement: {
+        Args: { _booking_id: string }
+        Returns: Json
+      }
       provider_orders_safe: {
         Args: never
         Returns: {
@@ -919,6 +997,7 @@ export type Database = {
           status: string
         }[]
       }
+      provider_reserve_booking: { Args: { _booking_id: string }; Returns: Json }
       provider_self_assign: { Args: { _booking_id: string }; Returns: Json }
       remove_user_role: {
         Args: {
