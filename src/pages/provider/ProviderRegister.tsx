@@ -279,6 +279,7 @@ const ProviderRegister = () => {
           address_text: addressText.trim() || null,
           radius_km: radiusKm ? parseInt(radiusKm) : 20,
           specialties: selectedSpecialties.length > 0 ? selectedSpecialties : null,
+          provider_type: providerType,
           provider_status: "pending",
           academic_cert_url: academicCertUrl,
           experience_cert_url: experienceCertUrl,
