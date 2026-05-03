@@ -32,6 +32,7 @@ import {
 } from "lucide-react";
 import mfnLogo from "@/assets/mfn-logo.png";
 import AvailableBookingsTab from "@/components/provider/AvailableBookingsTab";
+import ProviderMessagesTab from "@/components/provider/ProviderMessagesTab";
 import LanguageToggle from "@/components/booking/LanguageToggle";
 
 /* ── Types ── */
@@ -1005,7 +1006,7 @@ const ProviderDashboard = () => {
         )}
 
         <Tabs defaultValue="orders" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="available" className="gap-1 text-[10px] sm:text-xs relative">
               <DollarSign className="h-3.5 w-3.5" /> متاحة
               {availableCount > 0 && (
@@ -1016,6 +1017,9 @@ const ProviderDashboard = () => {
             </TabsTrigger>
             <TabsTrigger value="orders" className="gap-1 text-[10px] sm:text-xs">
               <ClipboardList className="h-3.5 w-3.5" /> طلباتي ({orders.length})
+            </TabsTrigger>
+            <TabsTrigger value="messages" className="gap-1 text-[10px] sm:text-xs">
+              <MessageCircle className="h-3.5 w-3.5" /> رسائل
             </TabsTrigger>
             <TabsTrigger value="notifications" className="gap-1 text-[10px] sm:text-xs relative">
               <AlertTriangle className="h-3.5 w-3.5" /> تنبيهات
@@ -1036,6 +1040,11 @@ const ProviderDashboard = () => {
           {/* ═══ Available Bookings Tab ═══ */}
           <TabsContent value="available" className="space-y-3">
             <AvailableBookingsTab serviceNames={serviceNames} />
+          </TabsContent>
+
+          {/* ═══ Messages Tab ═══ */}
+          <TabsContent value="messages" className="space-y-3">
+            {user?.id && <ProviderMessagesTab providerId={user.id} serviceNames={serviceNames} />}
           </TabsContent>
 
           {/* ═══ Notifications Tab ═══ */}
