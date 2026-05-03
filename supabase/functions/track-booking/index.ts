@@ -101,7 +101,7 @@ Deno.serve(async (req) => {
     if (booking.assigned_provider_id && ["ASSIGNED", "ACCEPTED", "IN_PROGRESS", "COMPLETED"].includes(booking.status)) {
       const { data: provider } = await supabase
         .from("profiles")
-        .select("full_name, avatar_url, role_type, specialties, experience_years, city")
+        .select("full_name, avatar_url, role_type, specialties, experience_years, city, phone, bio, languages, tools, provider_number")
         .eq("user_id", booking.assigned_provider_id)
         .single();
 
@@ -116,13 +116,27 @@ Deno.serve(async (req) => {
           ? (ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length).toFixed(1)
           : null;
 
+        // Count completed bookings for this provider
+        const { count: completedCount } = await supabase
+          .from("bookings")
+          .select("id", { count: "exact", head: true })
+          .eq("assigned_provider_id", booking.assigned_provider_id)
+          .eq("status", "COMPLETED");
+
         provider_info = {
+          provider_id: booking.assigned_provider_id,
           full_name: provider.full_name,
           avatar_url: provider.avatar_url,
           role_type: provider.role_type,
           specialties: provider.specialties,
           experience_years: provider.experience_years,
           city: provider.city,
+          phone: provider.phone,
+          bio: provider.bio,
+          languages: provider.languages,
+          tools: provider.tools,
+          provider_number: provider.provider_number,
+          completed_count: completedCount || 0,
           avg_rating: avgRating,
           total_ratings: ratings?.length || 0,
         };
