@@ -1581,14 +1581,14 @@ const ProviderDashboard = () => {
                       </a>
                     )}
                   </div>
-                  <Switch checked={availableNow} onCheckedChange={setAvailableNow} />
+                  <Switch checked={availableNow} onCheckedChange={setAvailableNow} disabled={!editMode} />
                 </div>
                 <div>
                   <label className="text-sm font-medium">{t("provider.profile.radius")} ({t("provider.details.km")})</label>
                   <Input
                     type="number" min={1} max={100} value={radiusKm}
                     onChange={(e) => setRadiusKm(Number(e.target.value))}
-                    className="w-24 mt-1" dir="ltr"
+                    className="w-24 mt-1" dir="ltr" disabled={!editMode}
                   />
                 </div>
                 <div>
@@ -1596,7 +1596,7 @@ const ProviderDashboard = () => {
                   <Input
                     value={addressText}
                     onChange={(e) => setAddressText(e.target.value)}
-                    placeholder={t("provider.profile.address_placeholder")} className="mt-1"
+                    placeholder={t("provider.profile.address_placeholder")} className="mt-1" disabled={!editMode}
                   />
                 </div>
               </CardContent>
