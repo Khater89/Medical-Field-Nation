@@ -167,6 +167,7 @@ export type Database = {
           deposit_status: string | null
           id: string
           internal_note: string | null
+          is_emergency: boolean
           last_provider_reminder_at: string | null
           notes: string | null
           otp_code: string | null
@@ -226,6 +227,7 @@ export type Database = {
           deposit_status?: string | null
           id?: string
           internal_note?: string | null
+          is_emergency?: boolean
           last_provider_reminder_at?: string | null
           notes?: string | null
           otp_code?: string | null
@@ -285,6 +287,7 @@ export type Database = {
           deposit_status?: string | null
           id?: string
           internal_note?: string | null
+          is_emergency?: boolean
           last_provider_reminder_at?: string | null
           notes?: string | null
           otp_code?: string | null
@@ -448,6 +451,7 @@ export type Database = {
           provider_agreement_version: string | null
           provider_number: number | null
           provider_status: string
+          provider_type: string
           radius_km: number | null
           role_type: string | null
           schedule_json: Json | null
@@ -481,6 +485,7 @@ export type Database = {
           provider_agreement_version?: string | null
           provider_number?: number | null
           provider_status?: string
+          provider_type?: string
           radius_km?: number | null
           role_type?: string | null
           schedule_json?: Json | null
@@ -514,6 +519,7 @@ export type Database = {
           provider_agreement_version?: string | null
           provider_number?: number | null
           provider_status?: string
+          provider_type?: string
           radius_km?: number | null
           role_type?: string | null
           schedule_json?: Json | null
@@ -809,7 +815,9 @@ export type Database = {
           booking_number: string
           city: string
           created_at: string
+          distance_km: number
           id: string
+          is_emergency: boolean
           notes: string
           payment_method: string
           scheduled_at: string
@@ -819,6 +827,20 @@ export type Database = {
       calc_escalating_price: {
         Args: { base_price: number; duration_minutes: number }
         Returns: number
+      }
+      customer_accept_quote: { Args: { _quote_id: string }; Returns: Json }
+      customer_quotes_for_booking: {
+        Args: { _booking_id: string }
+        Returns: {
+          created_at: string
+          id: string
+          note: string
+          provider_completed_count: number
+          provider_id: string
+          provider_name: string
+          provider_rating: number
+          quoted_price: number
+        }[]
       }
       find_nearest_providers: {
         Args: { _lat: number; _limit?: number; _lng: number }
@@ -897,6 +919,7 @@ export type Database = {
           status: string
         }[]
       }
+      provider_self_assign: { Args: { _booking_id: string }; Returns: Json }
       remove_user_role: {
         Args: {
           old_role: Database["public"]["Enums"]["app_role"]
