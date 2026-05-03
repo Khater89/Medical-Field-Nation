@@ -385,20 +385,26 @@ const TrackOrderPage = () => {
                   </div>
                 )}
 
-                {/* Booking Chat — visible to logged-in customer */}
-                {user && booking.id && !isCancelled && (
+                {/* Booking Chat — visible on the tracking page */}
+                {booking.id && !isCancelled && (
                   <div className="border-t pt-3 space-y-2">
                     <div className="flex items-center gap-2">
                       <p className="text-sm font-bold">المحادثة والعروض</p>
                       <span className="text-[10px] text-muted-foreground">
-                        تواصل مع المزودين المهتمين بطلبك
+                        تواصل مع المزودين المهتمين بطلبك — مع أوقات الإرسال وحالة التسليم
                       </span>
                     </div>
-                    <BookingChat
-                      bookingId={booking.id}
-                      viewerRole="customer"
-                      viewerId={user.id}
-                    />
+                    {user ? (
+                      <BookingChat
+                        bookingId={booking.id}
+                        viewerRole="customer"
+                        viewerId={user.id}
+                      />
+                    ) : (
+                      <div className="border rounded-lg bg-muted/30 p-4 text-center text-xs text-muted-foreground">
+                        سجّل الدخول لعرض الرسائل والعروض المرتبطة بطلبك مع طوابع الوقت وحالة التسليم.
+                      </div>
+                    )}
                   </div>
                 )}
 
