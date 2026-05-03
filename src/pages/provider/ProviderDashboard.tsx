@@ -10,7 +10,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+
+const ROLE_TYPE_OPTIONS = [
+  { value: "doctor", labelKey: "role_type.doctor" },
+  { value: "nurse", labelKey: "role_type.nurse" },
+  { value: "physiotherapist", labelKey: "role_type.physiotherapist" },
+  { value: "caregiver", labelKey: "role_type.caregiver" },
+];
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -318,6 +326,8 @@ const ProviderDashboard = () => {
   const [editPhone, setEditPhone] = useState("");
   const [editCity, setEditCity] = useState("");
   const [editBio, setEditBio] = useState("");
+  const [editRoleType, setEditRoleType] = useState<string>("");
+  const [editExperienceYears, setEditExperienceYears] = useState<number>(0);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [avatarUploading, setAvatarUploading] = useState(false);
 
@@ -335,6 +345,8 @@ const ProviderDashboard = () => {
       setEditPhone(profile.phone || "");
       setEditCity(profile.city || "");
       setEditBio((profile as any).bio || "");
+      setEditRoleType((profile as any).role_type || "");
+      setEditExperienceYears((profile as any).experience_years || 0);
       setAvatarUrl((profile as any).avatar_url || null);
     }
   }, [profile]);
