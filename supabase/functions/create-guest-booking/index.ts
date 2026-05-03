@@ -26,6 +26,7 @@ Deno.serve(async (req) => {
       time_slot,
       notes,
       payment_method,
+      is_emergency,
     } = body;
 
     // ── Validate required fields ──
@@ -111,6 +112,7 @@ Deno.serve(async (req) => {
       subtotal,
       payment_method: finalPaymentMethod,
       customer_user_id,
+      is_emergency: is_emergency === true,
     };
 
     const { data, error } = await supabaseAdmin

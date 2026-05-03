@@ -54,6 +54,7 @@ const ProviderRegister = () => {
   const [addressText, setAddressText] = useState("");
   const [radiusKm, setRadiusKm] = useState("20");
   const [selectedSpecialties, setSelectedSpecialties] = useState<string[]>([]);
+  const [providerType, setProviderType] = useState<"standard" | "emergency">("standard");
   const [saving, setSaving] = useState(false);
   const [resendingVerification, setResendingVerification] = useState(false);
   const [mode, setMode] = useState<"register" | "login">("register");
@@ -91,6 +92,7 @@ const ProviderRegister = () => {
       setAddressText(profile.address_text || "");
       setRadiusKm(profile.radius_km?.toString() || "20");
       setSelectedSpecialties(profile.specialties || []);
+      setProviderType(((profile as any).provider_type as "standard" | "emergency") || "standard");
       setAcademicCertUrl((profile as any).academic_cert_url || null);
       setExperienceCertUrl((profile as any).experience_cert_url || null);
     }
@@ -277,6 +279,7 @@ const ProviderRegister = () => {
           address_text: addressText.trim() || null,
           radius_km: radiusKm ? parseInt(radiusKm) : 20,
           specialties: selectedSpecialties.length > 0 ? selectedSpecialties : null,
+          provider_type: providerType,
           provider_status: "pending",
           academic_cert_url: academicCertUrl,
           experience_cert_url: experienceCertUrl,
@@ -340,6 +343,7 @@ const ProviderRegister = () => {
           address_text: addressText.trim() || null,
           radius_km: radiusKm ? parseInt(radiusKm) : 20,
           specialties: selectedSpecialties.length > 0 ? selectedSpecialties : null,
+          provider_type: providerType,
           pending_provider_application: true,
         },
       },
@@ -375,6 +379,7 @@ const ProviderRegister = () => {
           address_text: addressText.trim() || null,
           radius_km: radiusKm ? parseInt(radiusKm) : 20,
           specialties: selectedSpecialties.length > 0 ? selectedSpecialties : null,
+          provider_type: providerType,
           provider_status: "pending",
           academic_cert_url: certs.academic,
           experience_cert_url: certs.experience,
@@ -406,6 +411,7 @@ const ProviderRegister = () => {
         address_text: addressText.trim() || null,
         radius_km: radiusKm ? parseInt(radiusKm) : 20,
         specialties: selectedSpecialties.length > 0 ? selectedSpecialties : null,
+        provider_type: providerType,
         provider_status: "pending",
       };
 
@@ -676,6 +682,58 @@ const ProviderRegister = () => {
           placeholder={t("register.city.placeholder")}
           className={cn("h-11", city.trim().length > 1 && "border-success focus-visible:ring-success/30")}
         />
+      </div>
+
+      {/* Provider Type — Standard vs Emergency */}
+      <div className="space-y-2 pt-2">
+        <label className="text-sm font-medium block">
+          {isRTL ? "نوع المزوّد" : "Provider type"} <span className="text-destructive">*</span>
+        </label>
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={() => setProviderType("standard")}
+            className={cn(
+              "rounded-xl border-2 p-3 text-start transition-all",
+              providerType === "standard"
+                ? "border-primary bg-primary/5 shadow-sm"
+                : "border-border hover:border-primary/40"
+            )}
+          >
+            <div className="flex items-center gap-2 font-bold text-sm">
+              <UserPlus className="h-4 w-4 text-primary" />
+              {isRTL ? "مزوّد عادي" : "Standard"}
+            </div>
+            <p className="text-[11px] text-muted-foreground mt-1">
+              {isRTL ? "حجوزات مجدولة بأوقات محددة" : "Scheduled bookings"}
+            </p>
+          </button>
+          <button
+            type="button"
+            onClick={() => setProviderType("emergency")}
+            className={cn(
+              "rounded-xl border-2 p-3 text-start transition-all relative overflow-hidden",
+              providerType === "emergency"
+                ? "border-destructive bg-destructive/5 shadow-sm"
+                : "border-border hover:border-destructive/40"
+            )}
+          >
+            <div className="flex items-center gap-2 font-bold text-sm">
+              <span className="h-2 w-2 rounded-full bg-destructive animate-pulse" />
+              {isRTL ? "مزوّد طوارئ" : "Emergency"}
+            </div>
+            <p className="text-[11px] text-muted-foreground mt-1">
+              {isRTL ? "استجابة فورية 24/7 — شروط خاصة" : "24/7 rapid response"}
+            </p>
+          </button>
+        </div>
+        {providerType === "emergency" && (
+          <p className="text-[11px] text-destructive bg-destructive/5 border border-destructive/20 rounded p-2">
+            {isRTL
+              ? "⚠️ مزوّد الطوارئ ملزم بسرعة الاستجابة (≤15 دقيقة) والتواجد على مدار الساعة."
+              : "⚠️ Emergency providers must respond within 15 minutes and remain available 24/7."}
+          </p>
+        )}
       </div>
     </motion.div>
   );
