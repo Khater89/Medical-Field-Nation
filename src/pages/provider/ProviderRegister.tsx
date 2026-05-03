@@ -54,6 +54,7 @@ const ProviderRegister = () => {
   const [addressText, setAddressText] = useState("");
   const [radiusKm, setRadiusKm] = useState("20");
   const [selectedSpecialties, setSelectedSpecialties] = useState<string[]>([]);
+  const [providerType, setProviderType] = useState<"standard" | "emergency">("standard");
   const [saving, setSaving] = useState(false);
   const [resendingVerification, setResendingVerification] = useState(false);
   const [mode, setMode] = useState<"register" | "login">("register");
