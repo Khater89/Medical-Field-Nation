@@ -10,7 +10,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+
+const ROLE_TYPE_OPTIONS = [
+  { value: "doctor", labelKey: "role_type.doctor" },
+  { value: "nurse", labelKey: "role_type.nurse" },
+  { value: "physiotherapist", labelKey: "role_type.physiotherapist" },
+  { value: "caregiver", labelKey: "role_type.caregiver" },
+];
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -318,6 +326,8 @@ const ProviderDashboard = () => {
   const [editPhone, setEditPhone] = useState("");
   const [editCity, setEditCity] = useState("");
   const [editBio, setEditBio] = useState("");
+  const [editRoleType, setEditRoleType] = useState<string>("");
+  const [editExperienceYears, setEditExperienceYears] = useState<number>(0);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [avatarUploading, setAvatarUploading] = useState(false);
 
@@ -335,6 +345,8 @@ const ProviderDashboard = () => {
       setEditPhone(profile.phone || "");
       setEditCity(profile.city || "");
       setEditBio((profile as any).bio || "");
+      setEditRoleType((profile as any).role_type || "");
+      setEditExperienceYears((profile as any).experience_years || 0);
       setAvatarUrl((profile as any).avatar_url || null);
     }
   }, [profile]);
@@ -784,6 +796,8 @@ const ProviderDashboard = () => {
       phone: editPhone.trim(),
       city: editCity.trim(),
       bio: editBio.trim() || null,
+      role_type: editRoleType || null,
+      experience_years: editExperienceYears || 0,
       available_now: availableNow,
       specialties: specialties.length > 0 ? specialties : null,
       tools: tools.length > 0 ? tools : null,
@@ -1473,14 +1487,33 @@ const ProviderDashboard = () => {
                       className="mt-1"
                     />
                   </div>
-                  <div className="grid grid-cols-2 gap-3 text-sm">
-                    <div className="bg-muted/50 rounded-lg p-2.5">
-                      <span className="text-xs text-muted-foreground">{t("admin.providers.col.type")}</span>
-                      <p className="font-medium">{profile?.role_type ? t(`role_type.${profile.role_type}`) : "—"}</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground">{t("admin.providers.col.type")}</label>
+                      <Select value={editRoleType} onValueChange={setEditRoleType}>
+                        <SelectTrigger className="mt-1">
+                          <SelectValue placeholder="—" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {ROLE_TYPE_OPTIONS.map((rt) => (
+                            <SelectItem key={rt.value} value={rt.value}>{t(rt.labelKey)}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
-                    <div className="bg-muted/50 rounded-lg p-2.5">
-                      <span className="text-xs text-muted-foreground">{t("admin.providers.col.experience")}</span>
-                      <p className="font-medium">{profile?.experience_years || 0} {t("admin.providers.years")}</p>
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground">
+                        {t("admin.providers.col.experience")} ({t("admin.providers.years")})
+                      </label>
+                      <Input
+                        type="number"
+                        min={0}
+                        max={70}
+                        value={editExperienceYears}
+                        onChange={(e) => setEditExperienceYears(Math.max(0, parseInt(e.target.value) || 0))}
+                        className="mt-1"
+                        dir="ltr"
+                      />
                     </div>
                   </div>
                 </div>
