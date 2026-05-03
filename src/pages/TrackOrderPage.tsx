@@ -705,6 +705,148 @@ const TrackOrderPage = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Provider Full Details Dialog */}
+      <Dialog open={providerDialogOpen} onOpenChange={setProviderDialogOpen}>
+        <DialogContent dir="rtl" className="max-w-md max-h-[85vh] overflow-y-auto">
+          {providerInfo && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="text-base">الملف الكامل لمقدم الخدمة</DialogTitle>
+                <DialogDescription className="text-xs">
+                  معلومات تفصيلية عن مقدم الخدمة المعيّن لطلبك
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="space-y-4 pt-2">
+                {/* Header */}
+                <div className="flex items-center gap-3">
+                  <Avatar className="h-16 w-16 border-2 border-primary/30">
+                    <AvatarImage src={providerInfo.avatar_url || undefined} />
+                    <AvatarFallback className="bg-primary/10 text-primary">
+                      <User className="h-7 w-7" />
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <p className="font-bold text-base truncate">{providerInfo.full_name || "مقدم خدمة"}</p>
+                      <BadgeCheck className="h-4 w-4 text-primary shrink-0" />
+                    </div>
+                    {providerInfo.role_type && (
+                      <Badge variant="secondary" className="mt-1 text-[10px]">
+                        {ROLE_LABELS[providerInfo.role_type] || providerInfo.role_type}
+                      </Badge>
+                    )}
+                    {providerInfo.provider_number != null && (
+                      <p className="text-[10px] text-muted-foreground mt-1" dir="ltr">
+                        ID #{providerInfo.provider_number}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Stats */}
+                <div className="grid grid-cols-3 gap-2 text-center">
+                  <div className="rounded-lg border bg-muted/30 p-2">
+                    <p className="text-base font-bold text-primary">
+                      {providerInfo.avg_rating || "—"}
+                    </p>
+                    <p className="text-[10px] text-muted-foreground">التقييم</p>
+                  </div>
+                  <div className="rounded-lg border bg-muted/30 p-2">
+                    <p className="text-base font-bold text-primary">
+                      {providerInfo.completed_count}
+                    </p>
+                    <p className="text-[10px] text-muted-foreground">طلب مكتمل</p>
+                  </div>
+                  <div className="rounded-lg border bg-muted/30 p-2">
+                    <p className="text-base font-bold text-primary">
+                      {providerInfo.experience_years ?? "—"}
+                    </p>
+                    <p className="text-[10px] text-muted-foreground">سنوات خبرة</p>
+                  </div>
+                </div>
+
+                {/* Bio */}
+                {providerInfo.bio && (
+                  <div className="space-y-1">
+                    <p className="text-xs font-semibold text-muted-foreground">نبذة عن مقدم الخدمة</p>
+                    <p className="text-sm leading-relaxed whitespace-pre-wrap">{providerInfo.bio}</p>
+                  </div>
+                )}
+
+                {/* Specialties */}
+                {providerInfo.specialties && providerInfo.specialties.length > 0 && (
+                  <div className="space-y-1.5">
+                    <p className="text-xs font-semibold text-muted-foreground">التخصصات</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {providerInfo.specialties.map((s) => (
+                        <Badge key={s} variant="outline" className="text-[11px]">{s}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Languages */}
+                {providerInfo.languages && providerInfo.languages.length > 0 && (
+                  <div className="space-y-1.5">
+                    <p className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
+                      <Languages className="h-3 w-3" /> اللغات
+                    </p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {providerInfo.languages.map((l) => (
+                        <Badge key={l} variant="secondary" className="text-[11px]">{l}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Tools */}
+                {providerInfo.tools && providerInfo.tools.length > 0 && (
+                  <div className="space-y-1.5">
+                    <p className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
+                      <Wrench className="h-3 w-3" /> الأدوات والمعدات
+                    </p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {providerInfo.tools.map((t) => (
+                        <Badge key={t} variant="outline" className="text-[11px]">{t}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Location */}
+                {providerInfo.city && (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <MapPin className="h-4 w-4" />
+                    {providerInfo.city}
+                  </div>
+                )}
+
+                {/* Contact buttons */}
+                {providerInfo.phone && (
+                  <div className="grid grid-cols-2 gap-2 pt-2 border-t">
+                    <a
+                      href={`tel:${providerInfo.phone}`}
+                      className="flex items-center justify-center gap-2 h-11 rounded-lg bg-primary text-primary-foreground font-bold text-sm"
+                    >
+                      <Phone className="h-4 w-4" /> اتصال مباشر
+                    </a>
+                    <a
+                      href={`https://wa.me/${providerInfo.phone.replace(/[\s\-+]/g, "")}?text=${encodeURIComponent(`مرحباً، أنا صاحب الحجز رقم ${booking?.booking_number || ""}`)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-center gap-2 h-11 rounded-lg bg-[#25D366] text-white font-bold text-sm"
+                    >
+                      <MessageCircle className="h-4 w-4" /> واتساب
+                    </a>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
