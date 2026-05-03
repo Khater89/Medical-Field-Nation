@@ -161,8 +161,8 @@ export default function BookingChat({
       )}
 
       {/* Messages */}
-      <ScrollArea className="h-[300px]" ref={scrollRef as any}>
-        <div className="p-3 space-y-2">
+      <ScrollArea className="h-[300px]">
+        <div className="p-3 space-y-2" ref={scrollRef}>
           {loading && (
             <div className="flex justify-center py-6">
               <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
