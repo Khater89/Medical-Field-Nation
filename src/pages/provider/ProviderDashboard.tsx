@@ -1490,18 +1490,20 @@ const ProviderDashboard = () => {
                         <User className="h-10 w-10 text-muted-foreground" />
                       )}
                     </div>
-                    <label className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center cursor-pointer hover:bg-primary/90 transition-colors shadow-md">
-                      {avatarUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
-                      <input
-                        type="file"
-                        accept="image/png,image/jpeg,image/webp"
-                        className="hidden"
-                        onChange={handleAvatarUpload}
-                        disabled={avatarUploading}
-                      />
-                    </label>
+                    {editMode && (
+                      <label className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center cursor-pointer hover:bg-primary/90 transition-colors shadow-md">
+                        {avatarUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
+                        <input
+                          type="file"
+                          accept="image/png,image/jpeg,image/webp"
+                          className="hidden"
+                          onChange={handleAvatarUpload}
+                          disabled={avatarUploading}
+                        />
+                      </label>
+                    )}
                   </div>
-                  <p className="text-xs text-muted-foreground">اضغط لتغيير الصورة الشخصية</p>
+                  {editMode && <p className="text-xs text-muted-foreground">اضغط لتغيير الصورة الشخصية</p>}
                 </div>
 
                 {/* Editable Personal Fields */}
