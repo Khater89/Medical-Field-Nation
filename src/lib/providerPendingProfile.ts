@@ -13,6 +13,7 @@ type PendingProviderProfile = {
   address_text?: string | null;
   radius_km?: number | null;
   specialties?: string[] | null;
+  provider_type?: "standard" | "emergency" | null;
   provider_status?: string;
   academic_cert_url?: string | null;
   experience_cert_url?: string | null;
@@ -67,6 +68,7 @@ export const getPendingProviderProfileFromMetadata = (metadata: Record<string, a
     address_text: metadata.address_text ?? null,
     radius_km: metadata.radius_km ?? 20,
     specialties: Array.isArray(metadata.specialties) ? metadata.specialties : null,
+    provider_type: metadata.provider_type === "emergency" ? "emergency" : "standard",
     provider_status: "pending",
   } satisfies PendingProviderProfile;
 };
