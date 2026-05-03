@@ -1513,16 +1513,16 @@ const ProviderDashboard = () => {
                 <div className="grid gap-3">
                   <div>
                     <label className="text-xs font-medium text-muted-foreground">{t("booking.details.client_name")}</label>
-                    <Input value={editName} onChange={(e) => setEditName(e.target.value)} className="mt-1" />
+                    <Input value={editName} onChange={(e) => setEditName(e.target.value)} className="mt-1" disabled={!editMode} />
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="text-xs font-medium text-muted-foreground">{t("booking.details.client_phone")}</label>
-                      <Input value={editPhone} onChange={(e) => setEditPhone(e.target.value)} className="mt-1" dir="ltr" />
+                      <Input value={editPhone} onChange={(e) => setEditPhone(e.target.value)} className="mt-1" dir="ltr" disabled={!editMode} />
                     </div>
                     <div>
                       <label className="text-xs font-medium text-muted-foreground">{t("booking.details.client_city")}</label>
-                      <Input value={editCity} onChange={(e) => setEditCity(e.target.value)} className="mt-1" />
+                      <Input value={editCity} onChange={(e) => setEditCity(e.target.value)} className="mt-1" disabled={!editMode} />
                     </div>
                   </div>
                   <div>
