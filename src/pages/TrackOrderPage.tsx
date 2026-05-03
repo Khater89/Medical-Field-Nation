@@ -85,6 +85,7 @@ const ROLE_LABELS: Record<string, string> = {
 
 const TrackOrderPage = () => {
   const { toast } = useToast();
+  const { user } = useAuth();
   const copyText = (text: string) => {
     navigator.clipboard.writeText(text);
     toast({ title: "تم النسخ ✓" });
