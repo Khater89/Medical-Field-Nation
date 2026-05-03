@@ -330,6 +330,7 @@ const ProviderDashboard = () => {
   const [editExperienceYears, setEditExperienceYears] = useState<number>(0);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [avatarUploading, setAvatarUploading] = useState(false);
+  const [editMode, setEditMode] = useState(false);
 
   useEffect(() => {
     if (profile) {
@@ -810,8 +811,26 @@ const ProviderDashboard = () => {
       toast({ title: t("common.error"), description: error.message, variant: "destructive" });
     } else {
       await refreshUserData();
+      setEditMode(false);
       toast({ title: t("provider.dashboard.profile_saved") });
     }
+  };
+
+  const cancelEdit = () => {
+    if (profile) {
+      setEditName(profile.full_name || "");
+      setEditPhone(profile.phone || "");
+      setEditCity(profile.city || "");
+      setEditBio((profile as any).bio || "");
+      setEditRoleType((profile as any).role_type || "");
+      setEditExperienceYears((profile as any).experience_years || 0);
+      setAvailableNow(profile.available_now || false);
+      setSpecialties(profile.specialties || []);
+      setTools(profile.tools || []);
+      setRadiusKm(profile.radius_km || 20);
+      setAddressText(profile.address_text || "");
+    }
+    setEditMode(false);
   };
 
   const handleSignOut = async () => { await signOut(); navigate("/"); };
@@ -1431,7 +1450,34 @@ const ProviderDashboard = () => {
 
           {/* ═══ Profile Tab ═══ */}
           <TabsContent value="profile" className="space-y-4">
-            {/* Avatar & Personal Info */}
+            {/* Edit Mode Toggle Bar */}
+            <Card className={editMode ? "border-primary/40 bg-primary/5" : ""}>
+              <CardContent className="py-3 px-4 flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  {editMode ? (
+                    <>
+                      <Edit2 className="h-4 w-4 text-primary" />
+                      <span className="text-sm font-medium">وضع التعديل مفعّل — قم بإجراء تغييراتك ثم اضغط حفظ</span>
+                    </>
+                  ) : (
+                    <>
+                      <Lock className="h-4 w-4 text-muted-foreground" />
+                      <span className="text-sm text-muted-foreground">الحقول للقراءة فقط — اضغط "تعديل" لتغيير بياناتك</span>
+                    </>
+                  )}
+                </div>
+                {!editMode ? (
+                  <Button size="sm" variant="default" className="gap-1.5 shrink-0" onClick={() => setEditMode(true)}>
+                    <Edit2 className="h-3.5 w-3.5" /> تعديل الملف الشخصي
+                  </Button>
+                ) : (
+                  <Button size="sm" variant="ghost" className="gap-1.5 shrink-0" onClick={cancelEdit} disabled={profileSaving}>
+                    <X className="h-3.5 w-3.5" /> إلغاء
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
+
             <Card>
               <CardContent className="py-6 space-y-5">
                 {/* Avatar Upload */}
@@ -1444,18 +1490,20 @@ const ProviderDashboard = () => {
                         <User className="h-10 w-10 text-muted-foreground" />
                       )}
                     </div>
-                    <label className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center cursor-pointer hover:bg-primary/90 transition-colors shadow-md">
-                      {avatarUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
-                      <input
-                        type="file"
-                        accept="image/png,image/jpeg,image/webp"
-                        className="hidden"
-                        onChange={handleAvatarUpload}
-                        disabled={avatarUploading}
-                      />
-                    </label>
+                    {editMode && (
+                      <label className="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center cursor-pointer hover:bg-primary/90 transition-colors shadow-md">
+                        {avatarUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
+                        <input
+                          type="file"
+                          accept="image/png,image/jpeg,image/webp"
+                          className="hidden"
+                          onChange={handleAvatarUpload}
+                          disabled={avatarUploading}
+                        />
+                      </label>
+                    )}
                   </div>
-                  <p className="text-xs text-muted-foreground">اضغط لتغيير الصورة الشخصية</p>
+                  {editMode && <p className="text-xs text-muted-foreground">اضغط لتغيير الصورة الشخصية</p>}
                 </div>
 
                 {/* Editable Personal Fields */}
@@ -1465,16 +1513,16 @@ const ProviderDashboard = () => {
                 <div className="grid gap-3">
                   <div>
                     <label className="text-xs font-medium text-muted-foreground">{t("booking.details.client_name")}</label>
-                    <Input value={editName} onChange={(e) => setEditName(e.target.value)} className="mt-1" />
+                    <Input value={editName} onChange={(e) => setEditName(e.target.value)} className="mt-1" disabled={!editMode} />
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="text-xs font-medium text-muted-foreground">{t("booking.details.client_phone")}</label>
-                      <Input value={editPhone} onChange={(e) => setEditPhone(e.target.value)} className="mt-1" dir="ltr" />
+                      <Input value={editPhone} onChange={(e) => setEditPhone(e.target.value)} className="mt-1" dir="ltr" disabled={!editMode} />
                     </div>
                     <div>
                       <label className="text-xs font-medium text-muted-foreground">{t("booking.details.client_city")}</label>
-                      <Input value={editCity} onChange={(e) => setEditCity(e.target.value)} className="mt-1" />
+                      <Input value={editCity} onChange={(e) => setEditCity(e.target.value)} className="mt-1" disabled={!editMode} />
                     </div>
                   </div>
                   <div>
@@ -1485,12 +1533,13 @@ const ProviderDashboard = () => {
                       placeholder="اكتب نبذة مختصرة عن خبرتك..."
                       rows={3}
                       className="mt-1"
+                      disabled={!editMode}
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="text-xs font-medium text-muted-foreground">{t("admin.providers.col.type")}</label>
-                      <Select value={editRoleType} onValueChange={setEditRoleType}>
+                      <Select value={editRoleType} onValueChange={setEditRoleType} disabled={!editMode}>
                         <SelectTrigger className="mt-1">
                           <SelectValue placeholder="—" />
                         </SelectTrigger>
@@ -1513,6 +1562,7 @@ const ProviderDashboard = () => {
                         onChange={(e) => setEditExperienceYears(Math.max(0, parseInt(e.target.value) || 0))}
                         className="mt-1"
                         dir="ltr"
+                        disabled={!editMode}
                       />
                     </div>
                   </div>
@@ -1531,14 +1581,14 @@ const ProviderDashboard = () => {
                       </a>
                     )}
                   </div>
-                  <Switch checked={availableNow} onCheckedChange={setAvailableNow} />
+                  <Switch checked={availableNow} onCheckedChange={setAvailableNow} disabled={!editMode} />
                 </div>
                 <div>
                   <label className="text-sm font-medium">{t("provider.profile.radius")} ({t("provider.details.km")})</label>
                   <Input
                     type="number" min={1} max={100} value={radiusKm}
                     onChange={(e) => setRadiusKm(Number(e.target.value))}
-                    className="w-24 mt-1" dir="ltr"
+                    className="w-24 mt-1" dir="ltr" disabled={!editMode}
                   />
                 </div>
                 <div>
@@ -1546,7 +1596,7 @@ const ProviderDashboard = () => {
                   <Input
                     value={addressText}
                     onChange={(e) => setAddressText(e.target.value)}
-                    placeholder={t("provider.profile.address_placeholder")} className="mt-1"
+                    placeholder={t("provider.profile.address_placeholder")} className="mt-1" disabled={!editMode}
                   />
                 </div>
               </CardContent>
@@ -1560,8 +1610,8 @@ const ProviderDashboard = () => {
                     <Badge
                       key={s}
                       variant={specialties.includes(s) ? "default" : "outline"}
-                      className="cursor-pointer text-xs"
-                      onClick={() => toggleSpecialty(s)}
+                      className={`text-xs ${editMode ? "cursor-pointer" : "opacity-70"}`}
+                      onClick={() => editMode && toggleSpecialty(s)}
                     >
                       {s}
                     </Badge>
@@ -1575,21 +1625,25 @@ const ProviderDashboard = () => {
                     onChange={(e) => setToolInput(e.target.value)}
                     placeholder={t("provider.profile.add_tool")}
                     onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addTool(toolInput); } }}
+                    disabled={!editMode}
                   />
-                  <Button type="button" variant="outline" size="sm" onClick={() => addTool(toolInput)}>+</Button>
+                  <Button type="button" variant="outline" size="sm" onClick={() => addTool(toolInput)} disabled={!editMode}>+</Button>
                 </div>
-                <div className="flex flex-wrap gap-1.5">
-                  {TOOL_SUGGESTIONS.filter((ts) => !tools.includes(ts)).slice(0, 3).map((ts) => (
-                    <Badge key={ts} variant="outline" className="cursor-pointer hover:bg-accent text-xs" onClick={() => addTool(ts)}>
-                      + {ts}
-                    </Badge>
-                  ))}
-                </div>
+                {editMode && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {TOOL_SUGGESTIONS.filter((ts) => !tools.includes(ts)).slice(0, 3).map((ts) => (
+                      <Badge key={ts} variant="outline" className="cursor-pointer hover:bg-accent text-xs" onClick={() => addTool(ts)}>
+                        + {ts}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
                 {tools.length > 0 && (
                   <div className="flex flex-wrap gap-1.5">
                     {tools.map((toolItem) => (
                       <Badge key={toolItem} variant="secondary" className="gap-1 text-xs">
-                        {toolItem} <X className="h-3 w-3 cursor-pointer" onClick={() => setTools(tools.filter((x) => x !== toolItem))} />
+                        {toolItem}
+                        {editMode && <X className="h-3 w-3 cursor-pointer" onClick={() => setTools(tools.filter((x) => x !== toolItem))} />}
                       </Badge>
                     ))}
                   </div>
@@ -1597,10 +1651,12 @@ const ProviderDashboard = () => {
               </CardContent>
             </Card>
 
-            <Button className="w-full gap-2" onClick={saveProfile} disabled={profileSaving}>
-              {profileSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle className="h-4 w-4" />}
-              {t("provider.profile.save")}
-            </Button>
+            {editMode && (
+              <Button className="w-full gap-2" onClick={saveProfile} disabled={profileSaving}>
+                {profileSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle className="h-4 w-4" />}
+                {t("provider.profile.save")}
+              </Button>
+            )}
           </TabsContent>
 
           {/* ═══ Wallet Tab ═══ */}
