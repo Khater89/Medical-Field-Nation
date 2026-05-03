@@ -811,8 +811,26 @@ const ProviderDashboard = () => {
       toast({ title: t("common.error"), description: error.message, variant: "destructive" });
     } else {
       await refreshUserData();
+      setEditMode(false);
       toast({ title: t("provider.dashboard.profile_saved") });
     }
+  };
+
+  const cancelEdit = () => {
+    if (profile) {
+      setEditName(profile.full_name || "");
+      setEditPhone(profile.phone || "");
+      setEditCity(profile.city || "");
+      setEditBio((profile as any).bio || "");
+      setEditRoleType((profile as any).role_type || "");
+      setEditExperienceYears((profile as any).experience_years || 0);
+      setAvailableNow(profile.available_now || false);
+      setSpecialties(profile.specialties || []);
+      setTools(profile.tools || []);
+      setRadiusKm(profile.radius_km || 20);
+      setAddressText(profile.address_text || "");
+    }
+    setEditMode(false);
   };
 
   const handleSignOut = async () => { await signOut(); navigate("/"); };
