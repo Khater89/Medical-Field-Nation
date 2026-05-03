@@ -296,28 +296,42 @@ const TrackOrderPage = () => {
                   </span>
                 </div>
 
-                {/* Coordinator contact buttons — visible only after a booking is found */}
-                <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 space-y-2">
-                  <p className="text-xs font-bold text-foreground">للتواصل المباشر مع المنسق:</p>
-                  <div className="grid grid-cols-2 gap-2">
-                    <a
-                      href={`tel:${COORDINATOR_PHONE}`}
-                      className="flex items-center justify-center gap-2 h-10 rounded-lg bg-primary text-primary-foreground font-bold text-sm shadow hover:shadow-md transition-shadow"
-                    >
-                      <Phone className="h-4 w-4" />
-                      اتصال
-                    </a>
-                    <a
-                      href={`https://wa.me/${COORDINATOR_WA}?text=${encodeURIComponent(`مرحباً، استفسار عن الحجز رقم ${booking.booking_number}`)}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center justify-center gap-2 h-10 rounded-lg bg-[#25D366] text-white font-bold text-sm shadow hover:shadow-md transition-shadow"
-                    >
-                      <MessageCircle className="h-4 w-4" />
-                      واتساب
-                    </a>
-                  </div>
-                </div>
+                {/* Direct contact — prefer assigned provider; fallback to coordinator */}
+                {(() => {
+                  const provPhone = providerInfo?.phone?.replace(/[\s\-]/g, "");
+                  const useProvider = !!provPhone && !!providerInfo;
+                  const callNumber = useProvider ? provPhone! : COORDINATOR_PHONE;
+                  const waNumber = useProvider ? provPhone!.replace(/^\+/, "") : COORDINATOR_WA;
+                  const label = useProvider
+                    ? `للتواصل المباشر مع ${providerInfo!.full_name || "مقدم الخدمة"}:`
+                    : "للتواصل المباشر مع المنسق:";
+                  const waMsg = useProvider
+                    ? `مرحباً، أنا صاحب الحجز رقم ${booking.booking_number}`
+                    : `مرحباً، استفسار عن الحجز رقم ${booking.booking_number}`;
+                  return (
+                    <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 space-y-2">
+                      <p className="text-xs font-bold text-foreground">{label}</p>
+                      <div className="grid grid-cols-2 gap-2">
+                        <a
+                          href={`tel:${callNumber}`}
+                          className="flex items-center justify-center gap-2 h-10 rounded-lg bg-primary text-primary-foreground font-bold text-sm shadow hover:shadow-md transition-shadow"
+                        >
+                          <Phone className="h-4 w-4" />
+                          اتصال
+                        </a>
+                        <a
+                          href={`https://wa.me/${waNumber}?text=${encodeURIComponent(waMsg)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center justify-center gap-2 h-10 rounded-lg bg-[#25D366] text-white font-bold text-sm shadow hover:shadow-md transition-shadow"
+                        >
+                          <MessageCircle className="h-4 w-4" />
+                          واتساب
+                        </a>
+                      </div>
+                    </div>
+                  );
+                })()}
 
                 {/* Late provider alert */}
                 {result.is_provider_late && (
@@ -332,10 +346,17 @@ const TrackOrderPage = () => {
                   </div>
                 )}
 
-                {/* Provider Info Card */}
+                {/* Provider Info Card — clickable to open full details */}
                 {providerInfo && (
-                  <div className="rounded-lg border bg-muted/30 p-4 space-y-3">
-                    <p className="text-xs font-semibold text-muted-foreground">مقدم الخدمة</p>
+                  <button
+                    type="button"
+                    onClick={() => setProviderDialogOpen(true)}
+                    className="w-full text-right rounded-lg border bg-muted/30 p-4 space-y-3 hover:bg-muted/50 hover:border-primary/40 transition-colors cursor-pointer"
+                  >
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs font-semibold text-muted-foreground">مقدم الخدمة</p>
+                      <span className="text-[10px] text-primary font-medium">عرض الملف الكامل ←</span>
+                    </div>
                     <div className="flex items-center gap-3">
                       <Avatar className="h-12 w-12 border-2 border-primary/20">
                         <AvatarImage src={providerInfo.avatar_url || undefined} />
@@ -361,7 +382,6 @@ const TrackOrderPage = () => {
                       </div>
                     </div>
 
-                    {/* Rating & Location */}
                     <div className="flex items-center gap-4 text-xs text-muted-foreground">
                       {providerInfo.avg_rating && (
                         <span className="flex items-center gap-1">
@@ -378,7 +398,6 @@ const TrackOrderPage = () => {
                       )}
                     </div>
 
-                    {/* Specialties */}
                     {providerInfo.specialties && providerInfo.specialties.length > 0 && (
                       <div className="flex flex-wrap gap-1.5">
                         {providerInfo.specialties.slice(0, 4).map((s) => (
@@ -393,10 +412,10 @@ const TrackOrderPage = () => {
                         )}
                       </div>
                     )}
-                  </div>
+                  </button>
                 )}
 
-                {/* Booking Chat — visible on the tracking page */}
+                {/* Booking Chat — visible to all (guests use booking_number + phone) */}
                 {booking.id && !isCancelled && (
                   <div className="border-t pt-3 space-y-2">
                     <div className="flex items-center gap-2">
@@ -405,17 +424,12 @@ const TrackOrderPage = () => {
                         تواصل مع المزودين المهتمين بطلبك — مع أوقات الإرسال وحالة التسليم
                       </span>
                     </div>
-                    {user ? (
-                      <BookingChat
-                        bookingId={booking.id}
-                        viewerRole="customer"
-                        viewerId={user.id}
-                      />
-                    ) : (
-                      <div className="border rounded-lg bg-muted/30 p-4 text-center text-xs text-muted-foreground">
-                        سجّل الدخول لعرض الرسائل والعروض المرتبطة بطلبك مع طوابع الوقت وحالة التسليم.
-                      </div>
-                    )}
+                    <BookingChat
+                      bookingId={booking.id}
+                      viewerRole="customer"
+                      viewerId={user?.id || booking.id}
+                      guestMode={user ? undefined : { bookingNumber: bookingNumber.trim(), phone: phone.trim() }}
+                    />
                   </div>
                 )}
 
