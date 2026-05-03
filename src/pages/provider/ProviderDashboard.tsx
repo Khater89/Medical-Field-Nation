@@ -1610,8 +1610,8 @@ const ProviderDashboard = () => {
                     <Badge
                       key={s}
                       variant={specialties.includes(s) ? "default" : "outline"}
-                      className="cursor-pointer text-xs"
-                      onClick={() => toggleSpecialty(s)}
+                      className={`text-xs ${editMode ? "cursor-pointer" : "opacity-70"}`}
+                      onClick={() => editMode && toggleSpecialty(s)}
                     >
                       {s}
                     </Badge>
@@ -1625,21 +1625,25 @@ const ProviderDashboard = () => {
                     onChange={(e) => setToolInput(e.target.value)}
                     placeholder={t("provider.profile.add_tool")}
                     onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addTool(toolInput); } }}
+                    disabled={!editMode}
                   />
-                  <Button type="button" variant="outline" size="sm" onClick={() => addTool(toolInput)}>+</Button>
+                  <Button type="button" variant="outline" size="sm" onClick={() => addTool(toolInput)} disabled={!editMode}>+</Button>
                 </div>
-                <div className="flex flex-wrap gap-1.5">
-                  {TOOL_SUGGESTIONS.filter((ts) => !tools.includes(ts)).slice(0, 3).map((ts) => (
-                    <Badge key={ts} variant="outline" className="cursor-pointer hover:bg-accent text-xs" onClick={() => addTool(ts)}>
-                      + {ts}
-                    </Badge>
-                  ))}
-                </div>
+                {editMode && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {TOOL_SUGGESTIONS.filter((ts) => !tools.includes(ts)).slice(0, 3).map((ts) => (
+                      <Badge key={ts} variant="outline" className="cursor-pointer hover:bg-accent text-xs" onClick={() => addTool(ts)}>
+                        + {ts}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
                 {tools.length > 0 && (
                   <div className="flex flex-wrap gap-1.5">
                     {tools.map((toolItem) => (
                       <Badge key={toolItem} variant="secondary" className="gap-1 text-xs">
-                        {toolItem} <X className="h-3 w-3 cursor-pointer" onClick={() => setTools(tools.filter((x) => x !== toolItem))} />
+                        {toolItem}
+                        {editMode && <X className="h-3 w-3 cursor-pointer" onClick={() => setTools(tools.filter((x) => x !== toolItem))} />}
                       </Badge>
                     ))}
                   </div>
@@ -1647,10 +1651,12 @@ const ProviderDashboard = () => {
               </CardContent>
             </Card>
 
-            <Button className="w-full gap-2" onClick={saveProfile} disabled={profileSaving}>
-              {profileSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle className="h-4 w-4" />}
-              {t("provider.profile.save")}
-            </Button>
+            {editMode && (
+              <Button className="w-full gap-2" onClick={saveProfile} disabled={profileSaving}>
+                {profileSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle className="h-4 w-4" />}
+                {t("provider.profile.save")}
+              </Button>
+            )}
           </TabsContent>
 
           {/* ═══ Wallet Tab ═══ */}
