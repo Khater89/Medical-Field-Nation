@@ -980,6 +980,33 @@ export type Database = {
         Args: { _booking_id: string }
         Returns: Json
       }
+      provider_messages_inbox: {
+        Args: never
+        Returns: {
+          area_public: string
+          assigned_provider_id: string
+          booking_id: string
+          booking_number: string
+          city: string
+          client_address_text: string
+          customer_avatar: string
+          customer_display_name: string
+          customer_full_name: string
+          incoming_count: number
+          is_emergency: boolean
+          is_private: boolean
+          last_message_body: string
+          last_message_created_at: string
+          last_message_id: string
+          last_sender_display_name: string
+          last_sender_id: string
+          last_sender_role: string
+          scheduled_at: string
+          service_id: string
+          status: string
+          total_count: number
+        }[]
+      }
       provider_orders_safe: {
         Args: never
         Returns: {
