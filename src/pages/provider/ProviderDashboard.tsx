@@ -796,6 +796,8 @@ const ProviderDashboard = () => {
       phone: editPhone.trim(),
       city: editCity.trim(),
       bio: editBio.trim() || null,
+      role_type: editRoleType || null,
+      experience_years: editExperienceYears || 0,
       available_now: availableNow,
       specialties: specialties.length > 0 ? specialties : null,
       tools: tools.length > 0 ? tools : null,
