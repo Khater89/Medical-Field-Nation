@@ -137,15 +137,15 @@ const AvailableBookingsTab = ({ serviceNames, onAssigned }: Props) => {
     return (
       <div className="text-center py-12 text-muted-foreground">
         <FileText className="h-10 w-10 mx-auto mb-3 opacity-40" />
-        <p className="text-sm">لا توجد طلبات متاحة في منطقتك حالياً</p>
-        <p className="text-xs mt-1">ستظهر هنا الطلبات الجديدة المطابقة لتخصصك وموقعك</p>
+        <p className="text-sm">لا توجد طلبات متاحة حالياً</p>
+        <p className="text-xs mt-1">ستظهر هنا جميع الطلبات الجديدة فور وصولها</p>
       </div>
     );
   }
 
   return (
     <div className="space-y-3">
-      <p className="text-xs text-muted-foreground">{bookings.length} طلب متاح في منطقتك</p>
+      <p className="text-xs text-muted-foreground">{bookings.length} طلب متاح — جميع الطلبات معروضة لجميع المزودين</p>
       {bookings.map((b) => {
         const alreadyQuoted = myQuotes[b.id] !== undefined;
         const isExpanded = expandedId === b.id;
