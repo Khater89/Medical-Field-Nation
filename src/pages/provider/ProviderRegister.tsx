@@ -92,6 +92,7 @@ const ProviderRegister = () => {
       setAddressText(profile.address_text || "");
       setRadiusKm(profile.radius_km?.toString() || "20");
       setSelectedSpecialties(profile.specialties || []);
+      setProviderType(((profile as any).provider_type as "standard" | "emergency") || "standard");
       setAcademicCertUrl((profile as any).academic_cert_url || null);
       setExperienceCertUrl((profile as any).experience_cert_url || null);
     }
