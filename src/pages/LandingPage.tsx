@@ -116,6 +116,7 @@ const LandingPage = () => {
           time_slot: "morning",
           notes: `🚨 طلب طوارئ — العنوان: ${emAddress.trim()}${emLat && emLng ? ` — موقع: ${emLat.toFixed(5)}, ${emLng.toFixed(5)}` : ""}`,
           payment_method: "CASH",
+          is_emergency: true,
         },
       });
       if (error || !data?.success) {
