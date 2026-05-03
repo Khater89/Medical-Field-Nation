@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
-import { Send, Loader2, Star, DollarSign, MessageCircle, User, Phone } from "lucide-react";
+import { Send, Loader2, Star, DollarSign, MessageCircle, User, Phone, Check, CheckCheck, Clock } from "lucide-react";
 
 interface Message {
   id: string;
@@ -18,7 +18,24 @@ interface Message {
   target_provider_id: string | null;
   created_at: string;
   sender_avatar: string | null;
+  /** Local-only: optimistic pending message */
+  _pending?: boolean;
+  _tempId?: string;
 }
+
+const formatTime = (iso: string) =>
+  new Date(iso).toLocaleTimeString("ar-JO", { hour: "2-digit", minute: "2-digit" });
+
+const formatDateLabel = (iso: string) => {
+  const d = new Date(iso);
+  const today = new Date();
+  const yesterday = new Date(); yesterday.setDate(today.getDate() - 1);
+  const same = (a: Date, b: Date) =>
+    a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+  if (same(d, today)) return "اليوم";
+  if (same(d, yesterday)) return "أمس";
+  return d.toLocaleDateString("ar-JO", { day: "2-digit", month: "short", year: "numeric" });
+};
 
 interface Quote {
   id: string;
