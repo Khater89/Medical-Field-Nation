@@ -140,22 +140,34 @@ export default function BookingChat({
     setTimeout(() => scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" }), 50);
 
     try {
-      const { error } = await supabase.from("booking_messages" as any).insert({
-        booking_id: bookingId,
-        sender_id: viewerId,
-        sender_role: viewerRole,
-        sender_display_name: viewerName || null,
-        body: sentBody,
-        quoted_price: priceNum,
-        target_provider_id: viewerRole === "customer" ? target : null,
-      });
-      if (error) throw error;
-
-      // If provider attached a price, also insert a formal quote (best-effort)
-      if (viewerRole === "provider" && priceNum && priceNum > 0) {
-        await supabase.from("provider_quotes" as any).insert({
-          booking_id: bookingId, provider_id: viewerId, quoted_price: priceNum, note: sentBody,
+      if (guestMode) {
+        const { data, error } = await supabase.functions.invoke("guest-send-message", {
+          body: {
+            booking_number: guestMode.bookingNumber,
+            phone: guestMode.phone,
+            body: sentBody,
+            target_provider_id: target || null,
+          },
         });
+        if (error || (data as any)?.error) throw new Error((data as any)?.error || error?.message || "send_failed");
+      } else {
+        const { error } = await supabase.from("booking_messages" as any).insert({
+          booking_id: bookingId,
+          sender_id: viewerId,
+          sender_role: viewerRole,
+          sender_display_name: viewerName || null,
+          body: sentBody,
+          quoted_price: priceNum,
+          target_provider_id: viewerRole === "customer" ? target : null,
+        });
+        if (error) throw error;
+
+        // If provider attached a price, also insert a formal quote (best-effort)
+        if (viewerRole === "provider" && priceNum && priceNum > 0) {
+          await supabase.from("provider_quotes" as any).insert({
+            booking_id: bookingId, provider_id: viewerId, quoted_price: priceNum, note: sentBody,
+          });
+        }
       }
       await fetchAll();
     } catch (e: any) {
