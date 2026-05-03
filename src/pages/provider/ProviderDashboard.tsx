@@ -329,7 +329,7 @@ const ProviderDashboard = () => {
   const [editRoleType, setEditRoleType] = useState<string>("");
   const [editExperienceYears, setEditExperienceYears] = useState<number>(0);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-  const [avatarUploading, setAvatarUploading] = useState(false);
+  const [editMode, setEditMode] = useState(false);
 
   useEffect(() => {
     if (profile) {
