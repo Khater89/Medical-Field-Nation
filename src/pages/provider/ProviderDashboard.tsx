@@ -1487,14 +1487,33 @@ const ProviderDashboard = () => {
                       className="mt-1"
                     />
                   </div>
-                  <div className="grid grid-cols-2 gap-3 text-sm">
-                    <div className="bg-muted/50 rounded-lg p-2.5">
-                      <span className="text-xs text-muted-foreground">{t("admin.providers.col.type")}</span>
-                      <p className="font-medium">{profile?.role_type ? t(`role_type.${profile.role_type}`) : "—"}</p>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground">{t("admin.providers.col.type")}</label>
+                      <Select value={editRoleType} onValueChange={setEditRoleType}>
+                        <SelectTrigger className="mt-1">
+                          <SelectValue placeholder="—" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {ROLE_TYPE_OPTIONS.map((rt) => (
+                            <SelectItem key={rt.value} value={rt.value}>{t(rt.labelKey)}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
-                    <div className="bg-muted/50 rounded-lg p-2.5">
-                      <span className="text-xs text-muted-foreground">{t("admin.providers.col.experience")}</span>
-                      <p className="font-medium">{profile?.experience_years || 0} {t("admin.providers.years")}</p>
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground">
+                        {t("admin.providers.col.experience")} ({t("admin.providers.years")})
+                      </label>
+                      <Input
+                        type="number"
+                        min={0}
+                        max={70}
+                        value={editExperienceYears}
+                        onChange={(e) => setEditExperienceYears(Math.max(0, parseInt(e.target.value) || 0))}
+                        className="mt-1"
+                        dir="ltr"
+                      />
                     </div>
                   </div>
                 </div>
