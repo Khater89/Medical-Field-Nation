@@ -78,6 +78,7 @@ const ROLE_LABELS: Record<string, string> = {
 export default function BookingChat({
   bookingId, viewerRole, viewerId, viewerName,
   allowQuote, defaultTargetProviderId, onTargetProviderClick, guestMode,
+  canAssign, onAssigned,
 }: Props) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [quotes, setQuotes] = useState<Quote[]>([]);
@@ -86,6 +87,8 @@ export default function BookingChat({
   const [price, setPrice] = useState("");
   const [target, setTarget] = useState<string | null>(defaultTargetProviderId ?? null);
   const [sending, setSending] = useState(false);
+  const [assignDialog, setAssignDialog] = useState<string | null>(null);
+  const [assigning, setAssigning] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const fetchAll = async () => {
