@@ -179,51 +179,100 @@ export default function BookingChat({
   };
 
   // Distinct providers from quotes + messages (excluding viewer if provider)
-  const providers = quotes.map((q) => ({
-    id: q.provider_id, name: q.provider_name, avatar: q.provider_avatar,
-    role: q.provider_role, price: q.quoted_price, isMine: q.is_mine,
-  }));
+  // Build provider list from quotes + provider messages (provider may message without quote)
+  const providerMap = new Map<string, { id: string; name: string; avatar: string | null; role: string | null; price: number | null; isMine: boolean }>();
+  quotes.forEach((q) => {
+    providerMap.set(q.provider_id, {
+      id: q.provider_id, name: q.provider_name, avatar: q.provider_avatar,
+      role: q.provider_role, price: q.quoted_price, isMine: q.is_mine,
+    });
+  });
+  messages.forEach((m) => {
+    if (m.sender_role === "provider" && !providerMap.has(m.sender_id)) {
+      providerMap.set(m.sender_id, {
+        id: m.sender_id, name: m.sender_display_name || "مقدم خدمة",
+        avatar: m.sender_avatar, role: null, price: null,
+        isMine: m.sender_id === viewerId,
+      });
+    }
+  });
+  const providers = Array.from(providerMap.values());
+
+  // Customer-only: filter messages by selected provider thread
+  const visibleMessages = (() => {
+    if (viewerRole !== "customer" || !target) return messages;
+    return messages.filter((m) => {
+      if (m.sender_role === "provider") return m.sender_id === target;
+      return !m.target_provider_id || m.target_provider_id === target;
+    });
+  })();
+
+  const ROLE_LABEL = (r: string | null) => (r ? ROLE_LABELS[r] || r : "");
 
   return (
     <div className="border rounded-lg bg-card">
-      {/* Providers strip — both customer & provider see who's involved */}
+      {/* Providers strip — customer can filter to a single provider's thread */}
       {providers.length > 0 && (
-        <div className="border-b p-3 space-y-2">
-          <p className="text-[11px] font-semibold text-muted-foreground">
-            {viewerRole === "customer" ? "المزودون المهتمون بطلبك" : "العروض المقدمة"}
-          </p>
-          <div className="flex gap-2 overflow-x-auto">
-            {providers.map((p) => (
-              <button
-                key={p.id}
-                onClick={() => {
-                  if (viewerRole === "customer") {
-                    setTarget(p.id === target ? null : p.id);
-                    onTargetProviderClick?.(p.id);
-                  }
-                }}
-                className={`shrink-0 flex flex-col items-center gap-1 p-2 rounded-lg border min-w-[80px] transition-colors ${
-                  target === p.id ? "border-primary bg-primary/5" : "border-border bg-background hover:bg-muted/50"
-                } ${p.isMine ? "ring-1 ring-success" : ""}`}
-              >
-                <Avatar className="h-9 w-9">
-                  <AvatarImage src={p.avatar || undefined} />
-                  <AvatarFallback><User className="h-4 w-4" /></AvatarFallback>
-                </Avatar>
-                <p className="text-[11px] font-medium truncate max-w-[72px]">{p.name}</p>
-                {p.role && <span className="text-[9px] text-muted-foreground">{ROLE_LABELS[p.role] || p.role}</span>}
-                <Badge variant="outline" className="text-[10px] px-1 py-0 gap-0.5">
-                  <DollarSign className="h-2.5 w-2.5" />{p.price} JOD
-                </Badge>
-                {p.isMine && <span className="text-[9px] text-success font-bold">عرضي</span>}
-              </button>
-            ))}
-          </div>
-          {viewerRole === "customer" && target && (
-            <p className="text-[10px] text-primary">
-              ✉️ سيتم إرسال رسالتك التالية لهذا المزود فقط — اضغط مرة أخرى لإلغاء التحديد
+        <div className="border-b p-3 space-y-2 bg-muted/20">
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-[11px] font-semibold text-muted-foreground">
+              {viewerRole === "customer"
+                ? `🩺 ${providers.length} مزود مهتم — اضغط على مزود لعرض محادثته فقط`
+                : "العروض المقدمة"}
             </p>
-          )}
+            {viewerRole === "customer" && target && (
+              <button
+                onClick={() => setTarget(null)}
+                className="text-[10px] text-primary font-bold hover:underline"
+              >
+                عرض كل الرسائل
+              </button>
+            )}
+          </div>
+          <div className="flex gap-2 overflow-x-auto pb-1">
+            {providers.map((p) => {
+              const isActive = target === p.id;
+              return (
+                <button
+                  key={p.id}
+                  onClick={() => {
+                    if (viewerRole === "customer") {
+                      setTarget(p.id === target ? null : p.id);
+                      onTargetProviderClick?.(p.id);
+                    }
+                  }}
+                  className={`shrink-0 flex flex-col items-center gap-1 p-2 rounded-lg border min-w-[92px] transition-all ${
+                    isActive
+                      ? "border-primary bg-primary/10 ring-2 ring-primary/30 shadow-sm"
+                      : "border-border bg-background hover:bg-muted/50"
+                  } ${p.isMine ? "ring-1 ring-success" : ""}`}
+                >
+                  <Avatar className="h-10 w-10">
+                    <AvatarImage src={p.avatar || undefined} />
+                    <AvatarFallback><User className="h-4 w-4" /></AvatarFallback>
+                  </Avatar>
+                  <p className="text-[11px] font-bold truncate max-w-[80px]">{p.name}</p>
+                  {p.role && <span className="text-[9px] text-muted-foreground">{ROLE_LABEL(p.role)}</span>}
+                  {p.price != null && (
+                    <Badge variant="outline" className="text-[10px] px-1 py-0 gap-0.5">
+                      <DollarSign className="h-2.5 w-2.5" />{p.price} JOD
+                    </Badge>
+                  )}
+                  {p.isMine && <span className="text-[9px] text-success font-bold">عرضي</span>}
+                </button>
+              );
+            })}
+          </div>
+          {viewerRole === "customer" && target && (() => {
+            const sel = providers.find((p) => p.id === target);
+            return (
+              <div className="text-[11px] text-primary bg-primary/5 rounded px-2 py-1.5 border border-primary/20">
+                <span className="font-bold">محادثة:</span> {sel?.name}
+                {sel?.role && <span className="text-muted-foreground"> • {ROLE_LABEL(sel.role)}</span>}
+                <span className="block text-[10px] text-muted-foreground mt-0.5">رسالتك التالية ستُرسل لهذا المزود فقط</span>
+              </div>
+            );
+          })()}
         </div>
       )}
 
