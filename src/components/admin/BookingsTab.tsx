@@ -332,6 +332,12 @@ const BookingsTab = () => {
           }
         }}
       />
+      <BookingInteractionsDialog
+        bookingId={interactionsBooking?.id || null}
+        bookingNumber={interactionsBooking?.booking_number || null}
+        open={!!interactionsBooking}
+        onOpenChange={(o) => { if (!o) setInteractionsBooking(null); }}
+      />
     </div>
   );
 };
