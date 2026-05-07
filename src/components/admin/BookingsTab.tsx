@@ -60,14 +60,18 @@ const BookingsTab = () => {
       supabase.from("profiles").select("user_id, full_name, phone"),
       supabase.from("booking_history").select("booking_id, performer_role").eq("action", "CANCELLED").eq("performer_role", "customer"),
       supabase.from("booking_messages").select("booking_id, sender_id, sender_role").eq("sender_role", "provider"),
-      supabase.from("provider_quotes").select("booking_id"),
+      supabase.from("provider_quotes").select("booking_id, provider_id"),
     ]);
 
-    // Build viewer & quote count maps
+    // Count each provider once per booking based on FIRST interaction (message OR quote)
     const vMap: Record<string, Set<string>> = {};
     (msgsRes.data || []).forEach((m: any) => {
       if (!vMap[m.booking_id]) vMap[m.booking_id] = new Set();
       vMap[m.booking_id].add(m.sender_id);
+    });
+    (quotesRes.data || []).forEach((q: any) => {
+      if (!vMap[q.booking_id]) vMap[q.booking_id] = new Set();
+      vMap[q.booking_id].add(q.provider_id);
     });
     const viewerMap: Record<string, number> = {};
     Object.keys(vMap).forEach((k) => { viewerMap[k] = vMap[k].size; });
@@ -222,18 +226,41 @@ const BookingsTab = () => {
       enableSorting: false,
       cell: ({ row }) => {
         const b = row.original;
+        const viewers = viewerCounts[b.id] || 0;
+        const quotes = quoteCounts[b.id] || 0;
+        const hasActivity = viewers > 0 || quotes > 0;
         return (
           <button
             type="button"
             onClick={(e) => { e.stopPropagation(); setInteractionsBooking(b); }}
-            className="inline-flex items-center justify-center gap-2 text-xs px-2 py-1 rounded hover:bg-accent transition-colors"
+            className={`relative inline-flex items-center justify-center gap-2 text-xs px-2 py-1 rounded-md transition-all ${
+              hasActivity
+                ? "bg-primary/10 hover:bg-primary/20 ring-1 ring-primary/30"
+                : "hover:bg-accent"
+            }`}
             title="عرض المزودين الذين تفاعلوا مع الطلب"
           >
-            <span className="flex items-center gap-1 text-muted-foreground">
-              <Eye className="h-3.5 w-3.5" /> {viewerCounts[b.id] || 0}
+            <span className={`relative flex items-center gap-1 ${viewers > 0 ? "text-primary font-bold" : "text-muted-foreground"}`}>
+              <span className="relative inline-flex">
+                <Eye className={`h-3.5 w-3.5 ${viewers > 0 ? "animate-pulse" : ""}`} />
+                {viewers > 0 && (
+                  <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-primary ring-2 ring-background animate-ping" />
+                )}
+              </span>
+              {viewers > 0 && (
+                <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-primary text-primary-foreground text-[10px] font-bold">
+                  {viewers}
+                </span>
+              )}
+              {viewers === 0 && <span>0</span>}
             </span>
-            <span className={`flex items-center gap-1 font-semibold ${(quoteCounts[b.id] || 0) > 0 ? "text-success" : "text-muted-foreground"}`}>
-              <MessageSquareQuote className="h-3.5 w-3.5" /> {quoteCounts[b.id] || 0}
+            <span className={`flex items-center gap-1 font-semibold ${quotes > 0 ? "text-success" : "text-muted-foreground"}`}>
+              <MessageSquareQuote className={`h-3.5 w-3.5 ${quotes > 0 ? "animate-pulse" : ""}`} />
+              {quotes > 0 ? (
+                <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-success text-success-foreground text-[10px] font-bold">
+                  {quotes}
+                </span>
+              ) : <span>0</span>}
             </span>
           </button>
         );
