@@ -46,6 +46,8 @@ const BookingsTab = () => {
   const [serviceCategories, setServiceCategories] = useState<Record<string, string>>({});
   const [providerNames, setProviderNames] = useState<Record<string, string>>({});
   const [providerPhones, setProviderPhones] = useState<Record<string, string>>({});
+  const [viewerCounts, setViewerCounts] = useState<Record<string, number>>({});
+  const [quoteCounts, setQuoteCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("ALL");
   const [search, setSearch] = useState("");
