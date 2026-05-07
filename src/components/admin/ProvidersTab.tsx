@@ -235,36 +235,108 @@ const ProvidersTab = () => {
   const filtered = providers.filter((p) => {
     if (statusFilter !== "ALL" && p.provider_status !== statusFilter) return false;
     if (typeFilter !== "ALL" && p.role_type !== typeFilter) return false;
-    if (search) {
-      const q = search.toLowerCase();
-      return (
-        (p.full_name || "").toLowerCase().includes(q) ||
-        (p.phone || "").includes(q) ||
-        (p.city || "").toLowerCase().includes(q) ||
-        (p.provider_number != null && String(p.provider_number).includes(q)) ||
-        (p.specialties || []).some((s) => s.toLowerCase().includes(q))
-      );
-    }
     return true;
   });
+
+  const columns = useMemo<ColumnDef<ProviderProfile>[]>(() => {
+    const cols: ColumnDef<ProviderProfile>[] = [
+      {
+        accessorKey: "full_name",
+        header: t("admin.providers.col.name"),
+        cell: ({ row }) => {
+          const p = row.original;
+          return (
+            <span className="font-medium text-sm">
+              {p.full_name || t("admin.providers.no_name")}
+              {p.provider_number != null && (
+                <span className="ms-1.5 text-[10px] font-mono text-primary">#{p.provider_number}</span>
+              )}
+            </span>
+          );
+        },
+      },
+      {
+        accessorKey: "phone",
+        header: t("admin.providers.col.phone"),
+        cell: ({ row }) => <span className="text-xs" dir="ltr">{row.original.phone}</span>,
+      },
+      {
+        accessorKey: "role_type",
+        header: t("admin.providers.col.type"),
+        cell: ({ row }) => {
+          const rt = row.original.role_type;
+          const k = `role_type.${rt || ""}`;
+          return <span className="text-xs">{t(k) !== k ? t(k) : rt || "—"}</span>;
+        },
+      },
+      {
+        accessorKey: "city",
+        header: t("admin.providers.col.city"),
+        cell: ({ row }) => <span className="text-sm">{row.original.city || "—"}</span>,
+      },
+      {
+        accessorKey: "experience_years",
+        header: t("admin.providers.col.experience"),
+        cell: ({ row }) =>
+          row.original.experience_years != null
+            ? <span className="text-sm">{row.original.experience_years} {t("admin.providers.years")}</span>
+            : <span className="text-sm">—</span>,
+      },
+      {
+        accessorKey: "provider_status",
+        header: t("admin.providers.col.status"),
+        cell: ({ row }) => (
+          <Badge variant="outline" className={`text-[10px] ${STATUS_COLORS[row.original.provider_status] || ""}`}>
+            {t(`provider_status.${row.original.provider_status}`)}
+          </Badge>
+        ),
+      },
+      {
+        accessorKey: "available_now",
+        header: t("admin.providers.col.availability"),
+        cell: ({ row }) => row.original.available_now ? (
+          <Badge variant="outline" className="bg-success/10 text-success border-success/30 text-[10px]">
+            {t("admin.providers.available")}
+          </Badge>
+        ) : <span className="text-xs text-muted-foreground">—</span>,
+      },
+      {
+        accessorKey: "balance",
+        header: t("admin.providers.col.balance"),
+        cell: ({ row }) => (
+          <span className={`text-sm font-medium ${row.original.balance < 0 ? "text-destructive" : "text-success"}`}>
+            {row.original.hasProviderRole ? formatCurrency(row.original.balance) : "—"}
+          </span>
+        ),
+      },
+    ];
+    if (isAdmin) {
+      cols.push({
+        id: "actions",
+        header: "",
+        enableSorting: false,
+        cell: ({ row }) => row.original.user_id !== user?.id ? (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
+            onClick={(e) => { e.stopPropagation(); setDeleteTarget(row.original); }}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        ) : null,
+      });
+    }
+    return cols;
+  }, [t, formatCurrency, isAdmin, user?.id]);
 
   if (loading) return <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
 
   return (
     <div className="space-y-4">
-      {/* Filters */}
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <h2 className="text-lg font-bold">{t("admin.providers.title")} ({providers.length})</h2>
         <div className="flex gap-2 flex-wrap">
-          <div className="relative">
-            <Search className={`absolute ${isRTL ? "right-3" : "left-3"} top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground`} />
-            <Input
-              placeholder={t("admin.providers.search")}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className={`${isRTL ? "pr-9" : "pl-9"} w-[180px]`}
-            />
-          </div>
           <Select value={typeFilter} onValueChange={setTypeFilter}>
             <SelectTrigger className="w-[120px]">
               <SelectValue placeholder={t("admin.providers.col.type")} />
@@ -290,81 +362,15 @@ const ProvidersTab = () => {
         </div>
       </div>
 
-      {/* Table */}
-      {filtered.length === 0 ? (
-        <div className="text-center py-10 text-muted-foreground">{t("admin.providers.no_providers")}</div>
-      ) : (
-        <div className="rounded-lg border border-border overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-muted/50">
-                <TableHead>{t("admin.providers.col.name")}</TableHead>
-                <TableHead>{t("admin.providers.col.phone")}</TableHead>
-                <TableHead>{t("admin.providers.col.type")}</TableHead>
-                <TableHead>{t("admin.providers.col.city")}</TableHead>
-                <TableHead>{t("admin.providers.col.experience")}</TableHead>
-                <TableHead>{t("admin.providers.col.status")}</TableHead>
-                <TableHead>{t("admin.providers.col.availability")}</TableHead>
-                <TableHead>{t("admin.providers.col.balance")}</TableHead>
-                {isAdmin && <TableHead className="w-10" />}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filtered.map((p) => (
-                <TableRow
-                  key={p.user_id}
-                  className={`cursor-pointer hover:bg-accent/50 transition-colors ${p.provider_status === "pending" ? "bg-yellow-50 dark:bg-yellow-950/20 border-l-4 border-l-yellow-400" : ""}`}
-                  onClick={() => setSelectedProvider(p)}
-                >
-                  <TableCell className="font-medium text-sm">
-                    <span>{p.full_name || t("admin.providers.no_name")}</span>
-                    {p.provider_number && (
-                      <span className="ms-1.5 text-[10px] font-mono text-primary">#{p.provider_number}</span>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-xs" dir="ltr">{p.phone}</TableCell>
-                  <TableCell className="text-xs">
-                    {t(`role_type.${p.role_type || ""}`) !== `role_type.${p.role_type || ""}` ? t(`role_type.${p.role_type}`) : p.role_type || "—"}
-                  </TableCell>
-                  <TableCell className="text-sm">{p.city || "—"}</TableCell>
-                  <TableCell className="text-sm">
-                    {p.experience_years != null ? `${p.experience_years} ${t("admin.providers.years")}` : "—"}
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className={`text-[10px] ${STATUS_COLORS[p.provider_status] || ""}`}>
-                      {t(`provider_status.${p.provider_status}`)}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    {p.available_now ? (
-                      <Badge variant="outline" className="bg-success/10 text-success border-success/30 text-[10px]">
-                        {t("admin.providers.available")}
-                      </Badge>
-                    ) : (
-                      <span className="text-xs text-muted-foreground">—</span>
-                    )}
-                  </TableCell>
-                  <TableCell className={`text-sm font-medium ${p.balance < 0 ? "text-destructive" : "text-success"}`}>
-                    {p.hasProviderRole ? formatCurrency(p.balance) : "—"}
-                  </TableCell>
-                  {isAdmin && p.user_id !== user?.id && (
-                    <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
-                        onClick={(e) => { e.stopPropagation(); setDeleteTarget(p); }}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </TableCell>
-                  )}
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      )}
+      <DataTable
+        columns={columns}
+        data={filtered}
+        globalSearchPlaceholder={t("admin.providers.search")}
+        globalSearchKeys={["full_name", "phone", "city", "provider_number"]}
+        onRowClick={(p) => setSelectedProvider(p)}
+        rowClassName={(p) => p.provider_status === "pending" ? "bg-yellow-50 dark:bg-yellow-950/20 border-l-4 border-l-yellow-400" : ""}
+        emptyMessage={t("admin.providers.no_providers")}
+      />
 
       <ProviderDetailsDrawer
         provider={selectedProvider}
