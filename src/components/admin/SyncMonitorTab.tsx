@@ -1,10 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { RefreshCw, Send, CheckCircle, XCircle, Clock, Loader2 } from "lucide-react";
 import { format } from "date-fns";
+import { DataTable } from "@/components/ui/data-table";
+import type { ColumnDef } from "@tanstack/react-table";
 
 interface OutboxRow {
   id: string;
@@ -150,57 +152,50 @@ const SyncMonitorTab = () => {
         </div>
       </div>
 
-      {/* Table */}
-      {loading ? (
-        <div className="flex justify-center py-10">
-          <Loader2 className="h-6 w-6 animate-spin text-primary" />
-        </div>
-      ) : rows.length === 0 ? (
-        <p className="text-center text-sm text-muted-foreground py-10">لا توجد سجلات مزامنة</p>
-      ) : (
-        <div className="overflow-x-auto border rounded-lg">
-          <table className="w-full text-sm">
-            <thead className="bg-muted/50">
-              <tr>
-                <th className="p-2 text-start font-medium">رقم الحجز</th>
-                <th className="p-2 text-start font-medium">الحالة</th>
-                <th className="p-2 text-start font-medium">المحاولات</th>
-                <th className="p-2 text-start font-medium">الخطأ</th>
-                <th className="p-2 text-start font-medium">تاريخ الإنشاء</th>
-                <th className="p-2 text-start font-medium">إجراء</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row) => (
-                <tr key={row.id} className="border-t border-border hover:bg-muted/30">
-                  <td className="p-2 font-mono text-xs">
-                    {(row.payload as Record<string, unknown>)?.booking_number as string || row.booking_id.slice(0, 8)}
-                  </td>
-                  <td className="p-2">{statusBadge(row.status)}</td>
-                  <td className="p-2 text-center">{row.attempts}</td>
-                  <td className="p-2 text-xs text-destructive max-w-[200px] truncate">{row.last_error || "—"}</td>
-                  <td className="p-2 text-xs">{format(new Date(row.created_at), "MM/dd HH:mm")}</td>
-                  <td className="p-2">
-                    {row.status !== "sent" && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => resendOne(row.id)}
-                        disabled={resendingId === row.id}
-                        className="gap-1 text-xs h-7"
-                      >
-                        {resendingId === row.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Send className="h-3 w-3" />}
-                        إعادة
-                      </Button>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+      <SyncOutboxTable rows={rows} loading={loading} resendingId={resendingId} onResend={resendOne} statusBadge={statusBadge} />
     </div>
+  );
+};
+
+interface OutboxTableProps {
+  rows: OutboxRow[];
+  loading: boolean;
+  resendingId: string | null;
+  onResend: (id: string) => void;
+  statusBadge: (s: string) => JSX.Element;
+}
+
+const SyncOutboxTable = ({ rows, loading, resendingId, onResend, statusBadge }: OutboxTableProps) => {
+  const columns = useMemo<ColumnDef<OutboxRow>[]>(() => [
+    { id: "booking_number", header: "رقم الحجز",
+      accessorFn: (r) => (r.payload as Record<string, unknown>)?.booking_number as string || r.booking_id.slice(0, 8),
+      cell: ({ getValue }) => <span className="font-mono text-xs">{String(getValue() ?? "")}</span> },
+    { accessorKey: "status", header: "الحالة", cell: ({ row }) => statusBadge(row.original.status) },
+    { accessorKey: "attempts", header: "المحاولات", cell: ({ row }) => <span className="text-center">{row.original.attempts}</span> },
+    { accessorKey: "last_error", header: "الخطأ",
+      cell: ({ row }) => <span className="text-xs text-destructive max-w-[200px] truncate block">{row.original.last_error || "—"}</span> },
+    { accessorKey: "created_at", header: "تاريخ الإنشاء",
+      cell: ({ row }) => <span className="text-xs">{format(new Date(row.original.created_at), "MM/dd HH:mm")}</span> },
+    { id: "actions", header: "إجراء", enableSorting: false,
+      cell: ({ row }) => row.original.status !== "sent" ? (
+        <Button variant="ghost" size="sm" onClick={() => onResend(row.original.id)}
+          disabled={resendingId === row.original.id} className="gap-1 text-xs h-7">
+          {resendingId === row.original.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Send className="h-3 w-3" />}
+          إعادة
+        </Button>
+      ) : null },
+  ], [resendingId, onResend, statusBadge]);
+
+  if (loading) return <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
+
+  return (
+    <DataTable
+      columns={columns}
+      data={rows}
+      globalSearchPlaceholder="بحث..."
+      globalSearchKeys={["booking_id", "status", "last_error"]}
+      emptyMessage="لا توجد سجلات مزامنة"
+    />
   );
 };
 
