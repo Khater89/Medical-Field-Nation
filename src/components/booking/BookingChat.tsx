@@ -65,6 +65,10 @@ interface Props {
   onTargetProviderClick?: (providerId: string) => void;
   /** Guest mode (no auth): use edge functions with booking_number + phone */
   guestMode?: { bookingNumber: string; phone: string; displayName?: string };
+  /** Customer-only: enable "assign to this provider" action (only when booking is still NEW) */
+  canAssign?: boolean;
+  /** Called after assignment succeeds */
+  onAssigned?: (providerId: string) => void;
 }
 
 const ROLE_LABELS: Record<string, string> = {
