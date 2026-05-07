@@ -35,8 +35,7 @@ const FILTER_COLORS: Record<string, string> = {
 };
 
 const BookingsTab = () => {
-  const { toast } = useToast();
-  const { t, formatCurrency, formatDateShort, isRTL } = useLanguage();
+  const { t, formatCurrency, formatDateShort } = useLanguage();
   const [bookings, setBookings] = useState<BookingRow[]>([]);
   const [clientCancelledIds, setClientCancelledIds] = useState<Set<string>>(new Set());
   const [serviceNames, setServiceNames] = useState<Record<string, string>>({});
