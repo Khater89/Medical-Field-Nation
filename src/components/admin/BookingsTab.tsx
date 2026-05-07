@@ -10,6 +10,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import BookingDetailsDrawer, { type BookingRow } from "./BookingDetailsDrawer";
+import BookingInteractionsDialog from "./BookingInteractionsDialog";
 
 const STATUS_COLORS: Record<string, string> = {
   NEW: "bg-info/10 text-info border-info/30",
