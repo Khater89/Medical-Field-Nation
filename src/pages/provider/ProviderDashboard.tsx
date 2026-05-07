@@ -1049,34 +1049,55 @@ const ProviderDashboard = () => {
 
           {/* ═══ Notifications Tab ═══ */}
           <TabsContent value="notifications" className="space-y-3">
+            {providerNotifications.length > 0 && unreadNotifCount > 0 && (
+              <div className="flex justify-end">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="text-xs h-8"
+                  onClick={async () => {
+                    const ids = providerNotifications.filter((n: any) => !n.read).map((n: any) => n.id);
+                    if (ids.length === 0) return;
+                    await supabase.from("staff_notifications").update({ read: true }).in("id", ids);
+                    setProviderNotifications((prev) => prev.map((p: any) => ({ ...p, read: true })));
+                    setUnreadNotifCount(0);
+                  }}
+                >
+                  <CheckCircle className="h-3.5 w-3.5 ml-1" /> تعليم الكل كمقروء
+                </Button>
+              </div>
+            )}
             {providerNotifications.length === 0 ? (
-              <p className="text-center text-muted-foreground py-6 text-sm">لا توجد تنبيهات</p>
+              <div className="text-center py-12 text-muted-foreground">
+                <AlertTriangle className="h-12 w-12 mx-auto mb-3 opacity-30" />
+                <p className="text-base">لا توجد تنبيهات</p>
+              </div>
             ) : (
               providerNotifications.map((n: any) => (
-                <Card key={n.id} className={`${!n.read ? "border-primary/30 bg-primary/5" : ""}`}>
-                  <CardContent className="py-3 space-y-1">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex-1">
-                        <p className="text-sm font-semibold">{n.title}</p>
-                        {n.body && <p className="text-xs text-muted-foreground mt-1">{n.body}</p>}
-                        <p className="text-[10px] text-muted-foreground mt-1">
+                <Card
+                  key={n.id}
+                  className={`cursor-pointer transition-all hover:shadow-md ${
+                    !n.read ? "border-primary/40 bg-primary/5 shadow-sm" : "opacity-80"
+                  }`}
+                  onClick={async () => {
+                    if (n.read) return;
+                    await supabase.from("staff_notifications").update({ read: true }).eq("id", n.id);
+                    setProviderNotifications((prev) => prev.map((p: any) => p.id === n.id ? { ...p, read: true } : p));
+                    setUnreadNotifCount((c) => Math.max(0, c - 1));
+                  }}
+                >
+                  <CardContent className="py-4 px-4">
+                    <div className="flex items-start gap-3">
+                      {!n.read && (
+                        <span className="h-2.5 w-2.5 rounded-full bg-primary mt-1.5 shrink-0 animate-pulse" />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className={`text-base ${!n.read ? "font-bold" : "font-semibold"}`}>{n.title}</p>
+                        {n.body && <p className="text-sm text-muted-foreground mt-1.5 leading-relaxed whitespace-pre-line">{n.body}</p>}
+                        <p className="text-[11px] text-muted-foreground mt-2">
                           {new Date(n.created_at).toLocaleString("ar-JO", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
                         </p>
                       </div>
-                      {!n.read && (
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="h-6 text-[10px]"
-                          onClick={async () => {
-                            await supabase.from("staff_notifications").update({ read: true }).eq("id", n.id);
-                            setProviderNotifications((prev) => prev.map((p: any) => p.id === n.id ? { ...p, read: true } : p));
-                            setUnreadNotifCount((c) => Math.max(0, c - 1));
-                          }}
-                        >
-                          ✓ قراءة
-                        </Button>
-                      )}
                     </div>
                   </CardContent>
                 </Card>
