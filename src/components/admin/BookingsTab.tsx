@@ -121,6 +121,17 @@ const BookingsTab = () => {
 
   useEffect(() => { fetchBookings(); }, []);
 
+  // Realtime: refresh counts when providers send messages or quotes
+  useEffect(() => {
+    const ch = supabase
+      .channel("admin-bookings-interactions")
+      .on("postgres_changes", { event: "*", schema: "public", table: "booking_messages" }, () => fetchBookings())
+      .on("postgres_changes", { event: "*", schema: "public", table: "provider_quotes" }, () => fetchBookings())
+      .on("postgres_changes", { event: "*", schema: "public", table: "bookings" }, () => fetchBookings())
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, []);
+
   // Filter out client-cancelled bookings (they disappear from dashboard)
   const visibleBookings = bookings.filter((b) => {
     if (b.status === "CANCELLED" && clientCancelledIds.has(b.id)) return false;
