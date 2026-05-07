@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Loader2, Search, UserCheck } from "lucide-react";
+import { Loader2, Search, UserCheck, Eye, MessageSquareQuote } from "lucide-react";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
@@ -46,6 +46,8 @@ const BookingsTab = () => {
   const [serviceCategories, setServiceCategories] = useState<Record<string, string>>({});
   const [providerNames, setProviderNames] = useState<Record<string, string>>({});
   const [providerPhones, setProviderPhones] = useState<Record<string, string>>({});
+  const [viewerCounts, setViewerCounts] = useState<Record<string, number>>({});
+  const [quoteCounts, setQuoteCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("ALL");
   const [search, setSearch] = useState("");
@@ -53,14 +55,30 @@ const BookingsTab = () => {
   const [selectedBooking, setSelectedBooking] = useState<BookingRow | null>(null);
 
   const fetchBookings = async () => {
-    const [bookingsRes, contactsRes, servicesRes, profilesRes, cancelHistoryRes] = await Promise.all([
+    const [bookingsRes, contactsRes, servicesRes, profilesRes, cancelHistoryRes, msgsRes, quotesRes] = await Promise.all([
       supabase.from("bookings").select("*").order("created_at", { ascending: false }),
       supabase.from("booking_contacts").select("*"),
       supabase.from("services").select("id, name, base_price, category"),
       supabase.from("profiles").select("user_id, full_name, phone"),
-      // Fetch cancellation history to identify client-cancelled bookings
       supabase.from("booking_history").select("booking_id, performer_role").eq("action", "CANCELLED").eq("performer_role", "customer"),
+      supabase.from("booking_messages").select("booking_id, sender_id, sender_role").eq("sender_role", "provider"),
+      supabase.from("provider_quotes").select("booking_id"),
     ]);
+
+    // Build viewer & quote count maps
+    const vMap: Record<string, Set<string>> = {};
+    (msgsRes.data || []).forEach((m: any) => {
+      if (!vMap[m.booking_id]) vMap[m.booking_id] = new Set();
+      vMap[m.booking_id].add(m.sender_id);
+    });
+    const viewerMap: Record<string, number> = {};
+    Object.keys(vMap).forEach((k) => { viewerMap[k] = vMap[k].size; });
+    setViewerCounts(viewerMap);
+
+    const qMap: Record<string, number> = {};
+    (quotesRes.data || []).forEach((q: any) => { qMap[q.booking_id] = (qMap[q.booking_id] || 0) + 1; });
+    setQuoteCounts(qMap);
+
 
     // Build set of client-cancelled booking IDs
     const clientCancelled = new Set<string>();
@@ -201,6 +219,7 @@ const BookingsTab = () => {
                 <TableHead>{t("admin.bookings.col.date")}</TableHead>
                 <TableHead>{t("admin.bookings.col.amount")}</TableHead>
                 <TableHead>{t("admin.bookings.col.status")}</TableHead>
+                <TableHead className="text-center">سوق المزودين</TableHead>
                 <TableHead>{t("admin.bookings.col.provider")}</TableHead>
               </TableRow>
             </TableHeader>
@@ -248,6 +267,16 @@ const BookingsTab = () => {
                           🔑 OTP
                         </Badge>
                       )}
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <div className="flex items-center justify-center gap-2 text-xs">
+                      <span className="flex items-center gap-1 text-muted-foreground" title="عدد المزودين الذين شاهدوا/راسلوا">
+                        <Eye className="h-3.5 w-3.5" /> {viewerCounts[b.id] || 0}
+                      </span>
+                      <span className={`flex items-center gap-1 font-semibold ${(quoteCounts[b.id] || 0) > 0 ? "text-success" : "text-muted-foreground"}`} title="عدد عروض الأسعار">
+                        <MessageSquareQuote className="h-3.5 w-3.5" /> {quoteCounts[b.id] || 0}
+                      </span>
                     </div>
                   </TableCell>
                   <TableCell className="text-xs">
