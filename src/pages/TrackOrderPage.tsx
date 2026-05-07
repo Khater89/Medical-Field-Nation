@@ -428,7 +428,7 @@ const TrackOrderPage = () => {
                       bookingId={booking.id}
                       viewerRole="customer"
                       viewerId={user?.id || booking.id}
-                      guestMode={user ? undefined : { bookingNumber: bookingNumber.trim(), phone: phone.trim() }}
+                      guestMode={{ bookingNumber: bookingNumber.trim(), phone: phone.trim() }}
                     />
                   </div>
                 )}
