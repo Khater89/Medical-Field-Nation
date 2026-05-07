@@ -136,15 +136,6 @@ const BookingsTab = () => {
     } else if (filter !== "ALL" && b.status !== filter) {
       return false;
     }
-    if (search) {
-      const q = search.toLowerCase();
-      return (
-        (b.customer_name || "").toLowerCase().includes(q) ||
-        (b.customer_phone || "").includes(q) ||
-        b.city.toLowerCase().includes(q) ||
-        (b.booking_number || "").toLowerCase().includes(q)
-      );
-    }
     return true;
   });
 
