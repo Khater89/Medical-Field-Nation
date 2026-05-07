@@ -269,6 +269,16 @@ const BookingsTab = () => {
                       )}
                     </div>
                   </TableCell>
+                  <TableCell className="text-center">
+                    <div className="flex items-center justify-center gap-2 text-xs">
+                      <span className="flex items-center gap-1 text-muted-foreground" title="عدد المزودين الذين شاهدوا/راسلوا">
+                        <Eye className="h-3.5 w-3.5" /> {viewerCounts[b.id] || 0}
+                      </span>
+                      <span className={`flex items-center gap-1 font-semibold ${(quoteCounts[b.id] || 0) > 0 ? "text-success" : "text-muted-foreground"}`} title="عدد عروض الأسعار">
+                        <MessageSquareQuote className="h-3.5 w-3.5" /> {quoteCounts[b.id] || 0}
+                      </span>
+                    </div>
+                  </TableCell>
                   <TableCell className="text-xs">
                     {b.assigned_provider_id ? (
                       <span className="flex items-center gap-1">
