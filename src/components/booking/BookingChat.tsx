@@ -179,51 +179,100 @@ export default function BookingChat({
   };
 
   // Distinct providers from quotes + messages (excluding viewer if provider)
-  const providers = quotes.map((q) => ({
-    id: q.provider_id, name: q.provider_name, avatar: q.provider_avatar,
-    role: q.provider_role, price: q.quoted_price, isMine: q.is_mine,
-  }));
+  // Build provider list from quotes + provider messages (provider may message without quote)
+  const providerMap = new Map<string, { id: string; name: string; avatar: string | null; role: string | null; price: number | null; isMine: boolean }>();
+  quotes.forEach((q) => {
+    providerMap.set(q.provider_id, {
+      id: q.provider_id, name: q.provider_name, avatar: q.provider_avatar,
+      role: q.provider_role, price: q.quoted_price, isMine: q.is_mine,
+    });
+  });
+  messages.forEach((m) => {
+    if (m.sender_role === "provider" && !providerMap.has(m.sender_id)) {
+      providerMap.set(m.sender_id, {
+        id: m.sender_id, name: m.sender_display_name || "مقدم خدمة",
+        avatar: m.sender_avatar, role: null, price: null,
+        isMine: m.sender_id === viewerId,
+      });
+    }
+  });
+  const providers = Array.from(providerMap.values());
+
+  // Customer-only: filter messages by selected provider thread
+  const visibleMessages = (() => {
+    if (viewerRole !== "customer" || !target) return messages;
+    return messages.filter((m) => {
+      if (m.sender_role === "provider") return m.sender_id === target;
+      return !m.target_provider_id || m.target_provider_id === target;
+    });
+  })();
+
+  const ROLE_LABEL = (r: string | null) => (r ? ROLE_LABELS[r] || r : "");
 
   return (
     <div className="border rounded-lg bg-card">
-      {/* Providers strip — both customer & provider see who's involved */}
+      {/* Providers strip — customer can filter to a single provider's thread */}
       {providers.length > 0 && (
-        <div className="border-b p-3 space-y-2">
-          <p className="text-[11px] font-semibold text-muted-foreground">
-            {viewerRole === "customer" ? "المزودون المهتمون بطلبك" : "العروض المقدمة"}
-          </p>
-          <div className="flex gap-2 overflow-x-auto">
-            {providers.map((p) => (
-              <button
-                key={p.id}
-                onClick={() => {
-                  if (viewerRole === "customer") {
-                    setTarget(p.id === target ? null : p.id);
-                    onTargetProviderClick?.(p.id);
-                  }
-                }}
-                className={`shrink-0 flex flex-col items-center gap-1 p-2 rounded-lg border min-w-[80px] transition-colors ${
-                  target === p.id ? "border-primary bg-primary/5" : "border-border bg-background hover:bg-muted/50"
-                } ${p.isMine ? "ring-1 ring-success" : ""}`}
-              >
-                <Avatar className="h-9 w-9">
-                  <AvatarImage src={p.avatar || undefined} />
-                  <AvatarFallback><User className="h-4 w-4" /></AvatarFallback>
-                </Avatar>
-                <p className="text-[11px] font-medium truncate max-w-[72px]">{p.name}</p>
-                {p.role && <span className="text-[9px] text-muted-foreground">{ROLE_LABELS[p.role] || p.role}</span>}
-                <Badge variant="outline" className="text-[10px] px-1 py-0 gap-0.5">
-                  <DollarSign className="h-2.5 w-2.5" />{p.price} JOD
-                </Badge>
-                {p.isMine && <span className="text-[9px] text-success font-bold">عرضي</span>}
-              </button>
-            ))}
-          </div>
-          {viewerRole === "customer" && target && (
-            <p className="text-[10px] text-primary">
-              ✉️ سيتم إرسال رسالتك التالية لهذا المزود فقط — اضغط مرة أخرى لإلغاء التحديد
+        <div className="border-b p-3 space-y-2 bg-muted/20">
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-[11px] font-semibold text-muted-foreground">
+              {viewerRole === "customer"
+                ? `🩺 ${providers.length} مزود مهتم — اضغط على مزود لعرض محادثته فقط`
+                : "العروض المقدمة"}
             </p>
-          )}
+            {viewerRole === "customer" && target && (
+              <button
+                onClick={() => setTarget(null)}
+                className="text-[10px] text-primary font-bold hover:underline"
+              >
+                عرض كل الرسائل
+              </button>
+            )}
+          </div>
+          <div className="flex gap-2 overflow-x-auto pb-1">
+            {providers.map((p) => {
+              const isActive = target === p.id;
+              return (
+                <button
+                  key={p.id}
+                  onClick={() => {
+                    if (viewerRole === "customer") {
+                      setTarget(p.id === target ? null : p.id);
+                      onTargetProviderClick?.(p.id);
+                    }
+                  }}
+                  className={`shrink-0 flex flex-col items-center gap-1 p-2 rounded-lg border min-w-[92px] transition-all ${
+                    isActive
+                      ? "border-primary bg-primary/10 ring-2 ring-primary/30 shadow-sm"
+                      : "border-border bg-background hover:bg-muted/50"
+                  } ${p.isMine ? "ring-1 ring-success" : ""}`}
+                >
+                  <Avatar className="h-10 w-10">
+                    <AvatarImage src={p.avatar || undefined} />
+                    <AvatarFallback><User className="h-4 w-4" /></AvatarFallback>
+                  </Avatar>
+                  <p className="text-[11px] font-bold truncate max-w-[80px]">{p.name}</p>
+                  {p.role && <span className="text-[9px] text-muted-foreground">{ROLE_LABEL(p.role)}</span>}
+                  {p.price != null && (
+                    <Badge variant="outline" className="text-[10px] px-1 py-0 gap-0.5">
+                      <DollarSign className="h-2.5 w-2.5" />{p.price} JOD
+                    </Badge>
+                  )}
+                  {p.isMine && <span className="text-[9px] text-success font-bold">عرضي</span>}
+                </button>
+              );
+            })}
+          </div>
+          {viewerRole === "customer" && target && (() => {
+            const sel = providers.find((p) => p.id === target);
+            return (
+              <div className="text-[11px] text-primary bg-primary/5 rounded px-2 py-1.5 border border-primary/20">
+                <span className="font-bold">محادثة:</span> {sel?.name}
+                {sel?.role && <span className="text-muted-foreground"> • {ROLE_LABEL(sel.role)}</span>}
+                <span className="block text-[10px] text-muted-foreground mt-0.5">رسالتك التالية ستُرسل لهذا المزود فقط</span>
+              </div>
+            );
+          })()}
         </div>
       )}
 
@@ -242,14 +291,24 @@ export default function BookingChat({
             </div>
           )}
           {(() => {
-            // Compute timestamp of latest message from any *other* participant —
-            // used to mark our own earlier messages as "delivered".
-            const latestOtherTs = messages
+            const latestOtherTs = visibleMessages
               .filter((x) => x.sender_id !== viewerId && !x._pending)
               .reduce<number>((acc, x) => Math.max(acc, new Date(x.created_at).getTime()), 0);
 
+            // Color palette for distinguishing providers (customer view)
+            const providerColors = [
+              "border-l-4 border-l-blue-500 bg-blue-50 dark:bg-blue-950/30",
+              "border-l-4 border-l-emerald-500 bg-emerald-50 dark:bg-emerald-950/30",
+              "border-l-4 border-l-purple-500 bg-purple-50 dark:bg-purple-950/30",
+              "border-l-4 border-l-amber-500 bg-amber-50 dark:bg-amber-950/30",
+              "border-l-4 border-l-pink-500 bg-pink-50 dark:bg-pink-950/30",
+            ];
+            const providerColorMap = new Map<string, string>();
+            providers.forEach((p, i) => providerColorMap.set(p.id, providerColors[i % providerColors.length]));
+
             let lastDateLabel = "";
-            return messages.map((m) => {
+            let lastSenderId = "";
+            return visibleMessages.map((m) => {
               const mine = m.sender_id === viewerId;
               const isPrivate = m.target_provider_id != null;
               const hidden = isPrivate && viewerRole === "provider" && m.target_provider_id !== viewerId && !mine;
@@ -259,10 +318,21 @@ export default function BookingChat({
               const showDate = dateLabel !== lastDateLabel;
               lastDateLabel = dateLabel;
 
-              // Status: pending (clock) → sent (single check) → delivered (double check)
+              // Show provider header divider when sender changes (customer view, multiple providers)
+              const showProviderDivider =
+                viewerRole === "customer" &&
+                m.sender_role === "provider" &&
+                !target &&
+                providers.length > 1 &&
+                m.sender_id !== lastSenderId;
+              lastSenderId = m.sender_id;
+
               let status: "pending" | "sent" | "delivered" = "sent";
               if (m._pending) status = "pending";
               else if (mine && new Date(m.created_at).getTime() < latestOtherTs) status = "delivered";
+
+              const providerInfo = m.sender_role === "provider" ? providers.find((p) => p.id === m.sender_id) : null;
+              const colorClass = m.sender_role === "provider" && !mine ? (providerColorMap.get(m.sender_id) || "bg-muted") : "";
 
               return (
                 <div key={m.id}>
@@ -273,6 +343,20 @@ export default function BookingChat({
                       </span>
                     </div>
                   )}
+                  {showProviderDivider && providerInfo && (
+                    <div className="flex items-center gap-2 my-2 px-2">
+                      <div className="h-px flex-1 bg-border" />
+                      <div className="flex items-center gap-1.5 text-[10px] font-bold text-muted-foreground bg-background px-2 py-0.5 rounded-full border">
+                        <Avatar className="h-4 w-4">
+                          <AvatarImage src={providerInfo.avatar || undefined} />
+                          <AvatarFallback className="text-[8px]">🩺</AvatarFallback>
+                        </Avatar>
+                        {providerInfo.name}
+                        {providerInfo.role && <span className="text-muted-foreground/70">• {ROLE_LABEL(providerInfo.role)}</span>}
+                      </div>
+                      <div className="h-px flex-1 bg-border" />
+                    </div>
+                  )}
                   <div className={`flex gap-2 ${mine ? "flex-row-reverse" : ""} ${m._pending ? "opacity-70" : ""}`}>
                     <Avatar className="h-7 w-7 shrink-0">
                       <AvatarImage src={m.sender_avatar || undefined} />
@@ -281,10 +365,13 @@ export default function BookingChat({
                       </AvatarFallback>
                     </Avatar>
                     <div className={`max-w-[75%] rounded-lg px-3 py-2 text-sm ${
-                      mine ? "bg-primary text-primary-foreground" : "bg-muted"
+                      mine ? "bg-primary text-primary-foreground" : (colorClass || "bg-muted")
                     }`}>
-                      <div className="flex items-center gap-1 mb-0.5">
-                        <span className="text-[10px] opacity-70 font-medium">{m.sender_display_name}</span>
+                      <div className="flex items-center gap-1 mb-0.5 flex-wrap">
+                        <span className="text-[10px] opacity-80 font-bold">{m.sender_display_name}</span>
+                        {providerInfo?.role && !mine && (
+                          <span className="text-[9px] opacity-70">• {ROLE_LABEL(providerInfo.role)}</span>
+                        )}
                         {isPrivate && <Badge variant="outline" className="text-[9px] px-1 py-0 h-3.5">خاص</Badge>}
                       </div>
                       <p className="break-words whitespace-pre-wrap">{m.body}</p>
