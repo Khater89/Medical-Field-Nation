@@ -465,6 +465,64 @@ export default function BookingChat({
           </Button>
         </div>
       </div>
+
+      {/* Assign confirmation */}
+      <AlertDialog open={!!assignDialog} onOpenChange={(o) => !o && setAssignDialog(null)}>
+        <AlertDialogContent dir="rtl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>تأكيد إسناد الطلب</AlertDialogTitle>
+            <AlertDialogDescription>
+              هل أنت متأكد أنك تريد إسناد هذا الطلب إلى{" "}
+              <strong>{providers.find((p) => p.id === assignDialog)?.name || "هذا المزود"}</strong>؟
+              سيتم إخطاره للقبول ولن يكون الطلب متاحاً لباقي المزودين.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-row-reverse gap-2">
+            <AlertDialogCancel disabled={assigning}>تراجع</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={assigning}
+              onClick={async (e) => {
+                e.preventDefault();
+                if (!assignDialog) return;
+                setAssigning(true);
+                try {
+                  let ok = false;
+                  let errMsg = "";
+                  if (guestMode) {
+                    const { data, error } = await supabase.functions.invoke("customer-assign-provider", {
+                      body: {
+                        booking_number: guestMode.bookingNumber,
+                        phone: guestMode.phone,
+                        provider_id: assignDialog,
+                      },
+                    });
+                    ok = !error && !(data as any)?.error;
+                    errMsg = (data as any)?.error || error?.message || "";
+                  } else {
+                    const { data, error } = await supabase.rpc("customer_assign_provider" as any, {
+                      _booking_id: bookingId, _provider_id: assignDialog,
+                    });
+                    ok = !error && (data as any)?.success;
+                    errMsg = (data as any)?.error || error?.message || "";
+                  }
+                  if (ok) {
+                    toast.success("تم إسناد الطلب بنجاح، بانتظار قبول المزود");
+                    onAssigned?.(assignDialog);
+                    setAssignDialog(null);
+                    fetchAll();
+                  } else {
+                    toast.error(errMsg === "already_assigned" ? "الطلب مُسنَد بالفعل" : "تعذّر الإسناد");
+                  }
+                } catch (err: any) {
+                  toast.error(err.message || "حدث خطأ");
+                } finally { setAssigning(false); }
+              }}
+            >
+              {assigning ? <Loader2 className="h-4 w-4 animate-spin" /> : "تأكيد الإسناد"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
