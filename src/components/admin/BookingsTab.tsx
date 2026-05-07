@@ -54,6 +54,7 @@ const BookingsTab = () => {
   const [search, setSearch] = useState("");
 
   const [selectedBooking, setSelectedBooking] = useState<BookingRow | null>(null);
+  const [interactionsBooking, setInteractionsBooking] = useState<BookingRow | null>(null);
 
   const fetchBookings = async () => {
     const [bookingsRes, contactsRes, servicesRes, profilesRes, cancelHistoryRes, msgsRes, quotesRes] = await Promise.all([
