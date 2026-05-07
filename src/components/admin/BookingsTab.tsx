@@ -47,7 +47,7 @@ const BookingsTab = () => {
   const [quoteCounts, setQuoteCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("ALL");
-  const [search, setSearch] = useState("");
+  
 
   const [selectedBooking, setSelectedBooking] = useState<BookingRow | null>(null);
   const [interactionsBooking, setInteractionsBooking] = useState<BookingRow | null>(null);
