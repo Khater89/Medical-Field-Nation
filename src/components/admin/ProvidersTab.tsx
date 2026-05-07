@@ -106,8 +106,8 @@ const ProvidersTab = () => {
     } else {
       // Send approval notification to provider
       await supabase.from("staff_notifications").insert({
-        title: "تم قبول طلب انضمامك ✅",
-        body: "تم قبول طلب انضمامك بنجاح، يمكنك الآن البدء بالعمل. أكمل ملفك الشخصي للبدء باستقبال الطلبات.",
+        title: "🎉 تم قبول طلب انضمامك بنجاح",
+        body: "مبروك! تم قبول طلب انضمامك بنجاح، ويمكنك الآن استخدام حسابك كمزود خدمة واستقبال الطلبات. لا تنسَ إكمال ملفك الشخصي.",
         target_role: "provider",
         provider_id: userId,
       });

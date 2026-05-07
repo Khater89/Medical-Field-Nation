@@ -1025,6 +1025,10 @@ export type Database = {
         }[]
       }
       provider_reserve_booking: { Args: { _booking_id: string }; Returns: Json }
+      provider_role_matches_category: {
+        Args: { _category: string; _role_type: string }
+        Returns: boolean
+      }
       provider_self_assign: { Args: { _booking_id: string }; Returns: Json }
       remove_user_role: {
         Args: {
