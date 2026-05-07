@@ -244,33 +244,49 @@ export default function BookingChat({
             {providers.map((p) => {
               const isActive = target === p.id;
               return (
-                <button
+                <div
                   key={p.id}
-                  onClick={() => {
-                    if (viewerRole === "customer") {
-                      setTarget(p.id === target ? null : p.id);
-                      onTargetProviderClick?.(p.id);
-                    }
-                  }}
-                  className={`shrink-0 flex flex-col items-center gap-1 p-2 rounded-lg border min-w-[92px] transition-all ${
+                  className={`shrink-0 flex flex-col items-center gap-1 p-2 rounded-lg border min-w-[110px] transition-all ${
                     isActive
                       ? "border-primary bg-primary/10 ring-2 ring-primary/30 shadow-sm"
                       : "border-border bg-background hover:bg-muted/50"
                   } ${p.isMine ? "ring-1 ring-success" : ""}`}
                 >
-                  <Avatar className="h-10 w-10">
-                    <AvatarImage src={p.avatar || undefined} />
-                    <AvatarFallback><User className="h-4 w-4" /></AvatarFallback>
-                  </Avatar>
-                  <p className="text-[11px] font-bold truncate max-w-[80px]">{p.name}</p>
-                  {p.role && <span className="text-[9px] text-muted-foreground">{ROLE_LABEL(p.role)}</span>}
-                  {p.price != null && (
-                    <Badge variant="outline" className="text-[10px] px-1 py-0 gap-0.5">
-                      <DollarSign className="h-2.5 w-2.5" />{p.price} JOD
-                    </Badge>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (viewerRole === "customer") {
+                        setTarget(p.id === target ? null : p.id);
+                        onTargetProviderClick?.(p.id);
+                      }
+                    }}
+                    className="flex flex-col items-center gap-1 w-full"
+                  >
+                    <Avatar className="h-10 w-10">
+                      <AvatarImage src={p.avatar || undefined} />
+                      <AvatarFallback><User className="h-4 w-4" /></AvatarFallback>
+                    </Avatar>
+                    <p className="text-[11px] font-bold truncate max-w-[90px]">{p.name}</p>
+                    {p.role && <span className="text-[9px] text-muted-foreground">{ROLE_LABEL(p.role)}</span>}
+                    {p.price != null && (
+                      <Badge variant="outline" className="text-[10px] px-1 py-0 gap-0.5">
+                        <DollarSign className="h-2.5 w-2.5" />{p.price} JOD
+                      </Badge>
+                    )}
+                    {p.isMine && <span className="text-[9px] text-success font-bold">عرضي</span>}
+                  </button>
+                  {viewerRole === "customer" && canAssign && (
+                    <Button
+                      type="button"
+                      size="sm"
+                      className="h-7 w-full text-[10px] gap-1 mt-1"
+                      onClick={() => setAssignDialog(p.id)}
+                    >
+                      <UserCheck className="h-3 w-3" />
+                      إسناد لهذا المزود
+                    </Button>
                   )}
-                  {p.isMine && <span className="text-[9px] text-success font-bold">عرضي</span>}
-                </button>
+                </div>
               );
             })}
           </div>
