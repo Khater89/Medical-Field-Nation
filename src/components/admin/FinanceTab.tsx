@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Card, CardContent } from "@/components/ui/card";
@@ -8,19 +8,18 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from "@/components/ui/table";
-import {
   Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription,
 } from "@/components/ui/sheet";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
 import {
-  Loader2, Search, TrendingUp, AlertTriangle, Wallet, DollarSign,
+  Loader2, TrendingUp, AlertTriangle, Wallet, DollarSign,
   ArrowDownCircle, ArrowUpCircle, CalendarDays,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { DataTable } from "@/components/ui/data-table";
+import type { ColumnDef } from "@tanstack/react-table";
 
 interface ProviderDebt {
   user_id: string;
@@ -230,13 +229,21 @@ const FinanceTab = () => {
     setSettlementLoading(false);
   };
 
-  const filtered = providers.filter((p) => {
-    if (!search) return true;
-    const q = search.toLowerCase();
-    return (p.full_name || "").toLowerCase().includes(q)
-      || (p.phone || "").includes(q)
-      || (p.city || "").toLowerCase().includes(q);
-  });
+  const columns = useMemo<ColumnDef<ProviderDebt>[]>(() => [
+    { accessorKey: "full_name", header: t("admin.providers.col.name"),
+      cell: ({ row }) => <span className="font-medium text-sm">{row.original.full_name || "—"}</span> },
+    { accessorKey: "phone", header: t("admin.providers.col.phone"),
+      cell: ({ row }) => <span className="text-xs" dir="ltr">{row.original.phone || "—"}</span> },
+    { accessorKey: "city", header: t("admin.providers.col.city"),
+      cell: ({ row }) => <span className="text-sm">{row.original.city || "—"}</span> },
+    { accessorKey: "role_type", header: t("admin.providers.col.type"),
+      cell: ({ row }) => {
+        const k = `role_type.${row.original.role_type || ""}`;
+        return <span className="text-xs">{t(k) !== k ? t(k) : row.original.role_type || "—"}</span>;
+      } },
+    { accessorKey: "balance", header: t("finance.debt_amount"),
+      cell: ({ row }) => <span className="text-sm font-bold text-destructive">{formatCurrency(row.original.balance)}</span> },
+  ], [t, formatCurrency]);
 
   if (loading) return <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
 
@@ -279,63 +286,16 @@ const FinanceTab = () => {
         </Card>
       </div>
 
-      {/* Search */}
-      <div className="flex items-center gap-2">
-        <h2 className="text-lg font-bold">{t("finance.title")}</h2>
-        <div className="relative ms-auto">
-          <Search className={`absolute ${isRTL ? "right-3" : "left-3"} top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground`} />
-          <Input
-            placeholder={t("admin.providers.search")}
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className={`${isRTL ? "pr-9" : "pl-9"} w-[200px]`}
-          />
-        </div>
-      </div>
+      <h2 className="text-lg font-bold">{t("finance.title")}</h2>
 
-      {/* Provider Debt Table */}
-      {filtered.length === 0 ? (
-        <Card>
-          <CardContent className="py-10 text-center text-muted-foreground">
-            لا يوجد مزوّدون مديونون حالياً
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="rounded-lg border border-border overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-muted/50">
-                <TableHead>{t("admin.providers.col.name")}</TableHead>
-                <TableHead>{t("admin.providers.col.phone")}</TableHead>
-                <TableHead>{t("admin.providers.col.city")}</TableHead>
-                <TableHead>{t("admin.providers.col.type")}</TableHead>
-                <TableHead>{t("finance.debt_amount")}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filtered.map((p) => (
-                <TableRow
-                  key={p.user_id}
-                  className="cursor-pointer hover:bg-accent/50 transition-colors"
-                  onClick={() => openProviderLedger(p)}
-                >
-                  <TableCell className="font-medium text-sm">{p.full_name || "—"}</TableCell>
-                  <TableCell className="text-xs" dir="ltr">{p.phone || "—"}</TableCell>
-                  <TableCell className="text-sm">{p.city || "—"}</TableCell>
-                  <TableCell className="text-xs">
-                    {t(`role_type.${p.role_type || ""}`) !== `role_type.${p.role_type || ""}` ? t(`role_type.${p.role_type}`) : p.role_type || "—"}
-                  </TableCell>
-                  <TableCell>
-                    <span className="text-sm font-bold text-destructive">
-                      {formatCurrency(p.balance)}
-                    </span>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      )}
+      <DataTable
+        columns={columns}
+        data={providers}
+        globalSearchPlaceholder={t("admin.providers.search")}
+        globalSearchKeys={["full_name", "phone", "city"]}
+        onRowClick={(p) => openProviderLedger(p)}
+        emptyMessage="لا يوجد مزوّدون مديونون حالياً"
+      />
 
       {/* Provider Ledger Drawer */}
       <Sheet open={!!selectedProvider} onOpenChange={(open) => { if (!open) setSelectedProvider(null); }}>
