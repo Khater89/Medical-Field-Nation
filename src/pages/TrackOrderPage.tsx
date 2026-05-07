@@ -417,21 +417,31 @@ const TrackOrderPage = () => {
 
                 {/* Booking Chat — visible to all (guests use booking_number + phone) */}
                 {booking.id && !isCancelled && (
-                  <div className="border-t pt-3 space-y-2">
-                    <div className="flex items-center gap-2">
-                      <p className="text-sm font-bold">المحادثة والعروض</p>
-                      <span className="text-[10px] text-muted-foreground">
-                        تواصل مع المزودين المهتمين بطلبك — مع أوقات الإرسال وحالة التسليم
-                      </span>
+                  <div className="border-t pt-4 -mx-2">
+                    <div className="rounded-2xl border-2 border-primary/30 bg-gradient-to-br from-primary/5 via-background to-primary/5 p-3 shadow-sm">
+                      <div className="flex items-start gap-2 mb-3 px-1">
+                        <div className="relative shrink-0 mt-0.5">
+                          <MessageCircle className="h-5 w-5 text-primary" />
+                          <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-success ring-2 ring-background animate-pulse" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-sm font-bold text-foreground">
+                            💬 محادثة مباشرة مع المزودين
+                          </p>
+                          <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
+                            هنا يتواصل معك المزودون المهتمون بطلبك ويرسلون عروض الأسعار مباشرة — لا حاجة لإنشاء حساب، فقط رقم الحجز والهاتف.
+                          </p>
+                        </div>
+                      </div>
+                      <BookingChat
+                        bookingId={booking.id}
+                        viewerRole="customer"
+                        viewerId={user?.id || booking.id}
+                        guestMode={{ bookingNumber: bookingNumber.trim(), phone: phone.trim() }}
+                        canAssign={booking.status === "NEW"}
+                        onAssigned={() => handleTrack()}
+                      />
                     </div>
-                    <BookingChat
-                      bookingId={booking.id}
-                      viewerRole="customer"
-                      viewerId={user?.id || booking.id}
-                      guestMode={{ bookingNumber: bookingNumber.trim(), phone: phone.trim() }}
-                      canAssign={booking.status === "NEW"}
-                      onAssigned={() => handleTrack()}
-                    />
                   </div>
                 )}
 
