@@ -219,6 +219,7 @@ const BookingsTab = () => {
                 <TableHead>{t("admin.bookings.col.date")}</TableHead>
                 <TableHead>{t("admin.bookings.col.amount")}</TableHead>
                 <TableHead>{t("admin.bookings.col.status")}</TableHead>
+                <TableHead className="text-center">سوق المزودين</TableHead>
                 <TableHead>{t("admin.bookings.col.provider")}</TableHead>
               </TableRow>
             </TableHeader>
