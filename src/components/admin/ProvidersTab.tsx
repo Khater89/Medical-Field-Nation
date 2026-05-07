@@ -26,11 +26,10 @@ const STATUS_COLORS: Record<string, string> = {
 
 const ProvidersTab = () => {
   const { toast } = useToast();
-  const { t, formatCurrency, isRTL } = useLanguage();
+  const { t, formatCurrency } = useLanguage();
   const { isAdmin, user } = useAuth();
   const [providers, setProviders] = useState<ProviderProfile[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [typeFilter, setTypeFilter] = useState("ALL");
 
