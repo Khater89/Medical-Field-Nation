@@ -1,14 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 
-import { Input } from "@/components/ui/input";
-import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Loader2, Search, UserCheck, Eye, MessageSquareQuote } from "lucide-react";
-import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from "@/components/ui/table";
+import { Loader2, UserCheck, Eye, MessageSquareQuote } from "lucide-react";
+import { DataTable } from "@/components/ui/data-table";
+import type { ColumnDef } from "@tanstack/react-table";
 import BookingDetailsDrawer, { type BookingRow } from "./BookingDetailsDrawer";
 import BookingInteractionsDialog from "./BookingInteractionsDialog";
 
@@ -38,8 +35,7 @@ const FILTER_COLORS: Record<string, string> = {
 };
 
 const BookingsTab = () => {
-  const { toast } = useToast();
-  const { t, formatCurrency, formatDateShort, isRTL } = useLanguage();
+  const { t, formatCurrency, formatDateShort } = useLanguage();
   const [bookings, setBookings] = useState<BookingRow[]>([]);
   const [clientCancelledIds, setClientCancelledIds] = useState<Set<string>>(new Set());
   const [serviceNames, setServiceNames] = useState<Record<string, string>>({});
@@ -51,7 +47,7 @@ const BookingsTab = () => {
   const [quoteCounts, setQuoteCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("ALL");
-  const [search, setSearch] = useState("");
+  
 
   const [selectedBooking, setSelectedBooking] = useState<BookingRow | null>(null);
   const [interactionsBooking, setInteractionsBooking] = useState<BookingRow | null>(null);
@@ -140,34 +136,128 @@ const BookingsTab = () => {
     } else if (filter !== "ALL" && b.status !== filter) {
       return false;
     }
-    if (search) {
-      const q = search.toLowerCase();
-      return (
-        (b.customer_name || "").toLowerCase().includes(q) ||
-        (b.customer_phone || "").includes(q) ||
-        b.city.toLowerCase().includes(q) ||
-        (b.booking_number || "").toLowerCase().includes(q)
-      );
-    }
     return true;
   });
+
+  const columns: ColumnDef<BookingRow>[] = useMemo(() => [
+    {
+      accessorKey: "booking_number",
+      header: t("admin.bookings.col.number"),
+      cell: ({ row }) => (
+        <span className="text-xs font-mono" dir="ltr">
+          {row.original.booking_number || row.original.id.slice(0, 8)}
+        </span>
+      ),
+    },
+    {
+      id: "service",
+      accessorFn: (b) => serviceNames[b.service_id] || "",
+      header: t("admin.bookings.col.service"),
+      cell: ({ row }) => {
+        const b = row.original;
+        const isEmergency = (serviceCategories[b.service_id] || "").toLowerCase() === "emergency" ||
+          (serviceNames[b.service_id] || "").includes("طوارئ");
+        return (
+          <span className="text-sm font-medium">
+            {isEmergency && <span className="text-destructive me-1">🚨</span>}
+            {serviceNames[b.service_id] || "—"}
+          </span>
+        );
+      },
+    },
+    {
+      id: "customer",
+      accessorFn: (b) => `${b.customer_name || b.customer_display_name || ""} ${b.customer_phone || ""}`,
+      header: t("admin.bookings.col.customer"),
+      cell: ({ row }) => (
+        <div>
+          <p className="text-sm">{row.original.customer_name || row.original.customer_display_name || "—"}</p>
+          <p className="text-xs text-muted-foreground" dir="ltr">{row.original.customer_phone || "—"}</p>
+        </div>
+      ),
+    },
+    {
+      accessorKey: "city",
+      header: t("admin.bookings.col.city"),
+      cell: ({ row }) => <span className="text-sm">{row.original.city}</span>,
+    },
+    {
+      accessorKey: "scheduled_at",
+      header: t("admin.bookings.col.date"),
+      cell: ({ row }) => <span className="text-xs">{formatDateShort(row.original.scheduled_at)}</span>,
+      sortingFn: "datetime",
+    },
+    {
+      id: "amount",
+      accessorFn: (b) => b.agreed_price ?? servicePrices[b.service_id] ?? b.subtotal ?? 0,
+      header: t("admin.bookings.col.amount"),
+      cell: ({ row }) => {
+        const b = row.original;
+        return (
+          <span className="text-sm font-medium">
+            {b.agreed_price != null
+              ? <span className="text-success">{formatCurrency(b.agreed_price)}</span>
+              : formatCurrency(servicePrices[b.service_id] ?? b.subtotal)}
+          </span>
+        );
+      },
+    },
+    {
+      accessorKey: "status",
+      header: t("admin.bookings.col.status"),
+      cell: ({ row }) => (
+        <div className="flex items-center gap-1">
+          <Badge variant="outline" className={`text-[10px] ${STATUS_COLORS[row.original.status] || ""}`}>
+            {t(`status.${row.original.status}`)}
+          </Badge>
+          {row.original.status === "IN_PROGRESS" && row.original.otp_code && (
+            <Badge className="text-[9px] bg-warning/20 text-warning border border-warning/40 animate-pulse">🔑 OTP</Badge>
+          )}
+        </div>
+      ),
+    },
+    {
+      id: "marketplace",
+      header: () => <span className="text-center w-full block">سوق المزودين</span>,
+      enableSorting: false,
+      cell: ({ row }) => {
+        const b = row.original;
+        return (
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); setInteractionsBooking(b); }}
+            className="inline-flex items-center justify-center gap-2 text-xs px-2 py-1 rounded hover:bg-accent transition-colors"
+            title="عرض المزودين الذين تفاعلوا مع الطلب"
+          >
+            <span className="flex items-center gap-1 text-muted-foreground">
+              <Eye className="h-3.5 w-3.5" /> {viewerCounts[b.id] || 0}
+            </span>
+            <span className={`flex items-center gap-1 font-semibold ${(quoteCounts[b.id] || 0) > 0 ? "text-success" : "text-muted-foreground"}`}>
+              <MessageSquareQuote className="h-3.5 w-3.5" /> {quoteCounts[b.id] || 0}
+            </span>
+          </button>
+        );
+      },
+    },
+    {
+      id: "provider",
+      accessorFn: (b) => b.assigned_provider_id ? providerNames[b.assigned_provider_id] || "" : "",
+      header: t("admin.bookings.col.provider"),
+      cell: ({ row }) => row.original.assigned_provider_id ? (
+        <span className="flex items-center gap-1 text-xs">
+          <UserCheck className="h-3 w-3 text-success" />
+          {providerNames[row.original.assigned_provider_id] || "—"}
+        </span>
+      ) : <span className="text-muted-foreground text-xs">—</span>,
+    },
+  ], [t, serviceNames, serviceCategories, servicePrices, providerNames, viewerCounts, quoteCounts, formatCurrency, formatDateShort]);
 
   if (loading) return <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
 
   return (
     <div className="space-y-4">
-      {/* Header + Search */}
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <h2 className="text-lg font-bold">{t("admin.bookings.title")} ({visibleBookings.length})</h2>
-        <div className="relative">
-          <Search className={`absolute ${isRTL ? "right-3" : "left-3"} top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground`} />
-          <Input
-            placeholder={t("admin.bookings.search")}
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className={`${isRTL ? "pr-9" : "pl-9"} w-[200px]`}
-          />
-        </div>
       </div>
 
       {/* Status Filter Chips */}
@@ -206,103 +296,20 @@ const BookingsTab = () => {
         ))}
       </div>
 
-      {/* Table */}
-      {filtered.length === 0 ? (
-        <div className="text-center py-10 text-muted-foreground">{t("admin.bookings.no_bookings")}</div>
-      ) : (
-        <div className="rounded-lg border border-border overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-muted/50">
-                <TableHead>{t("admin.bookings.col.number")}</TableHead>
-                <TableHead>{t("admin.bookings.col.service")}</TableHead>
-                <TableHead>{t("admin.bookings.col.customer")}</TableHead>
-                <TableHead>{t("admin.bookings.col.city")}</TableHead>
-                <TableHead>{t("admin.bookings.col.date")}</TableHead>
-                <TableHead>{t("admin.bookings.col.amount")}</TableHead>
-                <TableHead>{t("admin.bookings.col.status")}</TableHead>
-                <TableHead className="text-center">سوق المزودين</TableHead>
-                <TableHead>{t("admin.bookings.col.provider")}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filtered.map((b) => {
-                const isEmergency = (serviceCategories[b.service_id] || "").toLowerCase() === "emergency" ||
-                  (serviceNames[b.service_id] || "").includes("طوارئ");
-                return (
-                <TableRow
-                  key={b.id}
-                  className={`cursor-pointer hover:bg-accent/50 transition-colors ${isEmergency ? "bg-destructive/10 border-l-4 border-l-destructive" : ""}`}
-                  onClick={() => setSelectedBooking(b)}
-                >
-                  <TableCell className="text-xs font-mono" dir="ltr">
-                    {b.booking_number || b.id.slice(0, 8)}
-                  </TableCell>
-                  <TableCell className="text-sm font-medium">
-                    {isEmergency && <span className="text-destructive me-1">🚨</span>}
-                    {serviceNames[b.service_id] || "—"}
-                  </TableCell>
-                  <TableCell>
-                    <div>
-                      <p className="text-sm">{b.customer_name || b.customer_display_name || "—"}</p>
-                      <p className="text-xs text-muted-foreground" dir="ltr">{b.customer_phone || "—"}</p>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-sm">{b.city}</TableCell>
-                  <TableCell className="text-xs">
-                    {formatDateShort(b.scheduled_at)}
-                  </TableCell>
-                  <TableCell className="text-sm font-medium">
-                    {b.agreed_price != null ? (
-                      <span className="text-success">{formatCurrency(b.agreed_price)}</span>
-                    ) : (
-                      formatCurrency(servicePrices[b.service_id] ?? b.subtotal)
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-1">
-                      <Badge variant="outline" className={`text-[10px] ${STATUS_COLORS[b.status] || ""}`}>
-                        {t(`status.${b.status}`)}
-                      </Badge>
-                      {b.status === "IN_PROGRESS" && b.otp_code && (
-                        <Badge className="text-[9px] bg-warning/20 text-warning border border-warning/40 animate-pulse">
-                          🔑 OTP
-                        </Badge>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
-                    <button
-                      type="button"
-                      onClick={() => setInteractionsBooking(b)}
-                      className="inline-flex items-center justify-center gap-2 text-xs px-2 py-1 rounded hover:bg-accent transition-colors"
-                      title="عرض المزودين الذين تفاعلوا مع الطلب"
-                    >
-                      <span className="flex items-center gap-1 text-muted-foreground">
-                        <Eye className="h-3.5 w-3.5" /> {viewerCounts[b.id] || 0}
-                      </span>
-                      <span className={`flex items-center gap-1 font-semibold ${(quoteCounts[b.id] || 0) > 0 ? "text-success" : "text-muted-foreground"}`}>
-                        <MessageSquareQuote className="h-3.5 w-3.5" /> {quoteCounts[b.id] || 0}
-                      </span>
-                    </button>
-                  </TableCell>
-                  <TableCell className="text-xs">
-                    {b.assigned_provider_id ? (
-                      <span className="flex items-center gap-1">
-                        <UserCheck className="h-3 w-3 text-success" />
-                        {providerNames[b.assigned_provider_id] || "—"}
-                      </span>
-                    ) : (
-                      <span className="text-muted-foreground">—</span>
-                    )}
-                  </TableCell>
-                </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </div>
-      )}
+      <DataTable
+        columns={columns}
+        data={filtered}
+        globalSearchPlaceholder={t("admin.bookings.search")}
+        globalSearchKeys={["customer_name", "customer_phone", "city", "booking_number", "customer_display_name"]}
+        onRowClick={(b) => setSelectedBooking(b)}
+        rowClassName={(b) => {
+          const isEmergency = (serviceCategories[b.service_id] || "").toLowerCase() === "emergency" ||
+            (serviceNames[b.service_id] || "").includes("طوارئ");
+          return isEmergency ? "bg-destructive/10 border-l-4 border-l-destructive" : "";
+        }}
+        emptyMessage={t("admin.bookings.no_bookings")}
+        pageSize={25}
+      />
 
       <BookingDetailsDrawer
         booking={selectedBooking}
