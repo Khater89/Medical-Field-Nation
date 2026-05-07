@@ -6,7 +6,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
-import { Send, Loader2, Star, DollarSign, MessageCircle, User, Phone, Check, CheckCheck, Clock } from "lucide-react";
+import { Send, Loader2, Star, DollarSign, MessageCircle, User, Phone, Check, CheckCheck, Clock, UserCheck } from "lucide-react";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface Message {
   id: string;
@@ -61,6 +65,10 @@ interface Props {
   onTargetProviderClick?: (providerId: string) => void;
   /** Guest mode (no auth): use edge functions with booking_number + phone */
   guestMode?: { bookingNumber: string; phone: string; displayName?: string };
+  /** Customer-only: enable "assign to this provider" action (only when booking is still NEW) */
+  canAssign?: boolean;
+  /** Called after assignment succeeds */
+  onAssigned?: (providerId: string) => void;
 }
 
 const ROLE_LABELS: Record<string, string> = {
@@ -70,6 +78,7 @@ const ROLE_LABELS: Record<string, string> = {
 export default function BookingChat({
   bookingId, viewerRole, viewerId, viewerName,
   allowQuote, defaultTargetProviderId, onTargetProviderClick, guestMode,
+  canAssign, onAssigned,
 }: Props) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [quotes, setQuotes] = useState<Quote[]>([]);
@@ -78,6 +87,8 @@ export default function BookingChat({
   const [price, setPrice] = useState("");
   const [target, setTarget] = useState<string | null>(defaultTargetProviderId ?? null);
   const [sending, setSending] = useState(false);
+  const [assignDialog, setAssignDialog] = useState<string | null>(null);
+  const [assigning, setAssigning] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const fetchAll = async () => {
@@ -233,33 +244,49 @@ export default function BookingChat({
             {providers.map((p) => {
               const isActive = target === p.id;
               return (
-                <button
+                <div
                   key={p.id}
-                  onClick={() => {
-                    if (viewerRole === "customer") {
-                      setTarget(p.id === target ? null : p.id);
-                      onTargetProviderClick?.(p.id);
-                    }
-                  }}
-                  className={`shrink-0 flex flex-col items-center gap-1 p-2 rounded-lg border min-w-[92px] transition-all ${
+                  className={`shrink-0 flex flex-col items-center gap-1 p-2 rounded-lg border min-w-[110px] transition-all ${
                     isActive
                       ? "border-primary bg-primary/10 ring-2 ring-primary/30 shadow-sm"
                       : "border-border bg-background hover:bg-muted/50"
                   } ${p.isMine ? "ring-1 ring-success" : ""}`}
                 >
-                  <Avatar className="h-10 w-10">
-                    <AvatarImage src={p.avatar || undefined} />
-                    <AvatarFallback><User className="h-4 w-4" /></AvatarFallback>
-                  </Avatar>
-                  <p className="text-[11px] font-bold truncate max-w-[80px]">{p.name}</p>
-                  {p.role && <span className="text-[9px] text-muted-foreground">{ROLE_LABEL(p.role)}</span>}
-                  {p.price != null && (
-                    <Badge variant="outline" className="text-[10px] px-1 py-0 gap-0.5">
-                      <DollarSign className="h-2.5 w-2.5" />{p.price} JOD
-                    </Badge>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (viewerRole === "customer") {
+                        setTarget(p.id === target ? null : p.id);
+                        onTargetProviderClick?.(p.id);
+                      }
+                    }}
+                    className="flex flex-col items-center gap-1 w-full"
+                  >
+                    <Avatar className="h-10 w-10">
+                      <AvatarImage src={p.avatar || undefined} />
+                      <AvatarFallback><User className="h-4 w-4" /></AvatarFallback>
+                    </Avatar>
+                    <p className="text-[11px] font-bold truncate max-w-[90px]">{p.name}</p>
+                    {p.role && <span className="text-[9px] text-muted-foreground">{ROLE_LABEL(p.role)}</span>}
+                    {p.price != null && (
+                      <Badge variant="outline" className="text-[10px] px-1 py-0 gap-0.5">
+                        <DollarSign className="h-2.5 w-2.5" />{p.price} JOD
+                      </Badge>
+                    )}
+                    {p.isMine && <span className="text-[9px] text-success font-bold">عرضي</span>}
+                  </button>
+                  {viewerRole === "customer" && canAssign && (
+                    <Button
+                      type="button"
+                      size="sm"
+                      className="h-7 w-full text-[10px] gap-1 mt-1"
+                      onClick={() => setAssignDialog(p.id)}
+                    >
+                      <UserCheck className="h-3 w-3" />
+                      إسناد لهذا المزود
+                    </Button>
                   )}
-                  {p.isMine && <span className="text-[9px] text-success font-bold">عرضي</span>}
-                </button>
+                </div>
               );
             })}
           </div>
@@ -438,6 +465,64 @@ export default function BookingChat({
           </Button>
         </div>
       </div>
+
+      {/* Assign confirmation */}
+      <AlertDialog open={!!assignDialog} onOpenChange={(o) => !o && setAssignDialog(null)}>
+        <AlertDialogContent dir="rtl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>تأكيد إسناد الطلب</AlertDialogTitle>
+            <AlertDialogDescription>
+              هل أنت متأكد أنك تريد إسناد هذا الطلب إلى{" "}
+              <strong>{providers.find((p) => p.id === assignDialog)?.name || "هذا المزود"}</strong>؟
+              سيتم إخطاره للقبول ولن يكون الطلب متاحاً لباقي المزودين.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-row-reverse gap-2">
+            <AlertDialogCancel disabled={assigning}>تراجع</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={assigning}
+              onClick={async (e) => {
+                e.preventDefault();
+                if (!assignDialog) return;
+                setAssigning(true);
+                try {
+                  let ok = false;
+                  let errMsg = "";
+                  if (guestMode) {
+                    const { data, error } = await supabase.functions.invoke("customer-assign-provider", {
+                      body: {
+                        booking_number: guestMode.bookingNumber,
+                        phone: guestMode.phone,
+                        provider_id: assignDialog,
+                      },
+                    });
+                    ok = !error && !(data as any)?.error;
+                    errMsg = (data as any)?.error || error?.message || "";
+                  } else {
+                    const { data, error } = await supabase.rpc("customer_assign_provider" as any, {
+                      _booking_id: bookingId, _provider_id: assignDialog,
+                    });
+                    ok = !error && (data as any)?.success;
+                    errMsg = (data as any)?.error || error?.message || "";
+                  }
+                  if (ok) {
+                    toast.success("تم إسناد الطلب بنجاح، بانتظار قبول المزود");
+                    onAssigned?.(assignDialog);
+                    setAssignDialog(null);
+                    fetchAll();
+                  } else {
+                    toast.error(errMsg === "already_assigned" ? "الطلب مُسنَد بالفعل" : "تعذّر الإسناد");
+                  }
+                } catch (err: any) {
+                  toast.error(err.message || "حدث خطأ");
+                } finally { setAssigning(false); }
+              }}
+            >
+              {assigning ? <Loader2 className="h-4 w-4 animate-spin" /> : "تأكيد الإسناد"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

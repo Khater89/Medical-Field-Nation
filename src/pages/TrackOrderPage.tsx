@@ -429,6 +429,8 @@ const TrackOrderPage = () => {
                       viewerRole="customer"
                       viewerId={user?.id || booking.id}
                       guestMode={{ bookingNumber: bookingNumber.trim(), phone: phone.trim() }}
+                      canAssign={booking.status === "NEW"}
+                      onAssigned={() => handleTrack()}
                     />
                   </div>
                 )}

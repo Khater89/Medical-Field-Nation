@@ -870,6 +870,21 @@ export type Database = {
           viewer_count: number
         }[]
       }
+      booking_interactions_summary: {
+        Args: { _booking_id: string }
+        Returns: {
+          avatar_url: string
+          full_name: string
+          last_message: string
+          last_message_at: string
+          message_count: number
+          provider_id: string
+          quote_at: string
+          quote_note: string
+          quote_price: number
+          role_type: string
+        }[]
+      }
       booking_quotes_public: {
         Args: { _booking_id: string }
         Returns: {
@@ -889,6 +904,10 @@ export type Database = {
         Returns: number
       }
       customer_accept_quote: { Args: { _quote_id: string }; Returns: Json }
+      customer_assign_provider: {
+        Args: { _booking_id: string; _provider_id: string }
+        Returns: Json
+      }
       customer_quotes_for_booking: {
         Args: { _booking_id: string }
         Returns: {
