@@ -55,14 +55,30 @@ const BookingsTab = () => {
   const [selectedBooking, setSelectedBooking] = useState<BookingRow | null>(null);
 
   const fetchBookings = async () => {
-    const [bookingsRes, contactsRes, servicesRes, profilesRes, cancelHistoryRes] = await Promise.all([
+    const [bookingsRes, contactsRes, servicesRes, profilesRes, cancelHistoryRes, msgsRes, quotesRes] = await Promise.all([
       supabase.from("bookings").select("*").order("created_at", { ascending: false }),
       supabase.from("booking_contacts").select("*"),
       supabase.from("services").select("id, name, base_price, category"),
       supabase.from("profiles").select("user_id, full_name, phone"),
-      // Fetch cancellation history to identify client-cancelled bookings
       supabase.from("booking_history").select("booking_id, performer_role").eq("action", "CANCELLED").eq("performer_role", "customer"),
+      supabase.from("booking_messages").select("booking_id, sender_id, sender_role").eq("sender_role", "provider"),
+      supabase.from("provider_quotes").select("booking_id"),
     ]);
+
+    // Build viewer & quote count maps
+    const vMap: Record<string, Set<string>> = {};
+    (msgsRes.data || []).forEach((m: any) => {
+      if (!vMap[m.booking_id]) vMap[m.booking_id] = new Set();
+      vMap[m.booking_id].add(m.sender_id);
+    });
+    const viewerMap: Record<string, number> = {};
+    Object.keys(vMap).forEach((k) => { viewerMap[k] = vMap[k].size; });
+    setViewerCounts(viewerMap);
+
+    const qMap: Record<string, number> = {};
+    (quotesRes.data || []).forEach((q: any) => { qMap[q.booking_id] = (qMap[q.booking_id] || 0) + 1; });
+    setQuoteCounts(qMap);
+
 
     // Build set of client-cancelled booking IDs
     const clientCancelled = new Set<string>();
