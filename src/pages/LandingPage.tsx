@@ -7,6 +7,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import { QRCodeSVG } from "qrcode.react";
@@ -32,7 +33,7 @@ import {
   ClipboardList,
   CalendarDays,
   Home,
-  UserPlus,
+  
   Briefcase,
   Siren,
   Loader2,
@@ -76,6 +77,7 @@ const LandingPage = () => {
   const [emLocating, setEmLocating] = useState(false);
   const [emSubmitting, setEmSubmitting] = useState(false);
   const [emBookingNumber, setEmBookingNumber] = useState<string | null>(null);
+  const [emergencyOpen, setEmergencyOpen] = useState(false);
 
   const captureLocation = () => {
     if (!navigator.geolocation) {
@@ -196,10 +198,19 @@ const LandingPage = () => {
               <motion.h1
                 variants={fadeUp}
                 transition={{ duration: 0.6 }}
-                className="text-4xl sm:text-5xl lg:text-6xl font-black leading-[1.15] brand-text-animated"
+                className="text-5xl sm:text-7xl lg:text-8xl font-black leading-[1.05] tracking-tight brand-text-animated drop-shadow-sm"
+              >
+                MEDICAL FIELD NATION
+              </motion.h1>
+
+              <motion.p
+                variants={fadeUp}
+                transition={{ duration: 0.6 }}
+                className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-foreground/90 leading-tight"
               >
                 {t("app.brand_name")}
-              </motion.h1>
+              </motion.p>
+
 
               <motion.h2
                 variants={fadeUp}
@@ -315,159 +326,85 @@ const LandingPage = () => {
         </motion.div>
       </section>
 
-      {/* ═══════ PROMO VIDEO ═══════ */}
-      {/* EMERGENCY QUICK BOOKING */}
-      <section id="emergency" className="py-16 relative overflow-hidden scroll-mt-20">
-        <div className="absolute inset-0 bg-gradient-to-br from-destructive/5 via-background to-destructive/10" />
-        <motion.div
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, amount: 0.2 }}
-          variants={stagger}
-          className="container max-w-3xl relative"
-        >
-          <motion.div variants={fadeUp} transition={{ duration: 0.5 }} className="text-center space-y-3 mb-8">
-            <div className="inline-flex items-center gap-2 bg-destructive/10 border border-destructive/30 text-destructive px-4 py-1.5 rounded-full text-sm font-bold">
-              <Siren className="h-4 w-4 animate-pulse" />
-              {t("landing.emergency.badge")}
-            </div>
-            <h2 className="text-2xl sm:text-3xl font-black text-foreground">
-              {t("landing.emergency.title_part1")} <span className="text-destructive">{t("landing.emergency.title_part2")}</span>
-            </h2>
-            <p className="text-sm text-muted-foreground max-w-lg mx-auto">
-              {t("landing.emergency.desc")}
-            </p>
-          </motion.div>
-
-          <motion.div variants={fadeUp} transition={{ duration: 0.6 }}>
-            <Card className="border-2 border-destructive/30 shadow-xl">
-              <CardContent className="py-6">
-                <AnimatePresence mode="wait">
-                  {!emBookingNumber ? (
-                    <motion.form
-                      key="form"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      onSubmit={handleEmergencySubmit}
-                      className="space-y-4"
-                    >
-                      <div>
-                        <label className="text-sm font-semibold mb-1 block">{t("landing.emergency.name")} *</label>
-                        <Input
-                          value={emName}
-                          onChange={(e) => setEmName(e.target.value.slice(0, 100))}
-                          placeholder={t("landing.emergency.name_ph")}
-                          required
-                          maxLength={100}
-                        />
-                      </div>
-                      <div>
-                        <label className="text-sm font-semibold mb-1 block">{t("landing.emergency.address")} *</label>
-                        <Input
-                          value={emAddress}
-                          onChange={(e) => setEmAddress(e.target.value.slice(0, 300))}
-                          placeholder={t("landing.emergency.address_ph")}
-                          required
-                          maxLength={300}
-                        />
-                      </div>
-                      <div>
-                        <label className="text-sm font-semibold mb-1 block">{t("landing.emergency.phone")} *</label>
-                        <Input
-                          value={emPhone}
-                          onChange={(e) => setEmPhone(e.target.value.slice(0, 20))}
-                          placeholder={t("landing.emergency.phone_ph")}
-                          required
-                          dir="ltr"
-                          type="tel"
-                          maxLength={20}
-                        />
-                      </div>
-                      {/* Geolocation capture */}
-                      <div>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={captureLocation}
-                          disabled={emLocating}
-                          className="w-full gap-2 h-11"
-                        >
-                          <Navigation className={emLocating ? "h-4 w-4 animate-pulse" : "h-4 w-4"} />
-                          {emLocating
-                            ? t("landing.emergency.location_locating")
-                            : emLat != null && emLng != null
-                            ? `${t("landing.emergency.location_detected")} (${emLat.toFixed(4)}, ${emLng.toFixed(4)})`
-                            : t("landing.emergency.location")}
-                        </Button>
-                      </div>
-                      <Button
-                        type="submit"
-                        disabled={emSubmitting}
-                        size="lg"
-                        className="w-full gap-2 bg-destructive hover:bg-destructive/90 text-destructive-foreground font-bold h-12"
-                      >
-                        {emSubmitting ? <Loader2 className="h-5 w-5 animate-spin" /> : <Siren className="h-5 w-5" />}
-                        {emSubmitting ? t("landing.emergency.submitting") : t("landing.emergency.submit")}
-                      </Button>
-                    </motion.form>
-                  ) : (
-                    <motion.div
-                      key="success"
-                      initial={{ opacity: 0, y: 12 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="space-y-5 text-center"
-                    >
-                      <div className="flex justify-center">
-                        <div className="h-16 w-16 rounded-full bg-green-500/15 flex items-center justify-center">
-                          <CheckCircle className="h-9 w-9 text-green-600" />
-                        </div>
-                      </div>
-                      <div>
-                        <h3 className="text-xl font-black text-foreground">{t("landing.emergency.success_title")}</h3>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          {t("landing.emergency.booking_no")} <span className="font-mono font-bold text-primary" dir="ltr">{emBookingNumber}</span>
-                        </p>
-                      </div>
-                      <div className="rounded-xl bg-primary/5 border border-primary/20 p-4 space-y-3">
-                        <p className="text-sm font-bold text-foreground">{t("landing.emergency.contact_now")}</p>
-                        <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                          <a
-                            href={`tel:${COORDINATOR_PHONE}`}
-                            className="flex items-center justify-center gap-2 h-12 px-5 rounded-full bg-primary text-primary-foreground font-bold shadow-md hover:shadow-lg transition-shadow"
-                          >
-                            <Phone className="h-5 w-5" />
-                            {t("landing.emergency.call_coord")}
-                          </a>
-                          <a
-                            href={`https://wa.me/${COORDINATOR_WA}?text=${encodeURIComponent(`Emergency #${emBookingNumber} — ${emName}`)}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center justify-center gap-2 h-12 px-5 rounded-full bg-[#25D366] text-white font-bold shadow-md hover:shadow-lg transition-shadow"
-                          >
-                            <MessageCircle className="h-5 w-5" />
-                            {t("landing.emergency.wa_coord")}
-                          </a>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => {
-                          setEmBookingNumber(null);
-                          setEmName(""); setEmAddress(""); setEmPhone("");
-                          setEmLat(null); setEmLng(null);
-                        }}
-                        className="text-xs text-muted-foreground hover:text-primary underline"
-                      >
-                        {t("landing.emergency.send_another")}
-                      </button>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </CardContent>
-            </Card>
-          </motion.div>
-        </motion.div>
-      </section>
+      {/* ═══════ EMERGENCY DIALOG ═══════ */}
+      <Dialog open={emergencyOpen} onOpenChange={setEmergencyOpen}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-destructive">
+              <Siren className="h-5 w-5 animate-pulse" />
+              {t("landing.emergency.title_part1")} {t("landing.emergency.title_part2")}
+            </DialogTitle>
+            <DialogDescription>{t("landing.emergency.desc")}</DialogDescription>
+          </DialogHeader>
+          <AnimatePresence mode="wait">
+            {!emBookingNumber ? (
+              <motion.form
+                key="form"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onSubmit={handleEmergencySubmit}
+                className="space-y-4"
+              >
+                <div>
+                  <label className="text-sm font-semibold mb-1 block">{t("landing.emergency.name")} *</label>
+                  <Input value={emName} onChange={(e) => setEmName(e.target.value.slice(0, 100))} placeholder={t("landing.emergency.name_ph")} required maxLength={100} />
+                </div>
+                <div>
+                  <label className="text-sm font-semibold mb-1 block">{t("landing.emergency.address")} *</label>
+                  <Input value={emAddress} onChange={(e) => setEmAddress(e.target.value.slice(0, 300))} placeholder={t("landing.emergency.address_ph")} required maxLength={300} />
+                </div>
+                <div>
+                  <label className="text-sm font-semibold mb-1 block">{t("landing.emergency.phone")} *</label>
+                  <Input value={emPhone} onChange={(e) => setEmPhone(e.target.value.slice(0, 20))} placeholder={t("landing.emergency.phone_ph")} required dir="ltr" type="tel" maxLength={20} />
+                </div>
+                <Button type="button" variant="outline" onClick={captureLocation} disabled={emLocating} className="w-full gap-2 h-11">
+                  <Navigation className={emLocating ? "h-4 w-4 animate-pulse" : "h-4 w-4"} />
+                  {emLocating
+                    ? t("landing.emergency.location_locating")
+                    : emLat != null && emLng != null
+                    ? `${t("landing.emergency.location_detected")} (${emLat.toFixed(4)}, ${emLng.toFixed(4)})`
+                    : t("landing.emergency.location")}
+                </Button>
+                <Button type="submit" disabled={emSubmitting} size="lg" className="w-full gap-2 bg-destructive hover:bg-destructive/90 text-destructive-foreground font-bold h-12">
+                  {emSubmitting ? <Loader2 className="h-5 w-5 animate-spin" /> : <Siren className="h-5 w-5" />}
+                  {emSubmitting ? t("landing.emergency.submitting") : t("landing.emergency.submit")}
+                </Button>
+              </motion.form>
+            ) : (
+              <motion.div key="success" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="space-y-5 text-center">
+                <div className="flex justify-center">
+                  <div className="h-16 w-16 rounded-full bg-green-500/15 flex items-center justify-center">
+                    <CheckCircle className="h-9 w-9 text-green-600" />
+                  </div>
+                </div>
+                <div>
+                  <h3 className="text-xl font-black text-foreground">{t("landing.emergency.success_title")}</h3>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {t("landing.emergency.booking_no")} <span className="font-mono font-bold text-primary" dir="ltr">{emBookingNumber}</span>
+                  </p>
+                </div>
+                <div className="rounded-xl bg-primary/5 border border-primary/20 p-4 space-y-3">
+                  <p className="text-sm font-bold text-foreground">{t("landing.emergency.contact_now")}</p>
+                  <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                    <a href={`tel:${COORDINATOR_PHONE}`} className="flex items-center justify-center gap-2 h-12 px-5 rounded-full bg-primary text-primary-foreground font-bold shadow-md hover:shadow-lg transition-shadow">
+                      <Phone className="h-5 w-5" />
+                      {t("landing.emergency.call_coord")}
+                    </a>
+                    <a href={`https://wa.me/${COORDINATOR_WA}?text=${encodeURIComponent(`Emergency #${emBookingNumber} — ${emName}`)}`} target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 h-12 px-5 rounded-full bg-[#25D366] text-white font-bold shadow-md hover:shadow-lg transition-shadow">
+                      <MessageCircle className="h-5 w-5" />
+                      {t("landing.emergency.wa_coord")}
+                    </a>
+                  </div>
+                </div>
+                <button onClick={() => { setEmBookingNumber(null); setEmName(""); setEmAddress(""); setEmPhone(""); setEmLat(null); setEmLng(null); }} className="text-xs text-muted-foreground hover:text-primary underline">
+                  {t("landing.emergency.send_another")}
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </DialogContent>
+      </Dialog>
 
       <section className="py-16 bg-card/40">
         <div className="container max-w-5xl space-y-8">
@@ -487,7 +424,7 @@ const LandingPage = () => {
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true, amount: 0.2 }}
             transition={{ duration: 0.7 }}
-            className="rounded-2xl overflow-hidden shadow-2xl border border-border"
+            className="relative rounded-2xl overflow-hidden shadow-2xl border border-border"
           >
             <video
               className="w-full aspect-video"
@@ -499,7 +436,10 @@ const LandingPage = () => {
             >
               <source src="/mfn-promo.mp4" type="video/mp4" />
             </video>
+            {/* Mask any hardcoded phone number burned into the promo video */}
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[18%] bg-gradient-to-t from-black via-black/85 to-transparent" />
           </motion.div>
+
         </div>
       </section>
 
@@ -807,14 +747,55 @@ const LandingPage = () => {
 
       {/* Floating call/whatsapp icons hidden on landing — they appear after booking only */}
 
-      {/* ═══════ FLOATING "EMERGENCY" CTA ═══════ */}
+      {/* ═══════ FLOATING "BOOK NOW" PRIMARY CTA ═══════ */}
       <motion.div
         initial={{ y: 100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 1.4, type: "spring", stiffness: 180, damping: 18 }}
         className="fixed bottom-6 end-6 z-50"
       >
-        <a href="#emergency" aria-label={t("landing.emergency.fab")}>
+        <Link to="/booking" aria-label={t("action.book_now")}>
+          <motion.div
+            animate={{
+              scale: [1, 1.06, 1],
+              boxShadow: [
+                "0 8px 24px -6px hsl(var(--primary) / 0.45)",
+                "0 14px 40px -4px hsl(var(--primary) / 0.75)",
+                "0 8px 24px -6px hsl(var(--primary) / 0.45)",
+              ],
+            }}
+            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.95 }}
+            className="relative flex items-center gap-2 h-14 ps-4 pe-5 rounded-full bg-gradient-to-r from-primary via-primary to-primary/85 text-primary-foreground font-bold text-sm shadow-xl overflow-hidden"
+          >
+            <motion.span
+              aria-hidden
+              className="absolute inset-y-0 -inset-x-4 bg-gradient-to-r from-transparent via-white/30 to-transparent skew-x-12 pointer-events-none"
+              animate={{ x: ["-120%", "220%"] }}
+              transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut", repeatDelay: 0.4 }}
+            />
+            <span className="relative flex h-9 w-9 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm">
+              <CalendarDays className="h-5 w-5" />
+            </span>
+            <span className="relative whitespace-nowrap">{t("action.book_now")}</span>
+          </motion.div>
+        </Link>
+      </motion.div>
+
+      {/* ═══════ FLOATING EMERGENCY ICON (opens dialog) ═══════ */}
+      <motion.div
+        initial={{ y: 100, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 1.6, type: "spring", stiffness: 180, damping: 18 }}
+        className="fixed bottom-6 start-6 z-50"
+      >
+        <button
+          type="button"
+          onClick={() => setEmergencyOpen(true)}
+          aria-label={t("landing.emergency.fab")}
+          className="group"
+        >
           <motion.div
             animate={{
               scale: [1, 1.08, 1],
@@ -827,59 +808,13 @@ const LandingPage = () => {
             transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.95 }}
-            className="relative flex items-center gap-2 h-14 ps-4 pe-5 rounded-full bg-gradient-to-r from-destructive via-destructive to-destructive/85 text-destructive-foreground font-bold text-sm shadow-xl overflow-hidden"
+            className="relative flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-destructive via-destructive to-destructive/85 text-destructive-foreground shadow-xl"
           >
-            <motion.span
-              aria-hidden
-              className="absolute inset-y-0 -inset-x-4 bg-gradient-to-r from-transparent via-white/30 to-transparent skew-x-12 pointer-events-none"
-              animate={{ x: ["-120%", "220%"] }}
-              transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut", repeatDelay: 0.4 }}
-            />
-            <span className="relative flex h-9 w-9 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm">
-              <Siren className="h-5 w-5 animate-pulse" />
-            </span>
-            <span className="relative whitespace-nowrap">{t("landing.emergency.fab")}</span>
+            <Siren className="h-6 w-6 animate-pulse" />
           </motion.div>
-        </a>
+        </button>
       </motion.div>
 
-
-      {/* ═══════ FLOATING "JOIN AS PROVIDER" CTA ═══════ */}
-      <motion.div
-        initial={{ y: 100, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 1.6, type: "spring", stiffness: 180, damping: 18 }}
-        className="fixed bottom-6 start-6 z-50"
-      >
-        <Link to="/provider/register" aria-label="انضم كمزوّد خدمة">
-          <motion.div
-            animate={{
-              scale: [1, 1.06, 1],
-              boxShadow: [
-                "0 8px 24px -6px hsl(var(--primary) / 0.45)",
-                "0 12px 36px -4px hsl(var(--primary) / 0.7)",
-                "0 8px 24px -6px hsl(var(--primary) / 0.45)",
-              ],
-            }}
-            transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
-            whileHover={{ scale: 1.08 }}
-            whileTap={{ scale: 0.95 }}
-            className="relative flex items-center gap-2 h-14 ps-4 pe-5 rounded-full bg-gradient-to-r from-primary via-primary to-primary/85 text-primary-foreground font-bold text-sm shadow-xl overflow-hidden"
-          >
-            {/* Shine sweep */}
-            <motion.span
-              aria-hidden
-              className="absolute inset-y-0 -inset-x-4 bg-gradient-to-r from-transparent via-white/30 to-transparent skew-x-12 pointer-events-none"
-              animate={{ x: ["-120%", "220%"] }}
-              transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut", repeatDelay: 0.6 }}
-            />
-            <span className="relative flex h-9 w-9 items-center justify-center rounded-full bg-white/15 backdrop-blur-sm">
-              <UserPlus className="h-5 w-5" />
-            </span>
-            <span className="relative whitespace-nowrap">انضم كمزوّد خدمة</span>
-          </motion.div>
-        </Link>
-      </motion.div>
     </div>
   );
 };
