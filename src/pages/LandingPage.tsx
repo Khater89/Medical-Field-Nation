@@ -424,7 +424,7 @@ const LandingPage = () => {
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true, amount: 0.2 }}
             transition={{ duration: 0.7 }}
-            className="rounded-2xl overflow-hidden shadow-2xl border border-border"
+            className="relative rounded-2xl overflow-hidden shadow-2xl border border-border"
           >
             <video
               className="w-full aspect-video"
@@ -436,7 +436,10 @@ const LandingPage = () => {
             >
               <source src="/mfn-promo.mp4" type="video/mp4" />
             </video>
+            {/* Mask any hardcoded phone number burned into the promo video */}
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[18%] bg-gradient-to-t from-black via-black/85 to-transparent" />
           </motion.div>
+
         </div>
       </section>
 
