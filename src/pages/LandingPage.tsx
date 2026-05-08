@@ -198,10 +198,19 @@ const LandingPage = () => {
               <motion.h1
                 variants={fadeUp}
                 transition={{ duration: 0.6 }}
-                className="text-4xl sm:text-5xl lg:text-6xl font-black leading-[1.15] brand-text-animated"
+                className="text-5xl sm:text-7xl lg:text-8xl font-black leading-[1.05] tracking-tight brand-text-animated drop-shadow-sm"
+              >
+                MEDICAL FIELD NATION
+              </motion.h1>
+
+              <motion.p
+                variants={fadeUp}
+                transition={{ duration: 0.6 }}
+                className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-foreground/90 leading-tight"
               >
                 {t("app.brand_name")}
-              </motion.h1>
+              </motion.p>
+
 
               <motion.h2
                 variants={fadeUp}
