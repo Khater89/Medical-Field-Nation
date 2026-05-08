@@ -77,6 +77,7 @@ const LandingPage = () => {
   const [emLocating, setEmLocating] = useState(false);
   const [emSubmitting, setEmSubmitting] = useState(false);
   const [emBookingNumber, setEmBookingNumber] = useState<string | null>(null);
+  const [emergencyOpen, setEmergencyOpen] = useState(false);
 
   const captureLocation = () => {
     if (!navigator.geolocation) {
