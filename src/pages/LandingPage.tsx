@@ -33,7 +33,7 @@ import {
   ClipboardList,
   CalendarDays,
   Home,
-  UserPlus,
+  
   Briefcase,
   Siren,
   Loader2,
