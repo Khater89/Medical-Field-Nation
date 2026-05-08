@@ -260,11 +260,15 @@ const PatientForm = ({ data, onChange, showHours = true }: PatientFormProps) => 
         </RadioGroup>
       </div>
 
-      {/* Case Details (required) — enhanced with specialty classification */}
-      <div className="space-y-3">
-        <Label className="text-sm font-medium">
-          {t("form.case_details")} <span className="text-destructive">*</span>
-        </Label>
+      {/* Case Description Section */}
+      <div className="space-y-4 rounded-2xl border-2 border-primary/20 bg-primary/5 p-4">
+        <div className="flex items-center gap-2">
+          <div className="h-8 w-1 rounded-full bg-primary" />
+          <h3 className="text-base font-bold text-foreground">
+            {lang === "ar" ? "وصف الحالة" : "Case Description"}
+            <span className="text-destructive ms-1">*</span>
+          </h3>
+        </div>
 
         {/* Specialty / Need Classification */}
         <div className="space-y-2">
@@ -295,7 +299,7 @@ const PatientForm = ({ data, onChange, showHours = true }: PatientFormProps) => 
                   "rounded-full border px-3 py-1 text-xs font-medium transition-all",
                   data.case_details.includes(`[${opt.label}]`)
                     ? "border-primary bg-primary/10 text-primary"
-                    : "border-border hover:border-primary/30 text-muted-foreground"
+                    : "border-border bg-background hover:border-primary/30 text-muted-foreground"
                 )}
               >
                 {opt.label}
@@ -304,16 +308,84 @@ const PatientForm = ({ data, onChange, showHours = true }: PatientFormProps) => 
           </div>
         </div>
 
-        <Textarea
-          value={data.case_details}
-          onChange={(e) => update("case_details", e.target.value)}
-          placeholder={t("form.case_details.placeholder")}
-          rows={4}
-          required
-        />
-        {data.case_details !== undefined && data.case_details.trim() === "" && (
-          <p className="text-xs text-destructive">{t("form.case_details.required")}</p>
-        )}
+        {/* Yes/No Medical Questions */}
+        <div className="space-y-2">
+          <Label className="text-xs text-muted-foreground">
+            {lang === "ar" ? "أسئلة سريعة (للمساعدة في فهم الحالة)" : "Quick questions (helps assess the case)"}
+          </Label>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {[
+              { key: "chronic", ar: "هل يعاني المريض من أمراض مزمنة؟", en: "Does the patient have chronic illness?" },
+              { key: "meds", ar: "هل يتناول المريض أدوية حالياً؟", en: "Currently taking medications?" },
+              { key: "allergy", ar: "هل لديه حساسية من أدوية؟", en: "Any drug allergies?" },
+              { key: "surgery", ar: "هل أجرى عملية جراحية مؤخراً؟", en: "Recent surgery?" },
+              { key: "fever", ar: "هل لديه حرارة مرتفعة؟", en: "High fever?" },
+              { key: "pain", ar: "هل يعاني من ألم شديد؟", en: "Severe pain?" },
+            ].map((q) => {
+              const yesTag = `{${q.key}:yes}`;
+              const noTag = `{${q.key}:no}`;
+              const hasYes = data.case_details.includes(yesTag);
+              const hasNo = data.case_details.includes(noTag);
+              const setAns = (val: "yes" | "no") => {
+                let txt = data.case_details.replace(yesTag, "").replace(noTag, "");
+                txt = `${val === "yes" ? yesTag : noTag} ${txt}`.replace(/\s+/g, " ").trim();
+                update("case_details", txt);
+              };
+              return (
+                <div
+                  key={q.key}
+                  className="flex items-center justify-between gap-2 rounded-xl border border-border bg-background px-3 py-2"
+                >
+                  <span className="text-xs sm:text-sm flex-1">{lang === "ar" ? q.ar : q.en}</span>
+                  <div className="flex gap-1 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => setAns("yes")}
+                      className={cn(
+                        "rounded-lg px-3 py-1 text-xs font-semibold border transition-all",
+                        hasYes
+                          ? "bg-primary text-primary-foreground border-primary"
+                          : "border-border hover:border-primary/40 text-muted-foreground"
+                      )}
+                    >
+                      {lang === "ar" ? "نعم" : "Yes"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setAns("no")}
+                      className={cn(
+                        "rounded-lg px-3 py-1 text-xs font-semibold border transition-all",
+                        hasNo
+                          ? "bg-muted text-foreground border-foreground/30"
+                          : "border-border hover:border-primary/40 text-muted-foreground"
+                      )}
+                    >
+                      {lang === "ar" ? "لا" : "No"}
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Free-text notes */}
+        <div className="space-y-2">
+          <Label className="text-xs text-muted-foreground">
+            {lang === "ar" ? "ملاحظات إضافية" : "Additional notes"}
+          </Label>
+          <Textarea
+            value={data.case_details}
+            onChange={(e) => update("case_details", e.target.value)}
+            placeholder={t("form.case_details.placeholder")}
+            rows={5}
+            required
+            className="bg-background"
+          />
+          {data.case_details.trim() === "" && (
+            <p className="text-xs text-destructive">{t("form.case_details.required")}</p>
+          )}
+        </div>
       </div>
 
       {/* Payment method is selected on the order tracking page after service completion */}
