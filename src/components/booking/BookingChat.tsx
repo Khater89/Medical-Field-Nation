@@ -1,16 +1,124 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
 import { Send, Loader2, Star, DollarSign, MessageCircle, User, Phone, Check, CheckCheck, Clock, UserCheck } from "lucide-react";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { CUSTOMER_QUESTIONS, QUESTIONS_BY_TEXT } from "@/lib/chatTemplates";
+
+// ============== Templated Q&A pickers ==============
+
+function CustomerQuestionPicker({
+  disabled, onPick,
+}: { disabled: boolean; onPick: (question: string) => void }) {
+  const [selected, setSelected] = useState<string>("");
+  return (
+    <div className="flex gap-2">
+      <Select value={selected} onValueChange={setSelected} disabled={disabled}>
+        <SelectTrigger className="flex-1 h-9 text-xs">
+          <SelectValue placeholder="اختر سؤالاً جاهزاً لإرساله إلى المزودين..." />
+        </SelectTrigger>
+        <SelectContent>
+          {CUSTOMER_QUESTIONS.map((q) => (
+            <SelectItem key={q.id} value={q.text} className="text-xs">{q.text}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <Button
+        size="sm"
+        disabled={!selected || disabled}
+        onClick={() => { if (selected) { onPick(selected); setSelected(""); } }}
+      >
+        {disabled ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+      </Button>
+    </div>
+  );
+}
+
+function ProviderResponsePicker({
+  disabled, messages, myId, onPick,
+}: {
+  disabled: boolean;
+  messages: { sender_role: string; sender_id: string; body: string; created_at: string }[];
+  myId: string;
+  onPick: (response: string, originalQuestion: string | null, price: number | null) => void;
+}) {
+  // Find the most recent customer question I haven't yet answered.
+  const lastQuestion = useMemo(() => {
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const m = messages[i];
+      if (m.sender_role === "customer" && QUESTIONS_BY_TEXT[m.body]) return m.body;
+    }
+    return null;
+  }, [messages]);
+
+  const [selected, setSelected] = useState<string>("");
+  const [price, setPrice] = useState<string>("");
+
+  if (!lastQuestion) {
+    return (
+      <div className="text-[11px] text-center text-muted-foreground py-3 border border-dashed rounded-md">
+        💬 ينتظر العميل إرسال سؤال جاهز قبل أن تتمكن من الرد.
+      </div>
+    );
+  }
+
+  const responses = QUESTIONS_BY_TEXT[lastQuestion]?.responses || [];
+
+  return (
+    <div className="space-y-2">
+      <div className="text-[11px] bg-primary/5 border border-primary/20 rounded px-2 py-1.5">
+        <span className="font-bold">سؤال العميل:</span> {lastQuestion}
+      </div>
+      <div className="flex gap-2">
+        <Select value={selected} onValueChange={setSelected} disabled={disabled}>
+          <SelectTrigger className="flex-1 h-9 text-xs">
+            <SelectValue placeholder="اختر رداً جاهزاً..." />
+          </SelectTrigger>
+          <SelectContent>
+            {responses.map((r, i) => (
+              <SelectItem key={i} value={r} className="text-xs">{r}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      {lastQuestion.includes("سعر") && (
+        <Input
+          type="number"
+          min={0}
+          placeholder="السعر المقترح بالدينار (اختياري)"
+          value={price}
+          onChange={(e) => setPrice(e.target.value)}
+          className="h-8 text-xs"
+          dir="ltr"
+        />
+      )}
+      <Button
+        size="sm"
+        className="w-full"
+        disabled={!selected || disabled}
+        onClick={() => {
+          const p = price ? parseFloat(price) : null;
+          onPick(selected, lastQuestion, p && p > 0 ? p : null);
+          setSelected(""); setPrice("");
+        }}
+      >
+        {disabled ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Send className="h-4 w-4 ml-1" />إرسال الرد</>}
+      </Button>
+    </div>
+  );
+}
+
 
 interface Message {
   id: string;
