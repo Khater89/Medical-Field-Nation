@@ -438,32 +438,93 @@ export default function BookingChat({
         </div>
       </ScrollArea>
 
-      {/* Composer */}
-      <div className="border-t p-2 space-y-2">
-        {allowQuote && (
-          <Input
-            type="number"
-            placeholder="إرفاق سعر (JOD) — اختياري"
-            value={price}
-            onChange={(e) => setPrice(e.target.value)}
-            className="h-8 text-xs"
-            dir="ltr"
-            min={0}
+      {/* Composer — Templated Q&A only (no free text) */}
+      <div className="border-t p-2 space-y-2 bg-muted/10">
+        {viewerRole === "customer" ? (
+          <CustomerQuestionPicker
+            disabled={sending}
+            onPick={async (q) => {
+              setBody(q);
+              // submit immediately
+              setTimeout(() => {
+                const ev = new Event("submit");
+                // call send via temporary hack: set body then call send()
+                (async () => {
+                  // inline send w/ q to avoid stale state
+                  setSending(true);
+                  const tempId = `temp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+                  const optimistic: Message = {
+                    id: tempId, sender_id: viewerId, sender_role: "customer",
+                    sender_display_name: viewerName || "أنت",
+                    body: q, quoted_price: null,
+                    target_provider_id: null, // broadcast to all matching providers
+                    created_at: new Date().toISOString(), sender_avatar: null,
+                    _pending: true, _tempId: tempId,
+                  };
+                  setMessages((prev) => [...prev, optimistic]);
+                  try {
+                    if (guestMode) {
+                      const { data, error } = await supabase.functions.invoke("guest-send-message", {
+                        body: { booking_number: guestMode.bookingNumber, phone: guestMode.phone, body: q, target_provider_id: null },
+                      });
+                      if (error || (data as any)?.error) throw new Error((data as any)?.error || error?.message || "send_failed");
+                    } else {
+                      const { error } = await supabase.from("booking_messages" as any).insert({
+                        booking_id: bookingId, sender_id: viewerId, sender_role: "customer",
+                        sender_display_name: viewerName || null, body: q, target_provider_id: null,
+                      });
+                      if (error) throw error;
+                    }
+                    await fetchAll();
+                    toast.success("تم إرسال السؤال لجميع المزودين المطابقين");
+                  } catch (e: any) {
+                    setMessages((prev) => prev.filter((m) => m._tempId !== tempId));
+                    toast.error(e.message || "تعذّر الإرسال");
+                  } finally { setSending(false); setBody(""); }
+                })();
+              }, 0);
+            }}
+          />
+        ) : (
+          <ProviderResponsePicker
+            disabled={sending}
+            messages={messages}
+            myId={viewerId}
+            onPick={async (responseText, originalQuestion, priceVal) => {
+              setSending(true);
+              const tempId = `temp-${Date.now()}`;
+              const optimistic: Message = {
+                id: tempId, sender_id: viewerId, sender_role: "provider",
+                sender_display_name: viewerName || "أنت",
+                body: responseText, quoted_price: priceVal,
+                target_provider_id: null,
+                created_at: new Date().toISOString(), sender_avatar: null,
+                _pending: true, _tempId: tempId,
+              };
+              setMessages((prev) => [...prev, optimistic]);
+              try {
+                const { error } = await supabase.from("booking_messages" as any).insert({
+                  booking_id: bookingId, sender_id: viewerId, sender_role: "provider",
+                  sender_display_name: viewerName || null, body: responseText, quoted_price: priceVal,
+                });
+                if (error) throw error;
+                if (priceVal && priceVal > 0) {
+                  await supabase.from("provider_quotes" as any).insert({
+                    booking_id: bookingId, provider_id: viewerId, quoted_price: priceVal, note: responseText,
+                  });
+                }
+                await fetchAll();
+                toast.success("تم إرسال الرد");
+              } catch (e: any) {
+                setMessages((prev) => prev.filter((m) => m._tempId !== tempId));
+                toast.error(e.message || "تعذّر الإرسال");
+              } finally { setSending(false); }
+            }}
           />
         )}
-        <div className="flex gap-2">
-          <Input
-            placeholder={target ? "رسالة خاصة للمزود المختار..." : "اكتب رسالتك..."}
-            value={body}
-            onChange={(e) => setBody(e.target.value)}
-            onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
-            className="flex-1"
-            disabled={sending}
-          />
-          <Button size="sm" onClick={send} disabled={!body.trim() || sending}>
-            {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-          </Button>
-        </div>
+        <p className="text-[10px] text-muted-foreground text-center px-2">
+          🔒 جميع المحادثات محصورة داخل المنصة. غير مسموح بمشاركة أرقام أو روابط أو عناوين.
+        </p>
       </div>
 
       {/* Assign confirmation */}
