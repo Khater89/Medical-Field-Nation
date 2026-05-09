@@ -3,11 +3,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Loader2, UserCheck, Eye, MessageSquareQuote } from "lucide-react";
+import { Loader2, UserCheck, Eye, MessageSquareQuote, MessageSquare } from "lucide-react";
 import { DataTable } from "@/components/ui/data-table";
 import type { ColumnDef } from "@tanstack/react-table";
 import BookingDetailsDrawer, { type BookingRow } from "./BookingDetailsDrawer";
 import BookingInteractionsDialog from "./BookingInteractionsDialog";
+import BookingMessagesDialog from "./BookingMessagesDialog";
+import BookingTimer from "./BookingTimer";
 
 const STATUS_COLORS: Record<string, string> = {
   NEW: "bg-info/10 text-info border-info/30",
@@ -51,6 +53,7 @@ const BookingsTab = () => {
 
   const [selectedBooking, setSelectedBooking] = useState<BookingRow | null>(null);
   const [interactionsBooking, setInteractionsBooking] = useState<BookingRow | null>(null);
+  const [messagesBooking, setMessagesBooking] = useState<BookingRow | null>(null);
 
   const fetchBookings = async () => {
     const [bookingsRes, contactsRes, servicesRes, profilesRes, cancelHistoryRes, msgsRes, quotesRes] = await Promise.all([
@@ -221,13 +224,20 @@ const BookingsTab = () => {
       accessorKey: "status",
       header: t("admin.bookings.col.status"),
       cell: ({ row }) => (
-        <div className="flex items-center gap-1">
-          <Badge variant="outline" className={`text-[10px] ${STATUS_COLORS[row.original.status] || ""}`}>
-            {t(`status.${row.original.status}`)}
-          </Badge>
-          {row.original.status === "IN_PROGRESS" && row.original.otp_code && (
-            <Badge className="text-[9px] bg-warning/20 text-warning border border-warning/40 animate-pulse">🔑 OTP</Badge>
-          )}
+        <div className="flex flex-col gap-1 items-start">
+          <div className="flex items-center gap-1">
+            <Badge variant="outline" className={`text-[10px] ${STATUS_COLORS[row.original.status] || ""}`}>
+              {t(`status.${row.original.status}`)}
+            </Badge>
+            {row.original.status === "IN_PROGRESS" && row.original.otp_code && (
+              <Badge className="text-[9px] bg-warning/20 text-warning border border-warning/40 animate-pulse">🔑 OTP</Badge>
+            )}
+          </div>
+          <BookingTimer
+            scheduledAt={row.original.scheduled_at}
+            status={row.original.status}
+            checkInAt={row.original.check_in_at}
+          />
         </div>
       ),
     },
@@ -241,39 +251,48 @@ const BookingsTab = () => {
         const quotes = quoteCounts[b.id] || 0;
         const hasActivity = viewers > 0 || quotes > 0;
         return (
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); setInteractionsBooking(b); }}
-            className={`relative inline-flex items-center justify-center gap-2 text-xs px-2 py-1 rounded-md transition-all ${
-              hasActivity
-                ? "bg-primary/10 hover:bg-primary/20 ring-1 ring-primary/30"
-                : "hover:bg-accent"
-            }`}
-            title="عرض المزودين الذين تفاعلوا مع الطلب"
-          >
-            <span className={`relative flex items-center gap-1 ${viewers > 0 ? "text-primary font-bold" : "text-muted-foreground"}`}>
-              <span className="relative inline-flex">
-                <Eye className={`h-3.5 w-3.5 ${viewers > 0 ? "animate-pulse" : ""}`} />
-                {viewers > 0 && (
-                  <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-primary ring-2 ring-background animate-ping" />
-                )}
+          <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              onClick={() => setInteractionsBooking(b)}
+              className={`relative inline-flex items-center justify-center gap-2 text-xs px-2 py-1 rounded-md transition-all ${
+                hasActivity
+                  ? "bg-primary/10 hover:bg-primary/20 ring-1 ring-primary/30"
+                  : "hover:bg-accent"
+              }`}
+              title="عرض المزودين الذين تفاعلوا مع الطلب"
+            >
+              <span className={`relative flex items-center gap-1 ${viewers > 0 ? "text-primary font-bold" : "text-muted-foreground"}`}>
+                <span className="relative inline-flex">
+                  <Eye className={`h-3.5 w-3.5 ${viewers > 0 ? "animate-pulse" : ""}`} />
+                  {viewers > 0 && (
+                    <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-primary ring-2 ring-background animate-ping" />
+                  )}
+                </span>
+                {viewers > 0 ? (
+                  <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-primary text-primary-foreground text-[10px] font-bold">
+                    {viewers}
+                  </span>
+                ) : <span>0</span>}
               </span>
-              {viewers > 0 && (
-                <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-primary text-primary-foreground text-[10px] font-bold">
-                  {viewers}
-                </span>
-              )}
-              {viewers === 0 && <span>0</span>}
-            </span>
-            <span className={`flex items-center gap-1 font-semibold ${quotes > 0 ? "text-success" : "text-muted-foreground"}`}>
-              <MessageSquareQuote className={`h-3.5 w-3.5 ${quotes > 0 ? "animate-pulse" : ""}`} />
-              {quotes > 0 ? (
-                <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-success text-success-foreground text-[10px] font-bold">
-                  {quotes}
-                </span>
-              ) : <span>0</span>}
-            </span>
-          </button>
+              <span className={`flex items-center gap-1 font-semibold ${quotes > 0 ? "text-success" : "text-muted-foreground"}`}>
+                <MessageSquareQuote className={`h-3.5 w-3.5 ${quotes > 0 ? "animate-pulse" : ""}`} />
+                {quotes > 0 ? (
+                  <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-success text-success-foreground text-[10px] font-bold">
+                    {quotes}
+                  </span>
+                ) : <span>0</span>}
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setMessagesBooking(b)}
+              className="inline-flex items-center justify-center p-1.5 rounded-md hover:bg-accent transition-colors"
+              title="عرض جميع رسائل هذا الطلب"
+            >
+              <MessageSquare className="h-3.5 w-3.5 text-muted-foreground" />
+            </button>
+          </div>
         );
       },
     },
@@ -382,6 +401,12 @@ const BookingsTab = () => {
         bookingNumber={interactionsBooking?.booking_number || null}
         open={!!interactionsBooking}
         onOpenChange={(o) => { if (!o) setInteractionsBooking(null); }}
+      />
+      <BookingMessagesDialog
+        bookingId={messagesBooking?.id || null}
+        bookingNumber={messagesBooking?.booking_number || null}
+        open={!!messagesBooking}
+        onOpenChange={(o) => { if (!o) setMessagesBooking(null); }}
       />
     </div>
   );

@@ -1,16 +1,124 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
 import { Send, Loader2, Star, DollarSign, MessageCircle, User, Phone, Check, CheckCheck, Clock, UserCheck } from "lucide-react";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { CUSTOMER_QUESTIONS, QUESTIONS_BY_TEXT } from "@/lib/chatTemplates";
+
+// ============== Templated Q&A pickers ==============
+
+function CustomerQuestionPicker({
+  disabled, onPick,
+}: { disabled: boolean; onPick: (question: string) => void }) {
+  const [selected, setSelected] = useState<string>("");
+  return (
+    <div className="flex gap-2">
+      <Select value={selected} onValueChange={setSelected} disabled={disabled}>
+        <SelectTrigger className="flex-1 h-9 text-xs">
+          <SelectValue placeholder="اختر سؤالاً جاهزاً لإرساله إلى المزودين..." />
+        </SelectTrigger>
+        <SelectContent>
+          {CUSTOMER_QUESTIONS.map((q) => (
+            <SelectItem key={q.id} value={q.text} className="text-xs">{q.text}</SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <Button
+        size="sm"
+        disabled={!selected || disabled}
+        onClick={() => { if (selected) { onPick(selected); setSelected(""); } }}
+      >
+        {disabled ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+      </Button>
+    </div>
+  );
+}
+
+function ProviderResponsePicker({
+  disabled, messages, myId, onPick,
+}: {
+  disabled: boolean;
+  messages: { sender_role: string; sender_id: string; body: string; created_at: string }[];
+  myId: string;
+  onPick: (response: string, originalQuestion: string | null, price: number | null) => void;
+}) {
+  // Find the most recent customer question I haven't yet answered.
+  const lastQuestion = useMemo(() => {
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const m = messages[i];
+      if (m.sender_role === "customer" && QUESTIONS_BY_TEXT[m.body]) return m.body;
+    }
+    return null;
+  }, [messages]);
+
+  const [selected, setSelected] = useState<string>("");
+  const [price, setPrice] = useState<string>("");
+
+  if (!lastQuestion) {
+    return (
+      <div className="text-[11px] text-center text-muted-foreground py-3 border border-dashed rounded-md">
+        💬 ينتظر العميل إرسال سؤال جاهز قبل أن تتمكن من الرد.
+      </div>
+    );
+  }
+
+  const responses = QUESTIONS_BY_TEXT[lastQuestion]?.responses || [];
+
+  return (
+    <div className="space-y-2">
+      <div className="text-[11px] bg-primary/5 border border-primary/20 rounded px-2 py-1.5">
+        <span className="font-bold">سؤال العميل:</span> {lastQuestion}
+      </div>
+      <div className="flex gap-2">
+        <Select value={selected} onValueChange={setSelected} disabled={disabled}>
+          <SelectTrigger className="flex-1 h-9 text-xs">
+            <SelectValue placeholder="اختر رداً جاهزاً..." />
+          </SelectTrigger>
+          <SelectContent>
+            {responses.map((r, i) => (
+              <SelectItem key={i} value={r} className="text-xs">{r}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      {lastQuestion.includes("سعر") && (
+        <Input
+          type="number"
+          min={0}
+          placeholder="السعر المقترح بالدينار (اختياري)"
+          value={price}
+          onChange={(e) => setPrice(e.target.value)}
+          className="h-8 text-xs"
+          dir="ltr"
+        />
+      )}
+      <Button
+        size="sm"
+        className="w-full"
+        disabled={!selected || disabled}
+        onClick={() => {
+          const p = price ? parseFloat(price) : null;
+          onPick(selected, lastQuestion, p && p > 0 ? p : null);
+          setSelected(""); setPrice("");
+        }}
+      >
+        {disabled ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Send className="h-4 w-4 ml-1" />إرسال الرد</>}
+      </Button>
+    </div>
+  );
+}
+
 
 interface Message {
   id: string;
@@ -438,32 +546,93 @@ export default function BookingChat({
         </div>
       </ScrollArea>
 
-      {/* Composer */}
-      <div className="border-t p-2 space-y-2">
-        {allowQuote && (
-          <Input
-            type="number"
-            placeholder="إرفاق سعر (JOD) — اختياري"
-            value={price}
-            onChange={(e) => setPrice(e.target.value)}
-            className="h-8 text-xs"
-            dir="ltr"
-            min={0}
+      {/* Composer — Templated Q&A only (no free text) */}
+      <div className="border-t p-2 space-y-2 bg-muted/10">
+        {viewerRole === "customer" ? (
+          <CustomerQuestionPicker
+            disabled={sending}
+            onPick={async (q) => {
+              setBody(q);
+              // submit immediately
+              setTimeout(() => {
+                const ev = new Event("submit");
+                // call send via temporary hack: set body then call send()
+                (async () => {
+                  // inline send w/ q to avoid stale state
+                  setSending(true);
+                  const tempId = `temp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+                  const optimistic: Message = {
+                    id: tempId, sender_id: viewerId, sender_role: "customer",
+                    sender_display_name: viewerName || "أنت",
+                    body: q, quoted_price: null,
+                    target_provider_id: null, // broadcast to all matching providers
+                    created_at: new Date().toISOString(), sender_avatar: null,
+                    _pending: true, _tempId: tempId,
+                  };
+                  setMessages((prev) => [...prev, optimistic]);
+                  try {
+                    if (guestMode) {
+                      const { data, error } = await supabase.functions.invoke("guest-send-message", {
+                        body: { booking_number: guestMode.bookingNumber, phone: guestMode.phone, body: q, target_provider_id: null },
+                      });
+                      if (error || (data as any)?.error) throw new Error((data as any)?.error || error?.message || "send_failed");
+                    } else {
+                      const { error } = await supabase.from("booking_messages" as any).insert({
+                        booking_id: bookingId, sender_id: viewerId, sender_role: "customer",
+                        sender_display_name: viewerName || null, body: q, target_provider_id: null,
+                      });
+                      if (error) throw error;
+                    }
+                    await fetchAll();
+                    toast.success("تم إرسال السؤال لجميع المزودين المطابقين");
+                  } catch (e: any) {
+                    setMessages((prev) => prev.filter((m) => m._tempId !== tempId));
+                    toast.error(e.message || "تعذّر الإرسال");
+                  } finally { setSending(false); setBody(""); }
+                })();
+              }, 0);
+            }}
+          />
+        ) : (
+          <ProviderResponsePicker
+            disabled={sending}
+            messages={messages}
+            myId={viewerId}
+            onPick={async (responseText, originalQuestion, priceVal) => {
+              setSending(true);
+              const tempId = `temp-${Date.now()}`;
+              const optimistic: Message = {
+                id: tempId, sender_id: viewerId, sender_role: "provider",
+                sender_display_name: viewerName || "أنت",
+                body: responseText, quoted_price: priceVal,
+                target_provider_id: null,
+                created_at: new Date().toISOString(), sender_avatar: null,
+                _pending: true, _tempId: tempId,
+              };
+              setMessages((prev) => [...prev, optimistic]);
+              try {
+                const { error } = await supabase.from("booking_messages" as any).insert({
+                  booking_id: bookingId, sender_id: viewerId, sender_role: "provider",
+                  sender_display_name: viewerName || null, body: responseText, quoted_price: priceVal,
+                });
+                if (error) throw error;
+                if (priceVal && priceVal > 0) {
+                  await supabase.from("provider_quotes" as any).insert({
+                    booking_id: bookingId, provider_id: viewerId, quoted_price: priceVal, note: responseText,
+                  });
+                }
+                await fetchAll();
+                toast.success("تم إرسال الرد");
+              } catch (e: any) {
+                setMessages((prev) => prev.filter((m) => m._tempId !== tempId));
+                toast.error(e.message || "تعذّر الإرسال");
+              } finally { setSending(false); }
+            }}
           />
         )}
-        <div className="flex gap-2">
-          <Input
-            placeholder={target ? "رسالة خاصة للمزود المختار..." : "اكتب رسالتك..."}
-            value={body}
-            onChange={(e) => setBody(e.target.value)}
-            onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
-            className="flex-1"
-            disabled={sending}
-          />
-          <Button size="sm" onClick={send} disabled={!body.trim() || sending}>
-            {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-          </Button>
-        </div>
+        <p className="text-[10px] text-muted-foreground text-center px-2">
+          🔒 جميع المحادثات محصورة داخل المنصة. غير مسموح بمشاركة أرقام أو روابط أو عناوين.
+        </p>
       </div>
 
       {/* Assign confirmation */}
