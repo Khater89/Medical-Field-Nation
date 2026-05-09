@@ -251,39 +251,48 @@ const BookingsTab = () => {
         const quotes = quoteCounts[b.id] || 0;
         const hasActivity = viewers > 0 || quotes > 0;
         return (
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); setInteractionsBooking(b); }}
-            className={`relative inline-flex items-center justify-center gap-2 text-xs px-2 py-1 rounded-md transition-all ${
-              hasActivity
-                ? "bg-primary/10 hover:bg-primary/20 ring-1 ring-primary/30"
-                : "hover:bg-accent"
-            }`}
-            title="عرض المزودين الذين تفاعلوا مع الطلب"
-          >
-            <span className={`relative flex items-center gap-1 ${viewers > 0 ? "text-primary font-bold" : "text-muted-foreground"}`}>
-              <span className="relative inline-flex">
-                <Eye className={`h-3.5 w-3.5 ${viewers > 0 ? "animate-pulse" : ""}`} />
-                {viewers > 0 && (
-                  <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-primary ring-2 ring-background animate-ping" />
-                )}
+          <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+            <button
+              type="button"
+              onClick={() => setInteractionsBooking(b)}
+              className={`relative inline-flex items-center justify-center gap-2 text-xs px-2 py-1 rounded-md transition-all ${
+                hasActivity
+                  ? "bg-primary/10 hover:bg-primary/20 ring-1 ring-primary/30"
+                  : "hover:bg-accent"
+              }`}
+              title="عرض المزودين الذين تفاعلوا مع الطلب"
+            >
+              <span className={`relative flex items-center gap-1 ${viewers > 0 ? "text-primary font-bold" : "text-muted-foreground"}`}>
+                <span className="relative inline-flex">
+                  <Eye className={`h-3.5 w-3.5 ${viewers > 0 ? "animate-pulse" : ""}`} />
+                  {viewers > 0 && (
+                    <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-primary ring-2 ring-background animate-ping" />
+                  )}
+                </span>
+                {viewers > 0 ? (
+                  <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-primary text-primary-foreground text-[10px] font-bold">
+                    {viewers}
+                  </span>
+                ) : <span>0</span>}
               </span>
-              {viewers > 0 && (
-                <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-primary text-primary-foreground text-[10px] font-bold">
-                  {viewers}
-                </span>
-              )}
-              {viewers === 0 && <span>0</span>}
-            </span>
-            <span className={`flex items-center gap-1 font-semibold ${quotes > 0 ? "text-success" : "text-muted-foreground"}`}>
-              <MessageSquareQuote className={`h-3.5 w-3.5 ${quotes > 0 ? "animate-pulse" : ""}`} />
-              {quotes > 0 ? (
-                <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-success text-success-foreground text-[10px] font-bold">
-                  {quotes}
-                </span>
-              ) : <span>0</span>}
-            </span>
-          </button>
+              <span className={`flex items-center gap-1 font-semibold ${quotes > 0 ? "text-success" : "text-muted-foreground"}`}>
+                <MessageSquareQuote className={`h-3.5 w-3.5 ${quotes > 0 ? "animate-pulse" : ""}`} />
+                {quotes > 0 ? (
+                  <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-success text-success-foreground text-[10px] font-bold">
+                    {quotes}
+                  </span>
+                ) : <span>0</span>}
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setMessagesBooking(b)}
+              className="inline-flex items-center justify-center p-1.5 rounded-md hover:bg-accent transition-colors"
+              title="عرض جميع رسائل هذا الطلب"
+            >
+              <MessageSquare className="h-3.5 w-3.5 text-muted-foreground" />
+            </button>
+          </div>
         );
       },
     },
