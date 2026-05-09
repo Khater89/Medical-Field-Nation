@@ -224,13 +224,20 @@ const BookingsTab = () => {
       accessorKey: "status",
       header: t("admin.bookings.col.status"),
       cell: ({ row }) => (
-        <div className="flex items-center gap-1">
-          <Badge variant="outline" className={`text-[10px] ${STATUS_COLORS[row.original.status] || ""}`}>
-            {t(`status.${row.original.status}`)}
-          </Badge>
-          {row.original.status === "IN_PROGRESS" && row.original.otp_code && (
-            <Badge className="text-[9px] bg-warning/20 text-warning border border-warning/40 animate-pulse">🔑 OTP</Badge>
-          )}
+        <div className="flex flex-col gap-1 items-start">
+          <div className="flex items-center gap-1">
+            <Badge variant="outline" className={`text-[10px] ${STATUS_COLORS[row.original.status] || ""}`}>
+              {t(`status.${row.original.status}`)}
+            </Badge>
+            {row.original.status === "IN_PROGRESS" && row.original.otp_code && (
+              <Badge className="text-[9px] bg-warning/20 text-warning border border-warning/40 animate-pulse">🔑 OTP</Badge>
+            )}
+          </div>
+          <BookingTimer
+            scheduledAt={row.original.scheduled_at}
+            status={row.original.status}
+            checkInAt={row.original.check_in_at}
+          />
         </div>
       ),
     },
