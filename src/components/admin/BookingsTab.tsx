@@ -3,11 +3,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Loader2, UserCheck, Eye, MessageSquareQuote } from "lucide-react";
+import { Loader2, UserCheck, Eye, MessageSquareQuote, MessageSquare } from "lucide-react";
 import { DataTable } from "@/components/ui/data-table";
 import type { ColumnDef } from "@tanstack/react-table";
 import BookingDetailsDrawer, { type BookingRow } from "./BookingDetailsDrawer";
 import BookingInteractionsDialog from "./BookingInteractionsDialog";
+import BookingMessagesDialog from "./BookingMessagesDialog";
+import BookingTimer from "./BookingTimer";
 
 const STATUS_COLORS: Record<string, string> = {
   NEW: "bg-info/10 text-info border-info/30",
@@ -51,6 +53,7 @@ const BookingsTab = () => {
 
   const [selectedBooking, setSelectedBooking] = useState<BookingRow | null>(null);
   const [interactionsBooking, setInteractionsBooking] = useState<BookingRow | null>(null);
+  const [messagesBooking, setMessagesBooking] = useState<BookingRow | null>(null);
 
   const fetchBookings = async () => {
     const [bookingsRes, contactsRes, servicesRes, profilesRes, cancelHistoryRes, msgsRes, quotesRes] = await Promise.all([
