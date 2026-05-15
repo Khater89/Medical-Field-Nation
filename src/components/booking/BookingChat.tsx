@@ -587,11 +587,15 @@ export default function BookingChat({
                       });
                       if (error || (data as any)?.error) throw new Error((data as any)?.error || error?.message || "send_failed");
                     } else {
-                      const { error } = await supabase.from("booking_messages" as any).insert({
-                        booking_id: bookingId, sender_id: viewerId, sender_role: "customer",
-                        sender_display_name: viewerName || null, body: q, target_provider_id: null,
+                      const { data, error } = await supabase.rpc("send_booking_message" as any, {
+                        _booking_id: bookingId,
+                        _sender_role: "customer",
+                        _body: q,
+                        _quoted_price: null,
+                        _target_provider_id: null,
+                        _sender_display_name: viewerName || null,
                       });
-                      if (error) throw error;
+                      if (error || (data as any)?.error) throw new Error((data as any)?.error || error?.message || "send_failed");
                     }
                     await fetchAll();
                     toast.success("تم إرسال السؤال لجميع المزودين المطابقين");
@@ -621,16 +625,15 @@ export default function BookingChat({
               };
               setMessages((prev) => [...prev, optimistic]);
               try {
-                const { error } = await supabase.from("booking_messages" as any).insert({
-                  booking_id: bookingId, sender_id: viewerId, sender_role: "provider",
-                  sender_display_name: viewerName || null, body: responseText, quoted_price: priceVal,
+                const { data, error } = await supabase.rpc("send_booking_message" as any, {
+                  _booking_id: bookingId,
+                  _sender_role: "provider",
+                  _body: responseText,
+                  _quoted_price: priceVal,
+                  _target_provider_id: null,
+                  _sender_display_name: viewerName || null,
                 });
-                if (error) throw error;
-                if (priceVal && priceVal > 0) {
-                  await supabase.from("provider_quotes" as any).insert({
-                    booking_id: bookingId, provider_id: viewerId, quoted_price: priceVal, note: responseText,
-                  });
-                }
+                if (error || (data as any)?.error) throw new Error((data as any)?.error || error?.message || "send_failed");
                 await fetchAll();
                 toast.success("تم إرسال الرد");
               } catch (e: any) {
