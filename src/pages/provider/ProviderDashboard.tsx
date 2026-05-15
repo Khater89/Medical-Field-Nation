@@ -529,9 +529,13 @@ const ProviderDashboard = () => {
     setActionLoading(id);
     try {
       // Detect: was this booking assigned by the customer (vs admin/cs)?
-      // If yes → revert booking to NEW so customer can pick another provider.
-      // If no → keep existing behavior (full REJECTED).
-      const customerAssigned = (order as any).assigned_by === "customer";
+      // Query directly because get_provider_bookings RPC may not include assigned_by.
+      const { data: bRow } = await supabase
+        .from("bookings")
+        .select("assigned_by")
+        .eq("id", id)
+        .maybeSingle();
+      const customerAssigned = (bRow as any)?.assigned_by === "customer";
       const now = new Date().toISOString();
       const reasonText = rejectReason.trim();
 
