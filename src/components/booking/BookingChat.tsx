@@ -14,22 +14,26 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { CUSTOMER_QUESTIONS, QUESTIONS_BY_TEXT, PROVIDER_RESPONSES } from "@/lib/chatTemplates";
+import { CUSTOMER_QUESTIONS, CUSTOMER_PRIVATE_QUESTIONS, QUESTIONS_BY_TEXT, PROVIDER_RESPONSES } from "@/lib/chatTemplates";
 
 // ============== Templated Q&A pickers ==============
 
 function CustomerQuestionPicker({
-  disabled, onPick,
-}: { disabled: boolean; onPick: (question: string) => void }) {
+  disabled, onPick, isPrivate, targetName,
+}: { disabled: boolean; onPick: (question: string) => void; isPrivate: boolean; targetName?: string | null }) {
   const [selected, setSelected] = useState<string>("");
+  const list = isPrivate ? CUSTOMER_PRIVATE_QUESTIONS : CUSTOMER_QUESTIONS;
+  const placeholder = isPrivate
+    ? `اختر سؤالاً مخصصاً لـ ${targetName || "المزود"}...`
+    : "اختر سؤالاً عاماً لإرساله لجميع المزودين المطابقين...";
   return (
     <div className="flex gap-2">
       <Select value={selected} onValueChange={setSelected} disabled={disabled}>
         <SelectTrigger className="flex-1 h-9 text-xs">
-          <SelectValue placeholder="اختر سؤالاً جاهزاً لإرساله إلى المزودين..." />
+          <SelectValue placeholder={placeholder} />
         </SelectTrigger>
         <SelectContent>
-          {CUSTOMER_QUESTIONS.map((q) => (
+          {list.map((q) => (
             <SelectItem key={q.id} value={q.text} className="text-xs">{q.text}</SelectItem>
           ))}
         </SelectContent>
