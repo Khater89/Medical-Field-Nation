@@ -434,14 +434,20 @@ const TrackOrderPage = () => {
                           </p>
                         </div>
                       </div>
-                      <BookingChat
-                        bookingId={booking.id}
-                        viewerRole="customer"
-                        viewerId={user?.id || booking.id}
-                        guestMode={{ bookingNumber: bookingNumber.trim(), phone: phone.trim() }}
-                        canAssign={booking.status === "NEW"}
-                        onAssigned={() => handleTrack()}
-                      />
+                      {(() => {
+                        const isOwner = !!user && !!booking.customer_user_id && user.id === booking.customer_user_id;
+                        return (
+                          <BookingChat
+                            bookingId={booking.id}
+                            viewerRole="customer"
+                            viewerId={user?.id || booking.id}
+                            viewerName={(user?.user_metadata as any)?.full_name || undefined}
+                            guestMode={isOwner ? undefined : { bookingNumber: bookingNumber.trim(), phone: phone.trim() }}
+                            canAssign={booking.status === "NEW"}
+                            onAssigned={() => handleTrack()}
+                          />
+                        );
+                      })()}
                     </div>
                   </div>
                 )}
