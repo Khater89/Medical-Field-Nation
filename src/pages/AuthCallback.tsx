@@ -54,15 +54,19 @@ const AuthCallback = () => {
           } else if (isCS) {
             navigate("/cs", { replace: true });
           } else if (isProvider) {
-            // Check if provider profile is complete
+            // Approved providers go straight to their dashboard
             const { data: prof } = await supabase
               .from("profiles")
               .select("provider_status, profile_completed")
               .eq("user_id", session.user.id)
               .maybeSingle();
 
-            if (prof?.provider_status === "approved" && !prof?.profile_completed) {
-              navigate("/provider/onboarding", { replace: true });
+            if (prof?.provider_status === "approved") {
+              if (prof?.profile_completed) {
+                navigate("/provider", { replace: true });
+              } else {
+                navigate("/provider/onboarding", { replace: true });
+              }
             } else {
               navigate("/account-review", { replace: true });
             }
