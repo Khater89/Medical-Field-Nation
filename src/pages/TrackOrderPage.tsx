@@ -72,6 +72,7 @@ interface TrackingResult {
     calculated_total: number | null;
     payment_status?: string;
     payment_method?: string;
+    customer_user_id?: string | null;
   };
   history: { action: string; created_at: string; note: string | null }[];
   rating: { rating: number; comment: string | null } | null;
