@@ -92,8 +92,29 @@ const AuthPage = () => {
           toast({ title: "خطأ في تسجيل الدخول", description: error.message, variant: "destructive" });
         }
       } else {
-        console.log("Login successful, waiting for AuthProvider to resolve roles...");
+        console.log("Login successful, resolving role and redirecting...");
         toast({ title: "تم تسجيل الدخول بنجاح" });
+        // Direct navigation — don't wait for AuthProvider race
+        const { data: { user: authedUser } } = await supabase.auth.getUser();
+        if (authedUser) {
+          const { data: roles } = await supabase
+            .from("user_roles").select("role").eq("user_id", authedUser.id);
+          const isAdminR = roles?.some((r) => r.role === "admin");
+          const isCSR = roles?.some((r) => r.role === "cs");
+          const isProviderR = roles?.some((r) => r.role === "provider");
+          if (isAdminR) navigate("/admin", { replace: true });
+          else if (isCSR) navigate("/cs", { replace: true });
+          else if (isProviderR) {
+            const { data: prof } = await supabase
+              .from("profiles").select("provider_status, profile_completed")
+              .eq("user_id", authedUser.id).maybeSingle();
+            if (prof?.provider_status === "approved") {
+              navigate(prof?.profile_completed ? "/provider" : "/provider/onboarding", { replace: true });
+            } else {
+              navigate("/account-review", { replace: true });
+            }
+          } else navigate("/", { replace: true });
+        }
       }
     } catch (err: any) {
       console.error("Unexpected login error:", err);
