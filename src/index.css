@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&family=Inter:wght@400;500;600;700;800;900&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -35,7 +35,7 @@
     --input: 214 32% 91%;
     --ring: 26 100% 55%;
 
-    --radius: 0.75rem;
+    --radius: 1rem;
 
     --success: 142 71% 45%;
     --success-foreground: 0 0% 100%;
@@ -60,14 +60,15 @@
     --chart-4: 210 100% 56%;
     --chart-5: 0 72% 50%;
 
-    --shadow-2xs: 0 1px 2px 0 hsl(0 0% 0% / 0.03);
-    --shadow-xs: 0 1px 3px 0 hsl(0 0% 0% / 0.04);
-    --shadow-sm: 0 2px 4px -1px hsl(0 0% 0% / 0.06), 0 1px 2px -1px hsl(0 0% 0% / 0.04);
-    --shadow: 0 4px 6px -1px hsl(0 0% 0% / 0.07), 0 2px 4px -2px hsl(0 0% 0% / 0.04);
-    --shadow-md: 0 6px 10px -2px hsl(0 0% 0% / 0.08), 0 4px 6px -2px hsl(0 0% 0% / 0.04);
-    --shadow-lg: 0 10px 20px -4px hsl(0 0% 0% / 0.08), 0 4px 8px -4px hsl(0 0% 0% / 0.03);
-    --shadow-xl: 0 20px 30px -6px hsl(0 0% 0% / 0.1), 0 8px 12px -6px hsl(0 0% 0% / 0.04);
-    --shadow-2xl: 0 25px 50px -12px hsl(0 0% 0% / 0.2);
+    /* Material 3 elevation tokens */
+    --shadow-2xs: 0 1px 2px 0 hsl(0 0% 0% / 0.05);
+    --shadow-xs: 0 1px 3px 1px hsl(0 0% 0% / 0.06), 0 1px 2px 0 hsl(0 0% 0% / 0.08);
+    --shadow-sm: 0 1px 2px 0 hsl(0 0% 0% / 0.10), 0 1px 3px 1px hsl(0 0% 0% / 0.06);
+    --shadow: 0 1px 3px 0 hsl(0 0% 0% / 0.12), 0 4px 8px 3px hsl(0 0% 0% / 0.08);
+    --shadow-md: 0 2px 6px 2px hsl(0 0% 0% / 0.10), 0 1px 2px 0 hsl(0 0% 0% / 0.14);
+    --shadow-lg: 0 4px 8px 3px hsl(0 0% 0% / 0.12), 0 1px 3px 0 hsl(0 0% 0% / 0.18);
+    --shadow-xl: 0 6px 10px 4px hsl(0 0% 0% / 0.12), 0 2px 3px 0 hsl(0 0% 0% / 0.20);
+    --shadow-2xl: 0 8px 12px 6px hsl(0 0% 0% / 0.14), 0 4px 4px 0 hsl(0 0% 0% / 0.22);
 
     --spacing: 0.25rem;
     --tracking-normal: 0em;
@@ -141,12 +142,18 @@
 
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: 'Inter', system-ui, sans-serif;
+    font-family: 'Roboto', 'Inter', system-ui, sans-serif;
+    letter-spacing: 0.01em;
   }
 
   .font-arabic {
-    font-family: 'IBM Plex Sans Arabic', 'Inter', system-ui, sans-serif;
+    font-family: 'IBM Plex Sans Arabic', 'Roboto', 'Inter', system-ui, sans-serif;
   }
+
+  /* Material 3 typography scale */
+  h1 { letter-spacing: -0.02em; font-weight: 500; }
+  h2, h3 { letter-spacing: -0.01em; font-weight: 500; }
+  button { letter-spacing: 0.02em; }
 }
 
 @layer utilities {

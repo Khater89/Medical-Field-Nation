@@ -14,22 +14,26 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { CUSTOMER_QUESTIONS, QUESTIONS_BY_TEXT, PROVIDER_RESPONSES } from "@/lib/chatTemplates";
+import { CUSTOMER_QUESTIONS, CUSTOMER_PRIVATE_QUESTIONS, QUESTIONS_BY_TEXT, PROVIDER_RESPONSES } from "@/lib/chatTemplates";
 
 // ============== Templated Q&A pickers ==============
 
 function CustomerQuestionPicker({
-  disabled, onPick,
-}: { disabled: boolean; onPick: (question: string) => void }) {
+  disabled, onPick, isPrivate, targetName,
+}: { disabled: boolean; onPick: (question: string) => void; isPrivate: boolean; targetName?: string | null }) {
   const [selected, setSelected] = useState<string>("");
+  const list = isPrivate ? CUSTOMER_PRIVATE_QUESTIONS : CUSTOMER_QUESTIONS;
+  const placeholder = isPrivate
+    ? `اختر سؤالاً مخصصاً لـ ${targetName || "المزود"}...`
+    : "اختر سؤالاً عاماً لإرساله لجميع المزودين المطابقين...";
   return (
     <div className="flex gap-2">
       <Select value={selected} onValueChange={setSelected} disabled={disabled}>
         <SelectTrigger className="flex-1 h-9 text-xs">
-          <SelectValue placeholder="اختر سؤالاً جاهزاً لإرساله إلى المزودين..." />
+          <SelectValue placeholder={placeholder} />
         </SelectTrigger>
         <SelectContent>
-          {CUSTOMER_QUESTIONS.map((q) => (
+          {list.map((q) => (
             <SelectItem key={q.id} value={q.text} className="text-xs">{q.text}</SelectItem>
           ))}
         </SelectContent>
@@ -561,21 +565,20 @@ export default function BookingChat({
         {viewerRole === "customer" ? (
           <CustomerQuestionPicker
             disabled={sending}
+            isPrivate={!!target}
+            targetName={target ? providers.find((p) => p.id === target)?.name : null}
             onPick={async (q) => {
+              const targetForThisMessage = target; // capture private target if any
               setBody(q);
-              // submit immediately
               setTimeout(() => {
-                const ev = new Event("submit");
-                // call send via temporary hack: set body then call send()
                 (async () => {
-                  // inline send w/ q to avoid stale state
                   setSending(true);
                   const tempId = `temp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
                   const optimistic: Message = {
                     id: tempId, sender_id: viewerId, sender_role: "customer",
                     sender_display_name: viewerName || "أنت",
                     body: q, quoted_price: null,
-                    target_provider_id: null, // broadcast to all matching providers
+                    target_provider_id: targetForThisMessage,
                     created_at: new Date().toISOString(), sender_avatar: null,
                     _pending: true, _tempId: tempId,
                   };
@@ -583,7 +586,7 @@ export default function BookingChat({
                   try {
                     if (guestMode) {
                       const { data, error } = await supabase.functions.invoke("guest-send-message", {
-                        body: { booking_number: guestMode.bookingNumber, phone: guestMode.phone, body: q, target_provider_id: null },
+                        body: { booking_number: guestMode.bookingNumber, phone: guestMode.phone, body: q, target_provider_id: targetForThisMessage },
                       });
                       if (error || (data as any)?.error) throw new Error((data as any)?.error || error?.message || "send_failed");
                     } else {
@@ -592,13 +595,13 @@ export default function BookingChat({
                         _sender_role: "customer",
                         _body: q,
                         _quoted_price: null,
-                        _target_provider_id: null,
+                        _target_provider_id: targetForThisMessage,
                         _sender_display_name: viewerName || null,
                       });
                       if (error || (data as any)?.error) throw new Error((data as any)?.error || error?.message || "send_failed");
                     }
                     await fetchAll();
-                    toast.success("تم إرسال السؤال لجميع المزودين المطابقين");
+                    toast.success(targetForThisMessage ? "تم إرسال السؤال إلى المزود" : "تم إرسال السؤال لجميع المزودين المطابقين");
                   } catch (e: any) {
                     setMessages((prev) => prev.filter((m) => m._tempId !== tempId));
                     toast.error(e.message || "تعذّر الإرسال");
