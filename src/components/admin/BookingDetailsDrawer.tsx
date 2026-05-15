@@ -367,6 +367,37 @@ const BookingDetailsDrawer = ({ booking, open, onOpenChange, serviceName, servic
             </Button>
           )}
 
+          {/* Release Gender button — only when a gender is required and not already released */}
+          {(booking as any).required_gender && (booking as any).required_gender !== "any" && !(booking as any).gender_released && (
+            <div className="rounded-lg border-2 border-warning/40 bg-warning/5 p-3 space-y-2">
+              <p className="text-xs">
+                هذا الطلب يطلب مزوداً <strong>{(booking as any).required_gender === "male" ? "ذكر" : "أنثى"}</strong>.
+                لتوسيع البحث لجميع الأجناس، تواصل مع العميل أولاً للحصول على موافقته.
+              </p>
+              <Button
+                variant="outline"
+                className="w-full gap-2 border-warning/40 text-warning hover:bg-warning/10"
+                onClick={async () => {
+                  if (!window.confirm("هل تؤكد أنك حصلت على موافقة العميل لإلغاء شرط الجنس لهذا الطلب؟")) return;
+                  const { data, error } = await supabase.rpc("admin_release_gender" as any, { _booking_id: booking.id });
+                  if (error || !(data as any)?.success) {
+                    toast.error(error?.message || "تعذّر تحرير الشرط");
+                  } else {
+                    toast.success("تم تحرير شرط الجنس — يمكن لجميع المزودين الآن رؤية الطلب");
+                    onStatusChange?.();
+                  }
+                }}
+              >
+                🔓 Release Gender — تحرير شرط الجنس
+              </Button>
+            </div>
+          )}
+          {(booking as any).gender_released && (
+            <div className="rounded-md bg-info/5 border border-info/30 text-xs px-3 py-2">
+              ✓ تم تحرير شرط الجنس لهذا الطلب
+            </div>
+          )}
+
           {/* Provider Quotes */}
           <ProviderQuotesSection
             bookingId={booking.id}
