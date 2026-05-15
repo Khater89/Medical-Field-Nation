@@ -49,6 +49,7 @@ const ProviderOnboarding = () => {
 
   // Deferred professional fields (moved here from initial signup)
   const [roleType, setRoleType] = useState<string>("");
+  const [gender, setGender] = useState<string>("");
   const [licenseId, setLicenseId] = useState<string>("");
   const [academicCertUrl, setAcademicCertUrl] = useState<string | null>(null);
   const [experienceCertUrl, setExperienceCertUrl] = useState<string | null>(null);
@@ -69,6 +70,7 @@ const ProviderOnboarding = () => {
       setBio((profile as any).bio || "");
       setLicenseUrl((profile as any).license_file_url || null);
       setRoleType((profile as any).role_type || "");
+      setGender((profile as any).gender || "");
       setLicenseId((profile as any).license_id || "");
       setAcademicCertUrl((profile as any).academic_cert_url || null);
       setExperienceCertUrl((profile as any).experience_cert_url || null);
@@ -163,6 +165,10 @@ const ProviderOnboarding = () => {
       toast({ title: "يرجى اختيار التخصص المهني", variant: "destructive" });
       return;
     }
+    if (!gender) {
+      toast({ title: "يرجى تحديد جنس مقدم الخدمة (إجباري)", variant: "destructive" });
+      return;
+    }
     if (!licenseId.trim()) {
       toast({ title: "يرجى إدخال رقم المزاولة المهنية", variant: "destructive" });
       return;
@@ -181,6 +187,7 @@ const ProviderOnboarding = () => {
       .from("profiles")
       .update({
         role_type: roleType,
+        gender,
         license_id: licenseId.trim(),
         academic_cert_url: academicCertUrl,
         experience_cert_url: experienceCertUrl,
@@ -260,6 +267,29 @@ const ProviderOnboarding = () => {
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+              <div>
+                <label className="text-sm font-medium">جنس مقدم الخدمة *</label>
+                <p className="text-xs text-muted-foreground mt-0.5 mb-2">يستخدم لمطابقتك مع الطلبات التي تحدد جنس المزود</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { value: "male", label: "ذكر" },
+                    { value: "female", label: "أنثى" },
+                  ].map((g) => (
+                    <button
+                      key={g.value}
+                      type="button"
+                      onClick={() => setGender(g.value)}
+                      className={`h-10 rounded-lg border text-sm font-semibold transition-all ${
+                        gender === g.value
+                          ? "border-primary bg-primary/10 text-primary"
+                          : "border-border hover:border-primary/40 text-muted-foreground"
+                      }`}
+                    >
+                      {g.label}
+                    </button>
+                  ))}
+                </div>
               </div>
               <div>
                 <label className="text-sm font-medium">رقم المزاولة المهنية *</label>

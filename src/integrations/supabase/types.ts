@@ -201,6 +201,9 @@ export type Database = {
           deal_confirmed_by: string | null
           deposit_amount: number | null
           deposit_status: string | null
+          gender_released: boolean
+          gender_released_at: string | null
+          gender_released_by: string | null
           id: string
           internal_note: string | null
           is_emergency: boolean
@@ -216,6 +219,7 @@ export type Database = {
           rejected_at: string | null
           rejected_by: string | null
           remaining_cash_amount: number | null
+          required_gender: string | null
           reserved_at: string | null
           reserved_provider_id: string | null
           reveal_contact_allowed: boolean | null
@@ -263,6 +267,9 @@ export type Database = {
           deal_confirmed_by?: string | null
           deposit_amount?: number | null
           deposit_status?: string | null
+          gender_released?: boolean
+          gender_released_at?: string | null
+          gender_released_by?: string | null
           id?: string
           internal_note?: string | null
           is_emergency?: boolean
@@ -278,6 +285,7 @@ export type Database = {
           rejected_at?: string | null
           rejected_by?: string | null
           remaining_cash_amount?: number | null
+          required_gender?: string | null
           reserved_at?: string | null
           reserved_provider_id?: string | null
           reveal_contact_allowed?: boolean | null
@@ -325,6 +333,9 @@ export type Database = {
           deal_confirmed_by?: string | null
           deposit_amount?: number | null
           deposit_status?: string | null
+          gender_released?: boolean
+          gender_released_at?: string | null
+          gender_released_by?: string | null
           id?: string
           internal_note?: string | null
           is_emergency?: boolean
@@ -340,6 +351,7 @@ export type Database = {
           rejected_at?: string | null
           rejected_by?: string | null
           remaining_cash_amount?: number | null
+          required_gender?: string | null
           reserved_at?: string | null
           reserved_provider_id?: string | null
           reveal_contact_allowed?: boolean | null
@@ -481,6 +493,7 @@ export type Database = {
           experience_cert_url: string | null
           experience_years: number | null
           full_name: string | null
+          gender: string | null
           languages: string[] | null
           last_active_at: string | null
           lat: number | null
@@ -515,6 +528,7 @@ export type Database = {
           experience_cert_url?: string | null
           experience_years?: number | null
           full_name?: string | null
+          gender?: string | null
           languages?: string[] | null
           last_active_at?: string | null
           lat?: number | null
@@ -549,6 +563,7 @@ export type Database = {
           experience_cert_url?: string | null
           experience_years?: number | null
           full_name?: string | null
+          gender?: string | null
           languages?: string[] | null
           last_active_at?: string | null
           lat?: number | null
@@ -850,6 +865,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_release_gender: { Args: { _booking_id: string }; Returns: Json }
       available_bookings_for_providers: {
         Args: never
         Returns: {
@@ -933,6 +949,14 @@ export type Database = {
           provider_id: string
           role_type: string
         }[]
+      }
+      gender_matches: {
+        Args: {
+          _provider_gender: string
+          _released: boolean
+          _required: string
+        }
+        Returns: boolean
       }
       get_provider_balance: { Args: { _provider_id: string }; Returns: number }
       get_provider_bookings: {

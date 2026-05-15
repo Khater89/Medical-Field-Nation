@@ -333,6 +333,33 @@ const ProviderDashboard = () => {
   const [avatarUploading, setAvatarUploading] = useState(false);
   const [editMode, setEditMode] = useState(false);
 
+  // Mandatory gender completion for legacy providers
+  const [genderDialogOpen, setGenderDialogOpen] = useState(false);
+  const [genderChoice, setGenderChoice] = useState<string>("");
+  const [savingGender, setSavingGender] = useState(false);
+
+  useEffect(() => {
+    if (profile && !(profile as any).gender) {
+      setGenderDialogOpen(true);
+    } else {
+      setGenderDialogOpen(false);
+    }
+  }, [profile]);
+
+  const saveGender = async () => {
+    if (!user || !genderChoice) return;
+    setSavingGender(true);
+    const { error } = await supabase.from("profiles").update({ gender: genderChoice } as any).eq("user_id", user.id);
+    setSavingGender(false);
+    if (error) {
+      toast({ title: "خطأ", description: error.message, variant: "destructive" });
+      return;
+    }
+    await refreshUserData();
+    toast({ title: "تم حفظ الجنس بنجاح ✅" });
+    setGenderDialogOpen(false);
+  };
+
   useEffect(() => {
     if (profile) {
       setAvailableNow(profile.available_now || false);
@@ -1910,6 +1937,46 @@ const ProviderDashboard = () => {
             >
               <CheckCircle className="h-4 w-4 me-1" />
               أوافق وأقبل الطلب
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Mandatory gender completion dialog (legacy providers without gender) */}
+      <AlertDialog open={genderDialogOpen} onOpenChange={() => { /* no-op: blocking */ }}>
+        <AlertDialogContent dir="rtl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>تحديد الجنس مطلوب</AlertDialogTitle>
+            <AlertDialogDescription>
+              لاستقبال الطلبات يجب تحديد جنس مقدم الخدمة. يستخدم هذا لمطابقتك مع الطلبات
+              التي يحدد فيها العميل جنس المزود المطلوب. لا يمكنك المتابعة قبل اختيار الجنس.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="grid grid-cols-2 gap-2 py-2">
+            {[
+              { value: "male", label: "ذكر" },
+              { value: "female", label: "أنثى" },
+            ].map((g) => (
+              <button
+                key={g.value}
+                type="button"
+                onClick={() => setGenderChoice(g.value)}
+                className={`h-12 rounded-lg border text-sm font-bold transition-all ${
+                  genderChoice === g.value
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "border-border hover:border-primary/40"
+                }`}
+              >
+                {g.label}
+              </button>
+            ))}
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogAction
+              disabled={!genderChoice || savingGender}
+              onClick={(e) => { e.preventDefault(); saveGender(); }}
+            >
+              {savingGender ? <Loader2 className="h-4 w-4 animate-spin" /> : "حفظ ومتابعة"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

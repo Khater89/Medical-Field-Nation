@@ -28,6 +28,8 @@ interface BookingRow {
   client_lng: number | null;
   subtotal: number;
   scheduled_at: string;
+  required_gender?: string | null;
+  gender_released?: boolean | null;
 }
 
 interface NearestProvider {
@@ -56,6 +58,7 @@ interface ProviderRow {
   lat: number | null;
   lng: number | null;
   provider_number?: number | null;
+  gender?: string | null;
 }
 
 const ROLE_TYPE_LABELS: Record<string, string> = {
@@ -265,9 +268,16 @@ const CSAssignmentDialog = ({ booking, open, onOpenChange, onAssigned, serviceNa
 
   // Filter helpers
   const matchesRole = (roleType: string | null) => {
-    if (isEmergency) return true; // emergency is filtered by specialty, not by role
+    if (isEmergency) return true;
     if (!allowedRoles.length) return true;
     return roleType ? allowedRoles.includes(roleType) : false;
+  };
+  const requiredGender = booking.required_gender;
+  const genderReleased = !!booking.gender_released;
+  const matchesGender = (g: string | null | undefined) => {
+    if (genderReleased) return true;
+    if (!requiredGender || requiredGender === "any") return true;
+    return g === requiredGender;
   };
   const matchesSearch = (name: string | null, providerNumber?: number | null) => {
     if (!search.trim()) return true;
@@ -279,12 +289,22 @@ const CSAssignmentDialog = ({ booking, open, onOpenChange, onAssigned, serviceNa
     );
   };
 
-  // STRICT: city + category. nearest is already geo-bounded by RPC radius.
+  // Build a lookup of gender for nearest providers (which don't return gender from RPC)
+  const genderById = useMemo(() => {
+    const map = new Map<string, string | null>();
+    fallbackProviders.forEach((p) => map.set(p.user_id, p.gender || null));
+    return map;
+  }, [fallbackProviders]);
+
+  // STRICT: city + category + gender. nearest is geo-bounded by RPC radius.
   const nearestIds = new Set(nearestProviders.map((p) => p.provider_id));
   const filteredNearest = useMemo(() =>
     nearestProviders
-      .filter(p => matchesRole(p.role_type) && matchesSearch(p.full_name) && matchesEmergency(p.provider_id)),
-    [nearestProviders, allowedRoles, search, isEmergency, emergencyProviderIds]
+      .filter(p => matchesRole(p.role_type)
+        && matchesSearch(p.full_name)
+        && matchesEmergency(p.provider_id)
+        && matchesGender(genderById.get(p.provider_id))),
+    [nearestProviders, allowedRoles, search, isEmergency, emergencyProviderIds, requiredGender, genderReleased, genderById]
   );
   const sameCityProviders = useMemo(() =>
     fallbackProviders.filter(
@@ -293,8 +313,9 @@ const CSAssignmentDialog = ({ booking, open, onOpenChange, onAssigned, serviceNa
         && matchesRole(p.role_type)
         && matchesSearch(p.full_name, p.provider_number)
         && matchesEmergency(p.user_id)
+        && matchesGender(p.gender)
     ),
-    [fallbackProviders, nearestIds, booking.city, allowedRoles, search, isEmergency, emergencyProviderIds]
+    [fallbackProviders, nearestIds, booking.city, allowedRoles, search, isEmergency, emergencyProviderIds, requiredGender, genderReleased]
   );
 
   // Apply quick filter on combined list
