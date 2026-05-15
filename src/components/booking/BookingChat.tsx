@@ -565,21 +565,20 @@ export default function BookingChat({
         {viewerRole === "customer" ? (
           <CustomerQuestionPicker
             disabled={sending}
+            isPrivate={!!target}
+            targetName={target ? providers.find((p) => p.id === target)?.name : null}
             onPick={async (q) => {
+              const targetForThisMessage = target; // capture private target if any
               setBody(q);
-              // submit immediately
               setTimeout(() => {
-                const ev = new Event("submit");
-                // call send via temporary hack: set body then call send()
                 (async () => {
-                  // inline send w/ q to avoid stale state
                   setSending(true);
                   const tempId = `temp-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
                   const optimistic: Message = {
                     id: tempId, sender_id: viewerId, sender_role: "customer",
                     sender_display_name: viewerName || "أنت",
                     body: q, quoted_price: null,
-                    target_provider_id: null, // broadcast to all matching providers
+                    target_provider_id: targetForThisMessage,
                     created_at: new Date().toISOString(), sender_avatar: null,
                     _pending: true, _tempId: tempId,
                   };
@@ -587,7 +586,7 @@ export default function BookingChat({
                   try {
                     if (guestMode) {
                       const { data, error } = await supabase.functions.invoke("guest-send-message", {
-                        body: { booking_number: guestMode.bookingNumber, phone: guestMode.phone, body: q, target_provider_id: null },
+                        body: { booking_number: guestMode.bookingNumber, phone: guestMode.phone, body: q, target_provider_id: targetForThisMessage },
                       });
                       if (error || (data as any)?.error) throw new Error((data as any)?.error || error?.message || "send_failed");
                     } else {
@@ -596,13 +595,13 @@ export default function BookingChat({
                         _sender_role: "customer",
                         _body: q,
                         _quoted_price: null,
-                        _target_provider_id: null,
+                        _target_provider_id: targetForThisMessage,
                         _sender_display_name: viewerName || null,
                       });
                       if (error || (data as any)?.error) throw new Error((data as any)?.error || error?.message || "send_failed");
                     }
                     await fetchAll();
-                    toast.success("تم إرسال السؤال لجميع المزودين المطابقين");
+                    toast.success(targetForThisMessage ? "تم إرسال السؤال إلى المزود" : "تم إرسال السؤال لجميع المزودين المطابقين");
                   } catch (e: any) {
                     setMessages((prev) => prev.filter((m) => m._tempId !== tempId));
                     toast.error(e.message || "تعذّر الإرسال");
