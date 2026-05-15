@@ -1,15 +1,17 @@
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Loader2, UserCheck, Eye, MessageSquareQuote, MessageSquare } from "lucide-react";
+import { Loader2, UserCheck, Eye, MessageSquareQuote, MessageSquare, Download } from "lucide-react";
 import { DataTable } from "@/components/ui/data-table";
 import type { ColumnDef } from "@tanstack/react-table";
 import BookingDetailsDrawer, { type BookingRow } from "./BookingDetailsDrawer";
 import BookingInteractionsDialog from "./BookingInteractionsDialog";
 import BookingMessagesDialog from "./BookingMessagesDialog";
 import BookingTimer from "./BookingTimer";
+import { toast } from "@/hooks/use-toast";
 
 const STATUS_COLORS: Record<string, string> = {
   NEW: "bg-info/10 text-info border-info/30",
