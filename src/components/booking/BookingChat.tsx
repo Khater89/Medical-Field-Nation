@@ -247,12 +247,14 @@ export default function BookingChat({
       const t = setInterval(fetchAll, 3000);
       return () => clearInterval(t);
     }
+    // Authenticated: realtime + 5s polling fallback (in case channel drops)
     const ch = supabase.channel(`booking_messages:${bookingId}`)
       .on("postgres_changes",
         { event: "INSERT", schema: "public", table: "booking_messages", filter: `booking_id=eq.${bookingId}` },
         () => fetchAll()
       ).subscribe();
-    return () => { supabase.removeChannel(ch); };
+    const poll = setInterval(fetchAll, 5000);
+    return () => { supabase.removeChannel(ch); clearInterval(poll); };
   }, [bookingId, guestMode?.bookingNumber, guestMode?.phone]);
 
   const send = async () => {
