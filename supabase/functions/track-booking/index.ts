@@ -168,6 +168,7 @@ Deno.serve(async (req) => {
         calculated_total: booking.calculated_total,
         payment_status: booking.payment_status,
         payment_method: booking.payment_method,
+        customer_user_id: booking.customer_user_id,
       },
       history: history || [],
       rating,
