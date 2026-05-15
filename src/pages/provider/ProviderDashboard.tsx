@@ -333,6 +333,33 @@ const ProviderDashboard = () => {
   const [avatarUploading, setAvatarUploading] = useState(false);
   const [editMode, setEditMode] = useState(false);
 
+  // Mandatory gender completion for legacy providers
+  const [genderDialogOpen, setGenderDialogOpen] = useState(false);
+  const [genderChoice, setGenderChoice] = useState<string>("");
+  const [savingGender, setSavingGender] = useState(false);
+
+  useEffect(() => {
+    if (profile && !(profile as any).gender) {
+      setGenderDialogOpen(true);
+    } else {
+      setGenderDialogOpen(false);
+    }
+  }, [profile]);
+
+  const saveGender = async () => {
+    if (!user || !genderChoice) return;
+    setSavingGender(true);
+    const { error } = await supabase.from("profiles").update({ gender: genderChoice } as any).eq("user_id", user.id);
+    setSavingGender(false);
+    if (error) {
+      toast({ title: "خطأ", description: error.message, variant: "destructive" });
+      return;
+    }
+    await refreshUserData();
+    toast({ title: "تم حفظ الجنس بنجاح ✅" });
+    setGenderDialogOpen(false);
+  };
+
   useEffect(() => {
     if (profile) {
       setAvailableNow(profile.available_now || false);
