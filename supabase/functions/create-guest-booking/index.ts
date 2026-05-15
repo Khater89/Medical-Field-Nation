@@ -57,6 +57,7 @@ Deno.serve(async (req) => {
       notes,
       payment_method,
       is_emergency,
+      provider_gender,
     } = body;
 
     // ── Validate required fields ──
@@ -130,6 +131,10 @@ Deno.serve(async (req) => {
     const validMethods = ["CASH", "CLIQ", "CARD"];
     const finalPaymentMethod = validMethods.includes(payment_method) ? payment_method : "CASH";
 
+    // ── Validate required gender ──
+    const validGenders = ["male", "female", "any"];
+    const finalRequiredGender = validGenders.includes(provider_gender) ? provider_gender : "any";
+
     // ── Insert booking ──
     const booking = {
       customer_display_name: customer_name.trim().substring(0, 200),
@@ -143,6 +148,7 @@ Deno.serve(async (req) => {
       payment_method: finalPaymentMethod,
       customer_user_id,
       is_emergency: is_emergency === true,
+      required_gender: finalRequiredGender,
     };
 
     const { data, error } = await supabaseAdmin
