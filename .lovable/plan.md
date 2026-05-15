@@ -1,61 +1,65 @@
-## خطة التنفيذ
+# خطة التنفيذ — فلترة الجنس + دردشة محدودة بالسعر
 
-طلبك يتضمن 8 أقسام كبيرة تمس قاعدة البيانات، الواجهة، الإشعارات، ونظام الدردشة. سأنفذها على دفعات منظمة:
+## 1) قاعدة البيانات (Migration واحد)
 
-### المرحلة 1 — مؤشرات الموعد والتأخير في لوحة الإدارة (أقسام 1, 2, 3)
+### إضافة أعمدة
+- `profiles.gender` TEXT (`male` | `female`) — للمزودين
+- `bookings.gender_released` BOOLEAN DEFAULT false — لتعطيل فلترة الجنس
+- `bookings.gender_released_at` TIMESTAMPTZ
+- `bookings.gender_released_by` UUID
+- `booking_messages.quoted_price` موجود مسبقاً ✓
 
-**واجهة فقط** (`src/components/admin/BookingsTab.tsx`):
-- إضافة مكوّن `BookingTimer` يعرض بجانب كل حجز:
-  - `متبقي 2س 15د` (أخضر) إذا الموعد > ساعة
-  - `موعد الطلب قريب — متبقي 45د` (أصفر/Badge وامض) إذا < ساعة
-  - `في وقت التنفيذ` (أزرق) إذا check_in_at موجود وضمن النافذة
-  - `المزود متأخر 30د` (أحمر/Badge نابض) إذا تجاوز الموعد ولم يبدأ
-- يحدّث ذاتياً كل 30 ثانية عبر `setInterval`.
-- منطق التأخر يعتمد على: `scheduled_at`, `status`, `check_in_at` (موجودة كلها).
+### تحديث Functions (لإضافة فلترة الجنس)
+- `available_bookings_for_providers()` — فلترة بـ `provider_gender` من `bookings.notes/internal` → نخزّن `bookings.required_gender` كعمود جديد
+- `bookings.required_gender` TEXT جديد، يُملأ من `provider_gender` في PatientForm
+- `list_booking_messages()` — لا تغيير في المنطق الأساسي
+- `provider_messages_inbox()` — إضافة فلتر الجنس
+- `find_nearest_providers()` — إضافة بارامتر `_required_gender`
 
-**باك إند خفيف** — تعديل Edge Function `check-late-checkins` (موجودة) لإرسال إشعار للمزود قبل الموعد بساعة (فحص `scheduled_at` بين 55-65 دقيقة). تُستدعى عبر cron الموجود.
+### RPC جديد
+- `admin_release_gender(_booking_id)` — فقط admin/cs، يضع `gender_released=true` ويسجل في `booking_history`
 
-### المرحلة 2 — إصلاح أيقونة العين والرسائل (قسم 4)
+### قاعدة فلترة الجنس
+في كل الاستعلامات: 
+```
+(b.gender_released = true OR b.required_gender IS NULL OR p.gender = b.required_gender)
+```
 
-- مراجعة `BookingInteractionsDialog.tsx` و RPC `booking_interactions_summary` (موجود ويعمل).
-- التحقق من سبب عدم الظهور بعد التفاعل: غالباً مشكلة فلترة `target_provider_id` أو عدم استدعاء `fetchData`.
-- إصلاح العرض ليشمل: اسم المزود، تخصصه، آخر رسالة، وقت آخر رسالة، عرض السعر، حالة قبول/رفض.
+## 2) الواجهة الأمامية
 
-### المرحلة 3 — تحويل الدردشة لأسئلة وردود جاهزة (أقسام 5, 6, 7, 8)
+### تسجيل المزود (`ProviderOnboarding.tsx` / `ProviderRegister.tsx`)
+- إضافة حقل اختيار جنس إلزامي (RadioGroup ذكر/أنثى)
+- منع إكمال البروفايل (`profile_completed=true`) بدون gender
+- تحديث trigger `prevent_profile_privilege_escalation` ليتحقق من `gender NOT NULL`
 
-**هذا أكبر تغيير وظيفي.** سأنفذه كالتالي:
+### نافذة إكمال للمزودين القدامى
+- في `ProviderDashboard.tsx`: عند `profile.gender IS NULL` → AlertDialog إلزامي قبل أي تفاعل
 
-1. **قاعدة البيانات** (migration):
-   - جدول `chat_question_templates` (id, question_ar, question_en, allowed_responses jsonb)
-   - عمود `template_id` و `selected_response_index` في `booking_messages`
-   - حذف صلاحية إدخال نص حر من العميل/المزود (RLS تتحقق أن `body` يطابق قالباً).
+### نموذج العميل (`PatientForm.tsx`)
+- موجود `provider_gender` ✓ — فقط نمرّره إلى `bookings.required_gender` في `BookingPage` و `create-guest-booking`
 
-2. **واجهة العميل** (`CustomerOrderTracker.tsx` / `BookingChat.tsx`):
-   - استبدال `Textarea` بقائمة منسدلة من 8 أسئلة جاهزة فقط.
-   - السؤال يُرسل بـ `target_provider_id = NULL` (broadcast لكل المطابقين، السلوك الحالي يدعمه).
+### دردشة محدودة بالسعر (`chatTemplates.ts`)
+- تقليل أسئلة العميل إلى **5 فقط** (الأسئلة المحددة)
+- ردود المزود **5 ردود** + كل رد يطلب إدخال سعر إجباري
+- إزالة أي textarea حرة في `BookingChat.tsx` و `ProviderMessagesTab.tsx`
 
-3. **واجهة المزود** (`ProviderMessagesTab.tsx`):
-   - عند فتح محادثة، عرض آخر سؤال من العميل + قائمة ردود جاهزة (4 خيارات لكل سؤال).
-   - إزالة Textarea الحرّ.
+### مكوّن `ProviderResponsePicker`
+- اختيار رد + Input للسعر (مطلوب) → ينحفظ في `booking_messages.quoted_price`
 
-4. **فلتر السلامة** (defense-in-depth):
-   - دالة `validate_no_pii(text)` ترفض الأرقام (هواتف)، الروابط، الإحداثيات.
-   - مُطبّقة عبر CHECK trigger على `booking_messages` حتى لو حاول أحد bypass.
+### عرض الردود في `CustomerOrderTracker` / `TrackOrderPage`
+- جلب الردود مع: اسم المزود، جنسه، تخصصه، النص، السعر، الوقت
+- استخدام `list_booking_messages` + JOIN بـ profile
 
-### تفاصيل تقنية مهمة
+### زر Release Gender (`BookingDetailsDrawer.tsx`)
+- يظهر فقط للأدمن وعندما `required_gender IS NOT NULL AND NOT gender_released`
+- AlertDialog تأكيد: "هل تؤكد موافقة العميل؟"
+- ينادي RPC ويعرض toast
 
-- استخدام `LanguageContext` لترجمة قوالب الأسئلة/الردود.
-- عرض اسم وتخصص المزود مع كل رد (موجود في `list_booking_messages` عبر JOIN على `profiles`).
-- التطابق بالتخصص (طبي/تمريض/علاج طبيعي) يعمل أصلاً عبر `provider_role_matches_category` في RLS الحالية.
-- الردود تظهر تلقائياً في صفحة التتبع لأن `booking_messages` تستخدم Realtime.
+### فلترة قائمة المزودين عند الإسناد (`CSAssignmentDialog.tsx` / `BroadcastProvidersDialog.tsx`)
+- فلتر الجنس + التخصص + احترام `gender_released`
 
-### ما لن يتم لمسه
+## 3) أمان (PII)
+- `containsPII` موجود ✓ — يُستخدم كطبقة دفاع إضافية
 
-- منطق الدفع، التسعير، الأسواق، ملفات المزودين، التقييمات، السحوبات.
-- جميع RLS الحالية تبقى؛ سأضيف فقط شروط أصرم على body.
-
-### الترتيب
-
-سأبدأ بالمرحلة 1 (سريعة، واجهة فقط) ثم المرحلة 2 (تشخيص + إصلاح)، ثم المرحلة 3 (تتطلب migration + إعادة بناء واجهتي العميل والمزود).
-
-هل أبدأ التنفيذ كاملاً، أم تريد تقسيمه على رسائل (مرحلة في كل رد) لمراجعة أوضح؟
+## ملاحظة
+سيتم تنفيذ Migration أولاً (بعد موافقتك)، ثم كود الواجهة في رسالة واحدة بعد إقرار الـ migration.
