@@ -286,22 +286,16 @@ export default function BookingChat({
         });
         if (error || (data as any)?.error) throw new Error((data as any)?.error || error?.message || "send_failed");
       } else {
-        const { error } = await supabase.from("booking_messages" as any).insert({
-          booking_id: bookingId,
-          sender_id: viewerId,
-          sender_role: viewerRole,
-          sender_display_name: viewerName || null,
-          body: sentBody,
-          quoted_price: priceNum,
-          target_provider_id: viewerRole === "customer" ? target : null,
+        const { data, error } = await supabase.rpc("send_booking_message" as any, {
+          _booking_id: bookingId,
+          _sender_role: viewerRole,
+          _body: sentBody,
+          _quoted_price: priceNum,
+          _target_provider_id: viewerRole === "customer" ? target : null,
+          _sender_display_name: viewerName || null,
         });
-        if (error) throw error;
-
-        // If provider attached a price, also insert a formal quote (best-effort)
-        if (viewerRole === "provider" && priceNum && priceNum > 0) {
-          await supabase.from("provider_quotes" as any).insert({
-            booking_id: bookingId, provider_id: viewerId, quoted_price: priceNum, note: sentBody,
-          });
+        if (error || (data as any)?.error) {
+          throw new Error((data as any)?.error || error?.message || "send_failed");
         }
       }
       await fetchAll();
