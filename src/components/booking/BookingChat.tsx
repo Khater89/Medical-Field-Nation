@@ -14,7 +14,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { CUSTOMER_QUESTIONS, QUESTIONS_BY_TEXT } from "@/lib/chatTemplates";
+import { CUSTOMER_QUESTIONS, QUESTIONS_BY_TEXT, PROVIDER_RESPONSES } from "@/lib/chatTemplates";
 
 // ============== Templated Q&A pickers ==============
 
@@ -51,9 +51,9 @@ function ProviderResponsePicker({
   disabled: boolean;
   messages: { sender_role: string; sender_id: string; body: string; created_at: string }[];
   myId: string;
-  onPick: (response: string, originalQuestion: string | null, price: number | null) => void;
+  onPick: (response: string, originalQuestion: string | null, price: number) => void;
 }) {
-  // Find the most recent customer question I haven't yet answered.
+  // Find the most recent customer question.
   const lastQuestion = useMemo(() => {
     for (let i = messages.length - 1; i >= 0; i--) {
       const m = messages[i];
@@ -62,8 +62,9 @@ function ProviderResponsePicker({
     return null;
   }, [messages]);
 
-  const [selected, setSelected] = useState<string>("");
+  const [selectedId, setSelectedId] = useState<string>("");
   const [price, setPrice] = useState<string>("");
+  const [duration, setDuration] = useState<string>("");
 
   if (!lastQuestion) {
     return (
@@ -73,48 +74,63 @@ function ProviderResponsePicker({
     );
   }
 
-  const responses = QUESTIONS_BY_TEXT[lastQuestion]?.responses || [];
+  const tpl = PROVIDER_RESPONSES.find((r) => r.id === selectedId);
+  const priceNum = parseFloat(price);
+  const canSend = !!tpl && !!price && priceNum > 0 && (!tpl.needsDuration || duration.trim().length > 0);
 
   return (
     <div className="space-y-2">
       <div className="text-[11px] bg-primary/5 border border-primary/20 rounded px-2 py-1.5">
         <span className="font-bold">سؤال العميل:</span> {lastQuestion}
       </div>
-      <div className="flex gap-2">
-        <Select value={selected} onValueChange={setSelected} disabled={disabled}>
-          <SelectTrigger className="flex-1 h-9 text-xs">
-            <SelectValue placeholder="اختر رداً جاهزاً..." />
-          </SelectTrigger>
-          <SelectContent>
-            {responses.map((r, i) => (
-              <SelectItem key={i} value={r} className="text-xs">{r}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-      {lastQuestion.includes("سعر") && (
+      <Select value={selectedId} onValueChange={setSelectedId} disabled={disabled}>
+        <SelectTrigger className="h-9 text-xs">
+          <SelectValue placeholder="اختر رداً جاهزاً..." />
+        </SelectTrigger>
+        <SelectContent>
+          {PROVIDER_RESPONSES.map((r) => (
+            <SelectItem key={r.id} value={r.id} className="text-xs">
+              {r.template.replace("{{price}}", "___").replace("{{duration}}", "___")}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      {tpl?.needsDuration && (
         <Input
-          type="number"
-          min={0}
-          placeholder="السعر المقترح بالدينار (اختياري)"
-          value={price}
-          onChange={(e) => setPrice(e.target.value)}
+          placeholder="المدة المتوقعة (مثال: ساعة، 45 دقيقة)"
+          value={duration}
+          onChange={(e) => setDuration(e.target.value)}
           className="h-8 text-xs"
-          dir="ltr"
         />
       )}
+      <Input
+        type="number"
+        min={0}
+        step="0.5"
+        placeholder="السعر المطلوب بالدينار (إجباري) *"
+        value={price}
+        onChange={(e) => setPrice(e.target.value)}
+        className="h-9 text-sm font-bold"
+        dir="ltr"
+      />
       <Button
         size="sm"
         className="w-full"
-        disabled={!selected || disabled}
+        disabled={!canSend || disabled}
         onClick={() => {
-          const p = price ? parseFloat(price) : null;
-          onPick(selected, lastQuestion, p && p > 0 ? p : null);
-          setSelected(""); setPrice("");
+          if (!tpl || !canSend) return;
+          const text = tpl.template
+            .replace("{{price}}", String(priceNum))
+            .replace("{{duration}}", duration.trim() || "");
+          onPick(text, lastQuestion, priceNum);
+          setSelectedId(""); setPrice(""); setDuration("");
         }}
       >
-        {disabled ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Send className="h-4 w-4 ml-1" />إرسال الرد</>}
+        {disabled ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Send className="h-4 w-4 ml-1" />إرسال الرد مع السعر</>}
       </Button>
+      <p className="text-[10px] text-muted-foreground text-center">
+        🔒 السعر إجباري — لا يمكن إرسال رد بدون تحديد سعر.
+      </p>
     </div>
   );
 }
