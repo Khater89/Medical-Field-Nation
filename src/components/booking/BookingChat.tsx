@@ -239,8 +239,8 @@ export default function BookingChat({
   useEffect(() => {
     fetchAll();
     if (guestMode) {
-      // Guests poll every 5s for new messages
-      const t = setInterval(fetchAll, 5000);
+      // Guests poll every 3s for new messages from providers
+      const t = setInterval(fetchAll, 3000);
       return () => clearInterval(t);
     }
     const ch = supabase.channel(`booking_messages:${bookingId}`)
