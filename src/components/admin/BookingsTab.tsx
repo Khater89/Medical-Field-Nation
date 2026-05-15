@@ -1,15 +1,17 @@
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Loader2, UserCheck, Eye, MessageSquareQuote, MessageSquare } from "lucide-react";
+import { Loader2, UserCheck, Eye, MessageSquareQuote, MessageSquare, Download } from "lucide-react";
 import { DataTable } from "@/components/ui/data-table";
 import type { ColumnDef } from "@tanstack/react-table";
 import BookingDetailsDrawer, { type BookingRow } from "./BookingDetailsDrawer";
 import BookingInteractionsDialog from "./BookingInteractionsDialog";
 import BookingMessagesDialog from "./BookingMessagesDialog";
 import BookingTimer from "./BookingTimer";
+import { toast } from "@/hooks/use-toast";
 
 const STATUS_COLORS: Record<string, string> = {
   NEW: "bg-info/10 text-info border-info/30",
@@ -315,6 +317,62 @@ const BookingsTab = () => {
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <h2 className="text-lg font-bold">{t("admin.bookings.title")} ({visibleBookings.length})</h2>
+        <Button
+          size="sm"
+          variant="outline"
+          className="gap-1.5"
+          onClick={() => {
+            try {
+              const headers = [
+                "booking_number","created_at","scheduled_at","status","city","service","category",
+                "customer_name","customer_phone","required_gender","is_emergency",
+                "assigned_provider","provider_phone","assigned_by","assigned_at","accepted_at",
+                "rejected_at","reject_reason","completed_at","payment_method","payment_status",
+                "agreed_price","subtotal","platform_fee","provider_payout","calculated_total",
+                "notes","internal_note","close_out_note",
+              ];
+              const esc = (v: any) => {
+                if (v === null || v === undefined) return "";
+                const s = String(v).replace(/"/g, '""');
+                return /[",\n\r]/.test(s) ? `"${s}"` : s;
+              };
+              const rows = visibleBookings.map((b: any) => [
+                b.booking_number || b.id.slice(0,8),
+                b.created_at, b.scheduled_at, b.status, b.city,
+                serviceNames[b.service_id] || b.service_id,
+                serviceCategories[b.service_id] || "",
+                b.customer_name || b.customer_display_name || "",
+                b.customer_phone || "",
+                b.required_gender || "",
+                b.is_emergency ? "yes" : "no",
+                b.assigned_provider_id ? (providerNames[b.assigned_provider_id] || "") : "",
+                b.assigned_provider_id ? (providerPhones[b.assigned_provider_id] || "") : "",
+                b.assigned_by || "",
+                b.assigned_at || "", b.accepted_at || "",
+                b.rejected_at || "", b.reject_reason || "",
+                b.completed_at || "",
+                b.payment_method, b.payment_status,
+                b.agreed_price ?? "", b.subtotal ?? "", b.platform_fee ?? "",
+                b.provider_payout ?? "", b.calculated_total ?? "",
+                b.notes || "", b.internal_note || "", b.close_out_note || "",
+              ].map(esc).join(","));
+              const csv = "\uFEFF" + headers.join(",") + "\n" + rows.join("\n");
+              const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              a.href = url;
+              a.download = `bookings-${new Date().toISOString().slice(0,10)}.csv`;
+              document.body.appendChild(a); a.click(); a.remove();
+              URL.revokeObjectURL(url);
+              toast({ title: "تم التصدير", description: `${visibleBookings.length} حجز — افتح الملف في Google Sheets (File → Import).` });
+            } catch (err: any) {
+              toast({ title: "فشل التصدير", description: err.message, variant: "destructive" });
+            }
+          }}
+        >
+          <Download className="h-4 w-4" />
+          تصدير الحجوزات إلى Google Sheet
+        </Button>
       </div>
 
       {/* Status Filter Chips */}

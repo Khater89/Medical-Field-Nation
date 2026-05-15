@@ -528,32 +528,76 @@ const ProviderDashboard = () => {
     if (!user) return;
     setActionLoading(id);
     try {
-      await logHistory(id, "REJECTED", `رفض المزود: ${rejectReason.trim()}`);
-
+      // Detect: was this booking assigned by the customer (vs admin/cs)?
+      // If yes → revert booking to NEW so customer can pick another provider.
+      // If no → keep existing behavior (full REJECTED).
+      const customerAssigned = (order as any).assigned_by === "customer";
       const now = new Date().toISOString();
-      const { data: updated, error } = await supabase.from("bookings").update({
-        status: "REJECTED",
-        rejected_at: now,
-        rejected_by: user.id,
-        reject_reason: rejectReason.trim(),
-      } as any).eq("id", id).eq("assigned_provider_id", user.id).eq("status", "ASSIGNED").select().maybeSingle();
+      const reasonText = rejectReason.trim();
 
-      if (error) throw error;
-      if (!updated) throw new Error("لم يتم تحديث الطلب — قد يكون مرفوضاً بالفعل");
+      await logHistory(id, "PROVIDER_DECLINED", `رفض المزود: ${reasonText}`);
 
-      // Send notification to admin/CS about rejection
-      const order = orders.find((o) => o.id === id);
-      await supabase.from("staff_notifications" as any).insert({
-        target_role: "admin",
-        title: `🚨 رفض إسناد: ${order?.booking_number || id.slice(0, 8)}`,
-        body: `المزود ${profile?.full_name || ""} رفض الطلب. السبب: ${rejectReason.trim()}`,
-        booking_id: id,
-        provider_id: user.id,
-      });
+      if (customerAssigned) {
+        // Revert booking to NEW, clear assignment, keep it open for re-assignment
+        const { data: updated, error } = await supabase.from("bookings").update({
+          status: "NEW",
+          assigned_provider_id: null,
+          assigned_at: null,
+          assigned_by: null,
+          agreed_price: null,
+        } as any).eq("id", id).eq("assigned_provider_id", user.id).eq("status", "ASSIGNED").select().maybeSingle();
+        if (error) throw error;
+        if (!updated) throw new Error("لم يتم تحديث الطلب");
 
-      setOrders((prev) => prev.map((o) => o.id === id ? { ...o, status: "REJECTED" } : o));
+        // Mark this provider's accepted/pending quote as rejected (so the customer sees the decline)
+        await supabase.from("provider_quotes" as any)
+          .update({ status: "rejected" })
+          .eq("booking_id", id)
+          .eq("provider_id", user.id);
 
-      toast({ title: t("provider.dashboard.rejected_toast") });
+        // Post a customer-visible system message explaining who declined
+        await supabase.from("booking_messages" as any).insert({
+          booking_id: id,
+          sender_id: user.id,
+          sender_role: "provider",
+          sender_display_name: profile?.full_name || "المزود",
+          body: `❌ المزود ${profile?.full_name || ""} اعتذر عن قبول الطلب. يمكنك اختيار مزود آخر من العروض المتاحة. السبب: ${reasonText}`,
+        });
+
+        // Notify admin/CS (informational, not full rejection)
+        await supabase.from("staff_notifications" as any).insert({
+          target_role: "admin",
+          title: `↩️ مزود رفض إسناد عميل: ${order?.booking_number || id.slice(0, 8)}`,
+          body: `المزود ${profile?.full_name || ""} رفض الإسناد. الطلب أُعيد إلى "متاح" لاختيار مزود آخر. السبب: ${reasonText}`,
+          booking_id: id,
+          provider_id: user.id,
+        });
+
+        // Remove from this provider's list (it's no longer assigned to them)
+        setOrders((prev) => prev.filter((o) => o.id !== id));
+        toast({ title: "تم الاعتذار عن الطلب", description: "أُعيد الطلب للعميل لاختيار مزود آخر" });
+      } else {
+        // Admin/CS-assigned: keep legacy full-reject flow
+        const { data: updated, error } = await supabase.from("bookings").update({
+          status: "REJECTED",
+          rejected_at: now,
+          rejected_by: user.id,
+          reject_reason: reasonText,
+        } as any).eq("id", id).eq("assigned_provider_id", user.id).eq("status", "ASSIGNED").select().maybeSingle();
+        if (error) throw error;
+        if (!updated) throw new Error("لم يتم تحديث الطلب — قد يكون مرفوضاً بالفعل");
+
+        await supabase.from("staff_notifications" as any).insert({
+          target_role: "admin",
+          title: `🚨 رفض إسناد: ${order?.booking_number || id.slice(0, 8)}`,
+          body: `المزود ${profile?.full_name || ""} رفض الطلب. السبب: ${reasonText}`,
+          booking_id: id,
+          provider_id: user.id,
+        });
+
+        setOrders((prev) => prev.map((o) => o.id === id ? { ...o, status: "REJECTED" } : o));
+        toast({ title: t("provider.dashboard.rejected_toast") });
+      }
 
       const { data: ordersData } = await supabase.rpc("get_provider_bookings" as any);
       if (ordersData) setOrders(ordersData as unknown as ProviderOrder[]);
