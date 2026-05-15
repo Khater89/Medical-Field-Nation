@@ -919,6 +919,10 @@ export type Database = {
         Args: { base_price: number; duration_minutes: number }
         Returns: number
       }
+      can_provider_message_booking: {
+        Args: { _booking_id: string; _provider_id: string }
+        Returns: boolean
+      }
       customer_accept_quote: { Args: { _quote_id: string }; Returns: Json }
       customer_assign_provider: {
         Args: { _booking_id: string; _provider_id: string }
@@ -1079,6 +1083,17 @@ export type Database = {
           target_user_id: string
         }
         Returns: undefined
+      }
+      send_booking_message: {
+        Args: {
+          _body: string
+          _booking_id: string
+          _quoted_price?: number
+          _sender_display_name?: string
+          _sender_role: string
+          _target_provider_id?: string
+        }
+        Returns: Json
       }
       set_user_role: {
         Args: {
