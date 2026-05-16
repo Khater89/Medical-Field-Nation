@@ -9,7 +9,7 @@ export interface ChatQuestion {
 // Only 3 general questions broadcast to all matching providers
 export const CUSTOMER_QUESTIONS: ChatQuestion[] = [
   { id: "available", text: "هل يوجد مزود متاح؟" },
-  { id: "quotes", text: "أرجو تقديم عروض الأسعار." },
+  { id: "quotes", text: "أرجو تقديم عرض السعر." },
   { id: "review", text: "أرجو الاطلاع على طلبي." },
 ];
 
@@ -17,18 +17,18 @@ export const CUSTOMER_QUESTIONS: ChatQuestion[] = [
 export const CUSTOMER_PRIVATE_QUESTIONS: ChatQuestion[] = [
   { id: "p_available", text: "هل أنت متاح في موعد الطلب المحدد؟" },
   { id: "p_experience", text: "هل لديك خبرة في هذه الحالة أو الخدمة المطلوبة؟" },
-  { id: "p_duration", text: "كم المدة المتوقعة لتقديم الخدمة؟" },
   { id: "p_more_info", text: "هل تحتاج إلى معلومات إضافية قبل قبول الطلب؟" },
+  { id: "p_assign_confirm", text: "سأقوم بالإسناد إليك الآن، أرجو منك التأكيد بقبول الطلب." },
 ];
 
-// Provider response templates — every reply MUST include a price.
+// Provider response templates — ready replies. Only the quote reply requires a price input.
 // Use {{price}} placeholder which the UI replaces with the entered number.
 export const PROVIDER_RESPONSES: { id: string; template: string; needsDuration?: boolean }[] = [
-  { id: "available_yes", template: "نعم، أنا متاح في الموعد المحدد، والسعر هو: {{price}} د.أ" },
-  { id: "available_confirm", template: "أنا متاح، لكن أحتاج إلى تأكيد بعض التفاصيل، والسعر المتوقع هو: {{price}} د.أ" },
-  { id: "experienced", template: "لدي خبرة في هذا النوع من الحالات، والسعر هو: {{price}} د.أ" },
-  { id: "duration", template: "يمكنني تقديم الخدمة، والمدة المتوقعة هي: {{duration}}، والسعر هو: {{price}} د.أ", needsDuration: true },
-  { id: "need_info", template: "أحتاج إلى معلومات إضافية قبل التأكيد، والسعر المبدئي هو: {{price}} د.أ" },
+  { id: "available_yes", template: "نعم، أنا متاح لتنفيذ الطلب في الموعد المحدد." },
+  { id: "reviewed", template: "تم الاطلاع على تفاصيل الطلب، ويمكنني تقديم الخدمة." },
+  { id: "accept_assignment", template: "أقبل إسناد الطلب لي، وأنا جاهز للمتابعة." },
+  { id: "need_info", template: "أحتاج إلى مراجعة تفاصيل إضافية قبل تأكيد القبول." },
+  { id: "quote", template: "عرض السعر الخاص بي هو: {{price}} د.أ" },
 ];
 
 export const QUESTIONS_BY_TEXT: Record<string, ChatQuestion> = Object.fromEntries(
