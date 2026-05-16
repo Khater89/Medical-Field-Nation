@@ -416,8 +416,8 @@ const LandingPage = () => {
             transition={{ duration: 0.6 }}
             className="text-center space-y-3"
           >
-            <h2 className="text-2xl sm:text-3xl font-black text-foreground">{isRTL ? "تعرّف علينا" : "About Us"}</h2>
-            <p className="text-muted-foreground max-w-xl mx-auto">{isRTL ? "شاهد كيف نقدّم خدماتنا الطبية المنزلية" : "See how we deliver home medical services"}</p>
+            <h2 className="text-2xl sm:text-3xl font-black text-foreground">{isRTL ? "\n" : "About Us"}</h2>
+            <p className="text-muted-foreground max-w-xl mx-auto">{isRTL ? "\n" : "See how we deliver home medical services"}</p>
           </motion.div>
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
@@ -644,7 +644,7 @@ const LandingPage = () => {
                 <span className="brand-text-animated">بمسحة واحدة</span>
               </h2>
               <p className="text-lg text-muted-foreground leading-relaxed">
-                امسح رمز QR بكاميرا هاتفك للوصول الفوري إلى منصة <strong className="text-foreground">أمة الحقل الطبي</strong> وحجز خدماتك الطبية المنزلية بكل سهولة وأمان.
+                {"\n"}
               </p>
               <div className="flex items-center justify-center lg:justify-start gap-3 text-sm text-muted-foreground">
                 <ScanLine className="h-5 w-5 text-primary animate-pulse" />

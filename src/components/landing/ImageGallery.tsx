@@ -25,7 +25,7 @@ const ImageGallery = () => {
           transition={{ duration: 0.6 }}
           className="text-center space-y-3"
         >
-          <h2 className="text-2xl sm:text-3xl font-black text-foreground">
+          <h2 className="text-2xl sm:text-4xl font-black text-foreground shadow-xl rounded-xl">
             {t("landing.gallery_title")}
           </h2>
           <p className="text-muted-foreground max-w-xl mx-auto">
