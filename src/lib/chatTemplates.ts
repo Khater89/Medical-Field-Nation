@@ -17,7 +17,6 @@ export const CUSTOMER_QUESTIONS: ChatQuestion[] = [
 export const CUSTOMER_PRIVATE_QUESTIONS: ChatQuestion[] = [
   { id: "p_available", text: "هل أنت متاح في موعد الطلب المحدد؟" },
   { id: "p_experience", text: "هل لديك خبرة في هذه الحالة أو الخدمة المطلوبة؟" },
-  { id: "p_price", text: "كم السعر النهائي المطلوب لتنفيذ هذه الخدمة؟" },
   { id: "p_duration", text: "كم المدة المتوقعة لتقديم الخدمة؟" },
   { id: "p_more_info", text: "هل تحتاج إلى معلومات إضافية قبل قبول الطلب؟" },
 ];
