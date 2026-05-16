@@ -704,6 +704,8 @@ export default function BookingChat({
               }, 0);
             }}
           />
+            );
+          })()
         ) : (
           <ProviderResponsePicker
             disabled={sending}
