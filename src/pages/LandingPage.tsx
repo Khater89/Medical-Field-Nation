@@ -648,7 +648,7 @@ const LandingPage = () => {
               </p>
               <div className="flex items-center justify-center lg:justify-start gap-3 text-sm text-muted-foreground">
                 <ScanLine className="h-5 w-5 text-primary animate-pulse" />
-                <span>افتح كاميرا الهاتف ووجّهها نحو الرمز</span>
+                <span>{"\n"}</span>
               </div>
             </motion.div>
 
