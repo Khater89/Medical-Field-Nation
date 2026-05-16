@@ -92,18 +92,61 @@ Deno.serve(async (req) => {
       });
     }
 
-    // If CliQ, credit provider's share to their wallet (platform received payment directly)
-    if (payment_method === "CLIQ" && booking.assigned_provider_id && booking.provider_share) {
-      // Calculate provider's total share based on actual duration
-      let providerTotal = booking.provider_share;
-      // The provider share is already calculated at completion time via calc_escalating_price
-      // Credit positive amount to provider wallet
-      await supabase.from("provider_wallet_ledger").insert({
-        provider_id: booking.assigned_provider_id,
-        amount: providerTotal,
-        reason: "cliq_payment_credit",
-        booking_id: booking.id,
-      });
+    // If CliQ, customer paid platform directly. Reverse provider's platform_fee debt
+    // and credit provider's net share so wallet shows the full amount owed back to provider.
+    if (payment_method === "CLIQ" && booking.assigned_provider_id) {
+      // Idempotency: skip if we've already credited this booking
+      const { data: existingCredit } = await supabase
+        .from("provider_wallet_ledger")
+        .select("id")
+        .eq("booking_id", booking.id)
+        .eq("reason", "cliq_payment_credit")
+        .maybeSingle();
+
+      // Resolve platform fee percent from settings as fallback
+      const { data: settingsRow } = await supabase
+        .from("platform_settings")
+        .select("platform_fee_percent")
+        .eq("id", 1)
+        .maybeSingle();
+      const feePct = Number(settingsRow?.platform_fee_percent ?? 10);
+
+      const clientTotal = Number(booking.calculated_total ?? booking.agreed_price ?? 0);
+      const providerNet = booking.provider_share != null
+        ? Number(booking.provider_share)
+        : Math.round(clientTotal * (1 - feePct / 100) * 100) / 100;
+      const platformAmount = Math.round((clientTotal - providerNet) * 100) / 100;
+
+      let providerTotal = providerNet;
+
+      if (!existingCredit) {
+        // Sum existing debt for this booking and reverse it (platform was paid directly via CliQ)
+        const { data: debtRows } = await supabase
+          .from("provider_wallet_ledger")
+          .select("amount")
+          .eq("booking_id", booking.id)
+          .eq("reason", "platform_fee");
+        const existingDebt = (debtRows || []).reduce(
+          (s: number, r: any) => s + Math.abs(Number(r.amount || 0)),
+          0,
+        );
+        if (existingDebt > 0) {
+          await supabase.from("provider_wallet_ledger").insert({
+            provider_id: booking.assigned_provider_id,
+            amount: existingDebt,
+            reason: "platform_fee_reversal",
+            booking_id: booking.id,
+          });
+        }
+
+        // Credit provider's net share (platform owes provider this amount)
+        await supabase.from("provider_wallet_ledger").insert({
+          provider_id: booking.assigned_provider_id,
+          amount: providerNet,
+          reason: "cliq_payment_credit",
+          booking_id: booking.id,
+        });
+      }
 
       // Notify provider about credit
       await supabase.from("staff_notifications").insert({
