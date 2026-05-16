@@ -360,53 +360,106 @@ const FinanceTab = () => {
               ) : (
                 <div className="space-y-2">
                   {ledger.map((entry) => (
-                    <div key={entry.id} className="flex items-center gap-3 rounded-lg border border-border p-3">
-                      {entry.amount < 0 ? (
-                        <ArrowDownCircle className="h-5 w-5 text-destructive shrink-0" />
-                      ) : (
-                        <ArrowUpCircle className="h-5 w-5 text-success shrink-0" />
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <Badge variant="outline" className="text-[10px]">
-                            {entry.reason === "platform_fee" ? t("finance.reason.platform_fee") :
-                             entry.reason === "settlement" ? t("provider.wallet.settlement") :
-                             entry.reason === "cliq_payment_credit" ? "💳 إيداع CliQ" :
-                             entry.reason}
-                          </Badge>
-                          {entry.booking_number && (
-                            <span className="text-[10px] text-muted-foreground font-mono" dir="ltr">{entry.booking_number}</span>
-                          )}
-                          {entry.cliq_reference && (
-                            <span className="text-[10px] text-muted-foreground" dir="ltr">
-                              {entry.cliq_reference.startsWith("CASH-") ? "💵 كاش" : `💳 CliQ: ${entry.cliq_reference}`}
-                            </span>
-                          )}
-                          {entry.reason === "platform_fee" && entry.is_settled && (
-                            <Badge variant="outline" className="text-[9px] bg-success/10 text-success border-success/30">✓ تمت التسوية</Badge>
+                    <div key={entry.id} className="rounded-lg border border-border p-3 space-y-2">
+                      <div className="flex items-start gap-3">
+                        {entry.amount < 0 ? (
+                          <ArrowDownCircle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
+                        ) : (
+                          <ArrowUpCircle className="h-5 w-5 text-success shrink-0 mt-0.5" />
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <Badge variant="outline" className="text-[10px]">
+                              {entry.reason === "platform_fee" ? t("finance.reason.platform_fee") :
+                               entry.reason === "settlement" ? t("provider.wallet.settlement") :
+                               entry.reason === "cliq_payment_credit" ? "💳 إيداع CliQ" :
+                               entry.reason}
+                            </Badge>
+                            {entry.booking_number && (
+                              <span className="text-[10px] text-muted-foreground font-mono" dir="ltr">{entry.booking_number}</span>
+                            )}
+                            {entry.cliq_reference && (
+                              <span className="text-[10px] text-muted-foreground" dir="ltr">
+                                {entry.cliq_reference.startsWith("CASH-") ? "💵 كاش" : `💳 CliQ: ${entry.cliq_reference}`}
+                              </span>
+                            )}
+                            {entry.reason === "platform_fee" && (
+                              entry.is_settled ? (
+                                <Badge variant="outline" className="text-[9px] bg-success/10 text-success border-success/30">✓ تمت التسوية</Badge>
+                              ) : (
+                                <Badge variant="outline" className="text-[9px] bg-warning/10 text-warning border-warning/30">⏳ غير مسوّى</Badge>
+                              )
+                            )}
+                          </div>
+                          <p className="text-[10px] text-muted-foreground mt-0.5">
+                            <CalendarDays className="h-3 w-3 inline me-1" />
+                            {formatDateShort(entry.created_at)}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className={`text-sm font-bold ${entry.amount < 0 ? "text-destructive" : "text-success"}`}>
+                            {entry.amount > 0 ? "+" : ""}{formatCurrency(entry.amount)}
+                          </span>
+                          {entry.reason === "platform_fee" && !entry.is_settled && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-7 text-[10px] gap-1 px-2"
+                              onClick={(e) => { e.stopPropagation(); openSettlementForEntry(entry); }}
+                            >
+                              <DollarSign className="h-3 w-3" /> تسوية
+                            </Button>
                           )}
                         </div>
-                        <p className="text-[10px] text-muted-foreground mt-0.5">
-                          <CalendarDays className="h-3 w-3 inline me-1" />
-                          {formatDateShort(entry.created_at)}
-                        </p>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span className={`text-sm font-bold ${entry.amount < 0 ? "text-destructive" : "text-success"}`}>
-                          {entry.amount > 0 ? "+" : ""}{formatCurrency(entry.amount)}
-                        </span>
-                        {/* Per-booking settle button for unsettled platform_fee entries */}
-                        {entry.reason === "platform_fee" && !entry.is_settled && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-7 text-[10px] gap-1 px-2"
-                            onClick={(e) => { e.stopPropagation(); openSettlementForEntry(entry); }}
-                          >
-                            <DollarSign className="h-3 w-3" /> تسوية
-                          </Button>
-                        )}
-                      </div>
+
+                      {/* Enriched booking details for platform_fee entries */}
+                      {entry.reason === "platform_fee" && entry.booking_id && (
+                        <div className="rounded-md bg-muted/30 border border-border/50 p-2 grid grid-cols-2 gap-x-3 gap-y-1 text-[11px]">
+                          {entry.customer_name && (
+                            <>
+                              <span className="text-muted-foreground">العميل:</span>
+                              <span className="font-medium truncate">{entry.customer_name}</span>
+                            </>
+                          )}
+                          {entry.service_name && (
+                            <>
+                              <span className="text-muted-foreground">الخدمة:</span>
+                              <span className="font-medium truncate">{entry.service_name}</span>
+                            </>
+                          )}
+                          {entry.base_price != null && (
+                            <>
+                              <span className="text-muted-foreground">السعر الأساسي:</span>
+                              <span className="font-medium">{formatCurrency(entry.base_price)}</span>
+                            </>
+                          )}
+                          {entry.final_price != null && (
+                            <>
+                              <span className="text-muted-foreground">السعر النهائي:</span>
+                              <span className="font-medium">{formatCurrency(entry.final_price)}</span>
+                            </>
+                          )}
+                          {entry.platform_amount != null && (
+                            <>
+                              <span className="text-muted-foreground">نسبة المنصة{entry.platform_percent != null ? ` (${entry.platform_percent}%)` : ""}:</span>
+                              <span className="font-bold text-destructive">{formatCurrency(entry.platform_amount)}</span>
+                            </>
+                          )}
+                          {entry.provider_net != null && (
+                            <>
+                              <span className="text-muted-foreground">صافي مستحقات المزود:</span>
+                              <span className="font-bold text-success">{formatCurrency(entry.provider_net)}</span>
+                            </>
+                          )}
+                          {entry.booking_date && (
+                            <>
+                              <span className="text-muted-foreground">تاريخ الطلب:</span>
+                              <span className="font-medium">{formatDateShort(entry.booking_date)}</span>
+                            </>
+                          )}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
