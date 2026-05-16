@@ -199,7 +199,9 @@ const CustomerOrderTracker = ({ bookingId, onClose }: OrderTrackerProps) => {
           </CardContent>
         </Card>
 
-      {/* Payment Method Selection - shown after completion */}
+        {/* Right column: Payment + Rating stacked, only visible after completion */}
+        <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Payment Method Selection - shown after completion */}
       {booking.status === "COMPLETED" && (
         <Card className="border-border">
           <CardContent className="py-4 space-y-3">
