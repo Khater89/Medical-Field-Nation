@@ -40,6 +40,15 @@ interface LedgerEntry {
   cliq_reference?: string | null;
   // Whether this debt entry has been settled already
   is_settled?: boolean;
+  // Enriched booking details for platform_fee entries
+  customer_name?: string | null;
+  service_name?: string | null;
+  base_price?: number | null;
+  final_price?: number | null;
+  platform_percent?: number | null;
+  platform_amount?: number | null;
+  provider_net?: number | null;
+  booking_date?: string | null;
 }
 
 const FinanceTab = () => {
@@ -130,14 +139,24 @@ const FinanceTab = () => {
 
     const allEntries = entries || [];
     const bookingIds = allEntries.filter((e) => e.booking_id).map((e) => e.booking_id!);
-    let bookingMap: Record<string, string> = {};
+    let bookingMap: Record<string, any> = {};
+    let contactMap: Record<string, any> = {};
+    let serviceMap: Record<string, string> = {};
     if (bookingIds.length > 0) {
-      const { data: bookings } = await supabase
-        .from("bookings")
-        .select("id, booking_number")
-        .in("id", [...new Set(bookingIds)]);
-      for (const b of (bookings || [])) {
-        bookingMap[b.id] = b.booking_number || b.id.slice(0, 8);
+      const uniqueIds = [...new Set(bookingIds)];
+      const [bookingsRes, contactsRes] = await Promise.all([
+        supabase
+          .from("bookings")
+          .select("id, booking_number, service_id, agreed_price, provider_share, calculated_total, scheduled_at, customer_display_name")
+          .in("id", uniqueIds),
+        supabase.from("booking_contacts").select("booking_id, customer_name").in("booking_id", uniqueIds),
+      ]);
+      for (const b of (bookingsRes.data || [])) bookingMap[b.id] = b;
+      for (const c of (contactsRes.data || [])) contactMap[c.booking_id] = c;
+      const serviceIds = [...new Set((bookingsRes.data || []).map((b: any) => b.service_id).filter(Boolean))];
+      if (serviceIds.length > 0) {
+        const { data: services } = await supabase.from("services").select("id, name").in("id", serviceIds);
+        for (const s of (services || [])) serviceMap[s.id] = s.name;
       }
     }
 
@@ -148,11 +167,27 @@ const FinanceTab = () => {
         .map((e) => e.booking_id!)
     );
 
-    setLedger(allEntries.map((e: any) => ({
-      ...e,
-      booking_number: e.booking_id ? bookingMap[e.booking_id] || null : null,
-      is_settled: e.reason === "platform_fee" && e.booking_id ? settlementBookingIds.has(e.booking_id) : false,
-    })));
+    setLedger(allEntries.map((e: any) => {
+      const b = e.booking_id ? bookingMap[e.booking_id] : null;
+      const contact = e.booking_id ? contactMap[e.booking_id] : null;
+      const basePrice = b?.provider_share ?? null;
+      const finalPrice = b?.calculated_total ?? b?.agreed_price ?? null;
+      const platformAmount = e.reason === "platform_fee" ? Math.abs(e.amount) : null;
+      const platformPercent = basePrice && platformAmount ? Math.round((platformAmount / basePrice) * 100) : null;
+      return {
+        ...e,
+        booking_number: b?.booking_number || (e.booking_id ? e.booking_id.slice(0, 8) : null),
+        is_settled: e.reason === "platform_fee" && e.booking_id ? settlementBookingIds.has(e.booking_id) : false,
+        customer_name: contact?.customer_name || b?.customer_display_name || null,
+        service_name: b?.service_id ? serviceMap[b.service_id] || b.service_id : null,
+        base_price: basePrice,
+        final_price: finalPrice,
+        platform_percent: platformPercent,
+        platform_amount: platformAmount,
+        provider_net: basePrice,
+        booking_date: b?.scheduled_at || null,
+      };
+    }));
     setLedgerLoading(false);
   };
 
