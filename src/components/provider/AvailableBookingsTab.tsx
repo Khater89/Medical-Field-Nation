@@ -142,6 +142,44 @@ const AvailableBookingsTab = ({ serviceNames }: Props) => {
                 </div>
               )}
 
+              {/* Peer quotes — read-only competitive transparency */}
+              {(peerQuotes[b.id]?.length || 0) > 0 && (
+                <div className="rounded-lg border border-primary/20 bg-primary/5 p-2 space-y-1.5">
+                  <p className="text-[10px] font-bold text-primary uppercase tracking-wider flex items-center gap-1">
+                    <DollarSign className="h-3 w-3" />
+                    عروض المزودين الآخرين ({peerQuotes[b.id].length}) — للاطلاع فقط
+                  </p>
+                  <div className="space-y-1">
+                    {peerQuotes[b.id]
+                      .slice()
+                      .sort((a, c) => a.quoted_price - c.quoted_price)
+                      .map((q) => (
+                        <div
+                          key={q.id}
+                          className={`flex items-center justify-between text-xs rounded px-2 py-1 ${
+                            q.is_mine ? "bg-success/10 border border-success/30" : "bg-background border border-border"
+                          }`}
+                        >
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <span className="font-medium truncate">{q.provider_name}</span>
+                            {q.provider_role && (
+                              <Badge variant="outline" className="text-[9px] px-1 py-0">{q.provider_role}</Badge>
+                            )}
+                            {q.is_mine && <Badge className="text-[9px] px-1 py-0 bg-success">عرضك</Badge>}
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <span className="font-bold text-primary">{Number(q.quoted_price).toFixed(2)} JOD</span>
+                            <span className="text-[9px] text-muted-foreground flex items-center gap-0.5">
+                              <Clock className="h-2.5 w-2.5" />
+                              {new Date(q.created_at).toLocaleString("ar-JO", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              )}
+
               <Button
                 size="sm"
                 variant={isExpanded ? "outline" : "default"}
