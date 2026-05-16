@@ -48,12 +48,22 @@ const AvailableBookingsTab = ({ serviceNames }: Props) => {
   const [bookings, setBookings] = useState<AvailableBooking[]>([]);
   const [loading, setLoading] = useState(true);
   const [openChat, setOpenChat] = useState<string | null>(null);
+  const [peerQuotes, setPeerQuotes] = useState<Record<string, PeerQuote[]>>({});
 
   const fetchData = async () => {
     if (!user) return;
     setLoading(true);
     const { data } = await supabase.rpc("available_bookings_for_providers" as any);
-    setBookings((data as unknown as AvailableBooking[]) || []);
+    const list = (data as unknown as AvailableBooking[]) || [];
+    setBookings(list);
+    // Fetch peer quotes for each booking in parallel
+    const entries = await Promise.all(
+      list.map(async (b) => {
+        const { data: qs } = await supabase.rpc("booking_quotes_public" as any, { _booking_id: b.id });
+        return [b.id, (qs as PeerQuote[]) || []] as const;
+      })
+    );
+    setPeerQuotes(Object.fromEntries(entries));
     setLoading(false);
   };
 
