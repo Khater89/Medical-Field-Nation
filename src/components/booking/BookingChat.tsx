@@ -607,11 +607,30 @@ export default function BookingChat({
                         )}
                         {isPrivate && <Badge variant="outline" className="text-[9px] px-1 py-0 h-3.5">خاص</Badge>}
                       </div>
-                      <p className="break-words whitespace-pre-wrap">{m.body}</p>
+                      {(() => {
+                        // For customers, strip internal price breakdown section from body
+                        const displayBody = viewerRole === "customer"
+                          ? m.body.split(/\n\n💰\s*تفاصيل السعر:/)[0].trim()
+                          : m.body;
+                        return <p className="break-words whitespace-pre-wrap">{displayBody}</p>;
+                      })()}
                       {m.quoted_price && (
-                        <Badge variant="outline" className={`mt-1 text-[10px] gap-0.5 ${mine ? "bg-primary-foreground/20 border-primary-foreground/30" : ""}`}>
-                          <DollarSign className="h-2.5 w-2.5" />السعر المقترح: {m.quoted_price} JOD
-                        </Badge>
+                        viewerRole === "customer" ? (
+                          <div className={`mt-2 rounded-md px-2 py-1.5 text-[11px] ${mine ? "bg-primary-foreground/15 border border-primary-foreground/30" : "bg-background/80 border border-border"}`}>
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="opacity-70">سعر الخدمة:</span>
+                              <span className="line-through opacity-70" dir="ltr">{(Number(m.quoted_price) + 10).toFixed(2)} JOD</span>
+                            </div>
+                            <div className="flex items-center justify-between gap-2 font-black">
+                              <span>بعد الخصم:</span>
+                              <span dir="ltr">{Number(m.quoted_price).toFixed(2)} JOD</span>
+                            </div>
+                          </div>
+                        ) : (
+                          <Badge variant="outline" className={`mt-1 text-[10px] gap-0.5 ${mine ? "bg-primary-foreground/20 border-primary-foreground/30" : ""}`}>
+                            <DollarSign className="h-2.5 w-2.5" />السعر المقترح: {m.quoted_price} JOD
+                          </Badge>
+                        )
                       )}
                       <div className={`flex items-center gap-1 mt-1 ${mine ? "justify-start flex-row-reverse" : "justify-start"}`}>
                         <span className="text-[9px] opacity-60">{formatTime(m.created_at)}</span>
