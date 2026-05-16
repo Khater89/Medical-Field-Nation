@@ -162,38 +162,42 @@ const CustomerOrderTracker = ({ bookingId, onClose }: OrderTrackerProps) => {
         </div>
       )}
 
-      {/* Timeline */}
-      <div className="relative space-y-0 pr-4">
-        {steps.map((step, i) => (
-          <div key={i} className="flex items-start gap-3 pb-6 relative">
-            {/* Line */}
-            {i < steps.length - 1 && (
-              <div className={`absolute right-[7px] top-6 w-0.5 h-full ${step.status === "done" ? "bg-success" : "bg-border"}`} />
-            )}
-            {/* Icon */}
-            <div className="relative z-10 shrink-0">
-              {step.status === "done" ? (
-                <CheckCircle className="h-4 w-4 text-success" />
-              ) : step.status === "current" ? (
-                <Clock className="h-4 w-4 text-primary animate-pulse" />
-              ) : (
-                <Circle className="h-4 w-4 text-muted-foreground/40" />
-              )}
+      {/* Timeline + Payment + Rating in horizontal grid on desktop */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* Timeline Card */}
+        <Card className="border-border lg:col-span-1">
+          <CardContent className="py-4">
+            <h4 className="text-sm font-bold mb-3">مراحل الطلب</h4>
+            <div className="relative space-y-0 pr-4">
+              {steps.map((step, i) => (
+                <div key={i} className="flex items-start gap-3 pb-4 relative">
+                  {i < steps.length - 1 && (
+                    <div className={`absolute right-[7px] top-6 w-0.5 h-full ${step.status === "done" ? "bg-success" : "bg-border"}`} />
+                  )}
+                  <div className="relative z-10 shrink-0">
+                    {step.status === "done" ? (
+                      <CheckCircle className="h-4 w-4 text-success" />
+                    ) : step.status === "current" ? (
+                      <Clock className="h-4 w-4 text-primary animate-pulse" />
+                    ) : (
+                      <Circle className="h-4 w-4 text-muted-foreground/40" />
+                    )}
+                  </div>
+                  <div>
+                    <p className={`text-sm font-medium ${step.status === "upcoming" ? "text-muted-foreground/50" : "text-foreground"}`}>
+                      {step.label}
+                    </p>
+                    {step.time && (
+                      <p className="text-[10px] text-muted-foreground">
+                        {new Date(step.time).toLocaleString("ar-JO", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ))}
             </div>
-            {/* Text */}
-            <div>
-              <p className={`text-sm font-medium ${step.status === "upcoming" ? "text-muted-foreground/50" : "text-foreground"}`}>
-                {step.label}
-              </p>
-              {step.time && (
-                <p className="text-[10px] text-muted-foreground">
-                  {new Date(step.time).toLocaleString("ar-JO", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
-                </p>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
+          </CardContent>
+        </Card>
 
       {/* Payment Method Selection - shown after completion */}
       {booking.status === "COMPLETED" && (
