@@ -96,7 +96,7 @@ function calculateEscalatingPrice(basePrice: number, durationMinutes: number): n
   if (durationMinutes <= 60) return basePrice;
   const extraMinutes = durationMinutes - 60;
   const segments = Math.ceil(extraMinutes / 15);
-  return basePrice + (segments * basePrice * 0.08);
+  return basePrice + (segments * basePrice * 0.10);
 }
 
 // Live timer hook for IN_PROGRESS orders
@@ -221,7 +221,7 @@ const LiveTimerBadge = ({ order, t, toast, overtimeWarningShown }: {
       overtimeWarningShown.current.add(order.id);
       toast({
         title: "⚠️ تنبيه: تجاوز الساعة الأولى",
-        description: `الطلب ${order.booking_number || ""} تجاوز 60 دقيقة — سيتم احتساب رسوم إضافية (8% لكل 15 دقيقة).`,
+        description: `الطلب ${order.booking_number || ""} تجاوز 60 دقيقة — سيتم احتساب رسوم إضافية (10% لكل 15 دقيقة).`,
         variant: "destructive",
       });
     }
@@ -248,7 +248,7 @@ const LiveTimerBadge = ({ order, t, toast, overtimeWarningShown }: {
       {isOvertime && (
         <div className="flex items-center gap-1.5 text-xs text-destructive">
           <AlertTriangle className="h-3.5 w-3.5" />
-          <span>وقت إضافي: {extraSegments} فترة × 8% = +{formatCurrencyFn(extraSegments * basePrice * 0.08)}</span>
+          <span>وقت إضافي: {extraSegments} فترة × 10% = +{formatCurrencyFn(extraSegments * basePrice * 0.10)}</span>
         </div>
       )}
       <div className="grid grid-cols-3 gap-2 text-[10px] text-muted-foreground">
@@ -745,7 +745,7 @@ const ProviderDashboard = () => {
       } : o));
 
       const extraSegs = durationMinutes > 60 ? Math.ceil((durationMinutes - 60) / 15) : 0;
-      const surchargeNote = extraSegs > 0 ? ` — فترات إضافية: ${extraSegs} × 8%` : "";
+      const surchargeNote = extraSegs > 0 ? ` — فترات إضافية: ${extraSegs} × 10%` : "";
       await logHistory(id, "CHECK_OUT", `تم إنهاء الخدمة — المدة: ${durationMinutes} دقيقة${surchargeNote} — الإجمالي: ${calculatedTotal} د.أ`);
       toast({ title: t("provider.checkout.success"), description: `المدة: ${durationMinutes} دقيقة — الإجمالي: ${formatCurrency(calculatedTotal)}` });
 
@@ -1250,7 +1250,7 @@ const ProviderDashboard = () => {
                         const base = o.agreed_price ?? o.subtotal;
                         const extraMins = Math.max(0, duration - 60);
                         const extraSegments = extraMins > 0 ? Math.ceil(extraMins / 15) : 0;
-                        const surcharge = extraSegments * base * 0.08;
+                        const surcharge = extraSegments * base * 0.10;
                         return (
                           <div className="rounded-lg border border-success/30 bg-success/5 p-3 space-y-2">
                             <p className="text-xs font-bold text-success flex items-center gap-1">📋 {t("invoice.title")}</p>
@@ -1262,7 +1262,7 @@ const ProviderDashboard = () => {
                               {extraSegments > 0 && (
                                 <>
                                   <span className="text-muted-foreground">رسوم إضافية:</span>
-                                  <span className="font-medium text-destructive">{extraSegments} × 8% = +{formatCurrency(surcharge)}</span>
+                                  <span className="font-medium text-destructive">{extraSegments} × 10% = +{formatCurrency(surcharge)}</span>
                                 </>
                               )}
                               <span className="text-muted-foreground border-t border-border pt-1">{t("invoice.client_total")}:</span>
@@ -1936,7 +1936,7 @@ const ProviderDashboard = () => {
                   <>
                     <p>الأجر المتفق عليه لهذا الطلب هو: <strong className="text-success">{formatCurrency(price)}</strong> للساعة الأولى.</p>
                     <ul className="list-disc list-inside space-y-1 text-xs">
-                      <li>في حال تجاوز مدة الخدمة 60 دقيقة، تُحتسب رسوم إضافية بنسبة <strong>8%</strong> من السعر الأساسي عن كل 15 دقيقة إضافية.</li>
+                      <li>يتم احتساب الساعات الإضافية بنسبة <strong>10%</strong> وفق سياسة المنصة المعتمدة — تُحتسب رسوم إضافية بنسبة 10% من السعر الأساسي عن كل 15 دقيقة بعد الساعة الأولى.</li>
                       <li>يتم خصم حصة المنصة (رسوم التنسيق) تلقائياً من رصيدك.</li>
                       <li>التسويات المالية تتم وفق الجدول المتفق عليه مع إدارة المنصة.</li>
                       <li>لا يحق لك المطالبة بأجر أعلى من المتفق عليه مباشرة من العميل.</li>

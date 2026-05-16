@@ -40,6 +40,15 @@ interface LedgerEntry {
   cliq_reference?: string | null;
   // Whether this debt entry has been settled already
   is_settled?: boolean;
+  // Enriched booking details for platform_fee entries
+  customer_name?: string | null;
+  service_name?: string | null;
+  base_price?: number | null;
+  final_price?: number | null;
+  platform_percent?: number | null;
+  platform_amount?: number | null;
+  provider_net?: number | null;
+  booking_date?: string | null;
 }
 
 const FinanceTab = () => {
@@ -130,14 +139,24 @@ const FinanceTab = () => {
 
     const allEntries = entries || [];
     const bookingIds = allEntries.filter((e) => e.booking_id).map((e) => e.booking_id!);
-    let bookingMap: Record<string, string> = {};
+    let bookingMap: Record<string, any> = {};
+    let contactMap: Record<string, any> = {};
+    let serviceMap: Record<string, string> = {};
     if (bookingIds.length > 0) {
-      const { data: bookings } = await supabase
-        .from("bookings")
-        .select("id, booking_number")
-        .in("id", [...new Set(bookingIds)]);
-      for (const b of (bookings || [])) {
-        bookingMap[b.id] = b.booking_number || b.id.slice(0, 8);
+      const uniqueIds = [...new Set(bookingIds)];
+      const [bookingsRes, contactsRes] = await Promise.all([
+        supabase
+          .from("bookings")
+          .select("id, booking_number, service_id, agreed_price, provider_share, calculated_total, scheduled_at, customer_display_name")
+          .in("id", uniqueIds),
+        supabase.from("booking_contacts").select("booking_id, customer_name").in("booking_id", uniqueIds),
+      ]);
+      for (const b of (bookingsRes.data || [])) bookingMap[b.id] = b;
+      for (const c of (contactsRes.data || [])) contactMap[c.booking_id] = c;
+      const serviceIds = [...new Set((bookingsRes.data || []).map((b: any) => b.service_id).filter(Boolean))];
+      if (serviceIds.length > 0) {
+        const { data: services } = await supabase.from("services").select("id, name").in("id", serviceIds);
+        for (const s of (services || [])) serviceMap[s.id] = s.name;
       }
     }
 
@@ -148,11 +167,27 @@ const FinanceTab = () => {
         .map((e) => e.booking_id!)
     );
 
-    setLedger(allEntries.map((e: any) => ({
-      ...e,
-      booking_number: e.booking_id ? bookingMap[e.booking_id] || null : null,
-      is_settled: e.reason === "platform_fee" && e.booking_id ? settlementBookingIds.has(e.booking_id) : false,
-    })));
+    setLedger(allEntries.map((e: any) => {
+      const b = e.booking_id ? bookingMap[e.booking_id] : null;
+      const contact = e.booking_id ? contactMap[e.booking_id] : null;
+      const basePrice = b?.provider_share ?? null;
+      const finalPrice = b?.calculated_total ?? b?.agreed_price ?? null;
+      const platformAmount = e.reason === "platform_fee" ? Math.abs(e.amount) : null;
+      const platformPercent = basePrice && platformAmount ? Math.round((platformAmount / basePrice) * 100) : null;
+      return {
+        ...e,
+        booking_number: b?.booking_number || (e.booking_id ? e.booking_id.slice(0, 8) : null),
+        is_settled: e.reason === "platform_fee" && e.booking_id ? settlementBookingIds.has(e.booking_id) : false,
+        customer_name: contact?.customer_name || b?.customer_display_name || null,
+        service_name: b?.service_id ? serviceMap[b.service_id] || b.service_id : null,
+        base_price: basePrice,
+        final_price: finalPrice,
+        platform_percent: platformPercent,
+        platform_amount: platformAmount,
+        provider_net: basePrice,
+        booking_date: b?.scheduled_at || null,
+      };
+    }));
     setLedgerLoading(false);
   };
 
@@ -325,53 +360,106 @@ const FinanceTab = () => {
               ) : (
                 <div className="space-y-2">
                   {ledger.map((entry) => (
-                    <div key={entry.id} className="flex items-center gap-3 rounded-lg border border-border p-3">
-                      {entry.amount < 0 ? (
-                        <ArrowDownCircle className="h-5 w-5 text-destructive shrink-0" />
-                      ) : (
-                        <ArrowUpCircle className="h-5 w-5 text-success shrink-0" />
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <Badge variant="outline" className="text-[10px]">
-                            {entry.reason === "platform_fee" ? t("finance.reason.platform_fee") :
-                             entry.reason === "settlement" ? t("provider.wallet.settlement") :
-                             entry.reason === "cliq_payment_credit" ? "💳 إيداع CliQ" :
-                             entry.reason}
-                          </Badge>
-                          {entry.booking_number && (
-                            <span className="text-[10px] text-muted-foreground font-mono" dir="ltr">{entry.booking_number}</span>
-                          )}
-                          {entry.cliq_reference && (
-                            <span className="text-[10px] text-muted-foreground" dir="ltr">
-                              {entry.cliq_reference.startsWith("CASH-") ? "💵 كاش" : `💳 CliQ: ${entry.cliq_reference}`}
-                            </span>
-                          )}
-                          {entry.reason === "platform_fee" && entry.is_settled && (
-                            <Badge variant="outline" className="text-[9px] bg-success/10 text-success border-success/30">✓ تمت التسوية</Badge>
+                    <div key={entry.id} className="rounded-lg border border-border p-3 space-y-2">
+                      <div className="flex items-start gap-3">
+                        {entry.amount < 0 ? (
+                          <ArrowDownCircle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
+                        ) : (
+                          <ArrowUpCircle className="h-5 w-5 text-success shrink-0 mt-0.5" />
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <Badge variant="outline" className="text-[10px]">
+                              {entry.reason === "platform_fee" ? t("finance.reason.platform_fee") :
+                               entry.reason === "settlement" ? t("provider.wallet.settlement") :
+                               entry.reason === "cliq_payment_credit" ? "💳 إيداع CliQ" :
+                               entry.reason}
+                            </Badge>
+                            {entry.booking_number && (
+                              <span className="text-[10px] text-muted-foreground font-mono" dir="ltr">{entry.booking_number}</span>
+                            )}
+                            {entry.cliq_reference && (
+                              <span className="text-[10px] text-muted-foreground" dir="ltr">
+                                {entry.cliq_reference.startsWith("CASH-") ? "💵 كاش" : `💳 CliQ: ${entry.cliq_reference}`}
+                              </span>
+                            )}
+                            {entry.reason === "platform_fee" && (
+                              entry.is_settled ? (
+                                <Badge variant="outline" className="text-[9px] bg-success/10 text-success border-success/30">✓ تمت التسوية</Badge>
+                              ) : (
+                                <Badge variant="outline" className="text-[9px] bg-warning/10 text-warning border-warning/30">⏳ غير مسوّى</Badge>
+                              )
+                            )}
+                          </div>
+                          <p className="text-[10px] text-muted-foreground mt-0.5">
+                            <CalendarDays className="h-3 w-3 inline me-1" />
+                            {formatDateShort(entry.created_at)}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className={`text-sm font-bold ${entry.amount < 0 ? "text-destructive" : "text-success"}`}>
+                            {entry.amount > 0 ? "+" : ""}{formatCurrency(entry.amount)}
+                          </span>
+                          {entry.reason === "platform_fee" && !entry.is_settled && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-7 text-[10px] gap-1 px-2"
+                              onClick={(e) => { e.stopPropagation(); openSettlementForEntry(entry); }}
+                            >
+                              <DollarSign className="h-3 w-3" /> تسوية
+                            </Button>
                           )}
                         </div>
-                        <p className="text-[10px] text-muted-foreground mt-0.5">
-                          <CalendarDays className="h-3 w-3 inline me-1" />
-                          {formatDateShort(entry.created_at)}
-                        </p>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span className={`text-sm font-bold ${entry.amount < 0 ? "text-destructive" : "text-success"}`}>
-                          {entry.amount > 0 ? "+" : ""}{formatCurrency(entry.amount)}
-                        </span>
-                        {/* Per-booking settle button for unsettled platform_fee entries */}
-                        {entry.reason === "platform_fee" && !entry.is_settled && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-7 text-[10px] gap-1 px-2"
-                            onClick={(e) => { e.stopPropagation(); openSettlementForEntry(entry); }}
-                          >
-                            <DollarSign className="h-3 w-3" /> تسوية
-                          </Button>
-                        )}
-                      </div>
+
+                      {/* Enriched booking details for platform_fee entries */}
+                      {entry.reason === "platform_fee" && entry.booking_id && (
+                        <div className="rounded-md bg-muted/30 border border-border/50 p-2 grid grid-cols-2 gap-x-3 gap-y-1 text-[11px]">
+                          {entry.customer_name && (
+                            <>
+                              <span className="text-muted-foreground">العميل:</span>
+                              <span className="font-medium truncate">{entry.customer_name}</span>
+                            </>
+                          )}
+                          {entry.service_name && (
+                            <>
+                              <span className="text-muted-foreground">الخدمة:</span>
+                              <span className="font-medium truncate">{entry.service_name}</span>
+                            </>
+                          )}
+                          {entry.base_price != null && (
+                            <>
+                              <span className="text-muted-foreground">السعر الأساسي:</span>
+                              <span className="font-medium">{formatCurrency(entry.base_price)}</span>
+                            </>
+                          )}
+                          {entry.final_price != null && (
+                            <>
+                              <span className="text-muted-foreground">السعر النهائي:</span>
+                              <span className="font-medium">{formatCurrency(entry.final_price)}</span>
+                            </>
+                          )}
+                          {entry.platform_amount != null && (
+                            <>
+                              <span className="text-muted-foreground">نسبة المنصة{entry.platform_percent != null ? ` (${entry.platform_percent}%)` : ""}:</span>
+                              <span className="font-bold text-destructive">{formatCurrency(entry.platform_amount)}</span>
+                            </>
+                          )}
+                          {entry.provider_net != null && (
+                            <>
+                              <span className="text-muted-foreground">صافي مستحقات المزود:</span>
+                              <span className="font-bold text-success">{formatCurrency(entry.provider_net)}</span>
+                            </>
+                          )}
+                          {entry.booking_date && (
+                            <>
+                              <span className="text-muted-foreground">تاريخ الطلب:</span>
+                              <span className="font-medium">{formatDateShort(entry.booking_date)}</span>
+                            </>
+                          )}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
