@@ -647,10 +647,20 @@ export default function BookingChat({
       {/* Composer — Templated Q&A only (no free text) */}
       <div className="border-t p-2 space-y-2 bg-muted/10">
         {viewerRole === "customer" ? (
-          <CustomerQuestionPicker
-            disabled={sending}
-            isPrivate={!!target}
-            targetName={target ? providers.find((p) => p.id === target)?.name : null}
+          (() => {
+            // Per-booking used-question set, scoped by target (private vs general)
+            const usedQuestions = new Set(
+              messages
+                .filter((m) => m.sender_role === "customer" && m.sender_id === viewerId)
+                .filter((m) => (target ? m.target_provider_id === target : !m.target_provider_id))
+                .map((m) => m.body.trim())
+            );
+            return (
+              <CustomerQuestionPicker
+                disabled={sending}
+                isPrivate={!!target}
+                targetName={target ? providers.find((p) => p.id === target)?.name : null}
+                usedQuestions={usedQuestions}
             onPick={async (q) => {
               const targetForThisMessage = target; // capture private target if any
               setBody(q);
