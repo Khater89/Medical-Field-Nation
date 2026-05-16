@@ -362,7 +362,7 @@ const ar: Record<string, string> = {
 
   // Landing
   "landing.hero": "خدمات طبية منزلية موثوقة",
-  "landing.hero.sub": "أطباء وممرضون معتمدون يصلون إلى باب منزلك في أي وقت",
+  "landing.hero.sub": "\n",
   "landing.cta": "احجز موعدك الآن",
   "landing.login": "تسجيل الدخول",
   "landing.feature1": "أطباء معتمدون",
@@ -393,7 +393,7 @@ const ar: Record<string, string> = {
   "landing.footer.quickLinks": "روابط سريعة",
   "landing.footer.contact": "تواصل معنا",
   "landing.whyus": "لماذا نحن؟",
-  "landing.whyus.sub": "نلتزم بتقديم أعلى مستويات الرعاية الطبية في راحة منزلك",
+  "landing.whyus.sub": "\n",
 
   // How it works
   "landing.howItWorks": "كيف يعمل؟",
@@ -401,12 +401,12 @@ const ar: Record<string, string> = {
   "landing.step1.desc": "تصفح قائمة الخدمات الطبية واختر ما يناسب حالتك",
   "landing.step2.title": "حدد موعدك",
   "landing.step2.desc": "اختر التاريخ والوقت والمكان المناسب لك",
-  "landing.step3.title": "نصلك فوراً",
-  "landing.step3.desc": "فريقنا الطبي المعتمد يصل إلى باب منزلك",
+  "landing.step3.title": "نصلك في موعدك ",
+  "landing.step3.desc": "\n",
 
   // Gallery
-  "landing.gallery_title": "فريقنا أثناء العمل",
-  "landing.gallery_sub": "",
+  "landing.gallery_title": "\n",
+  "landing.gallery_sub": "\n",
 
   // Settings
   "settings.title": "إعدادات المنصة",
