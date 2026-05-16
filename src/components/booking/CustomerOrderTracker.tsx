@@ -337,6 +337,7 @@ const CustomerOrderTracker = ({ bookingId, onClose }: OrderTrackerProps) => {
             )}
           </CardContent>
         </Card>
+        )}
         </div>
       </div>
 
