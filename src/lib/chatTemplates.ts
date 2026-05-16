@@ -27,8 +27,7 @@ export const PROVIDER_RESPONSES: { id: string; template: string; needsDuration?:
   { id: "available_yes", template: "نعم، أنا متاح لتنفيذ الطلب في الموعد المحدد." },
   { id: "reviewed", template: "تم الاطلاع على تفاصيل الطلب، ويمكنني تقديم الخدمة." },
   { id: "accept_assignment", template: "أقبل إسناد الطلب لي، وأنا جاهز للمتابعة." },
-  { id: "need_info", template: "أحتاج إلى مراجعة تفاصيل إضافية قبل تأكيد القبول." },
-  { id: "quote", template: "عرض السعر الخاص بي هو: {{price}} د.أ" },
+  { id: "contact_coordinator", template: "أرجو الاتصال بالمنسق لأي تفاصيل إضافية." },
 ];
 
 export const QUESTIONS_BY_TEXT: Record<string, ChatQuestion> = Object.fromEntries(
