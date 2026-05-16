@@ -6,9 +6,19 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   CalendarDays, MapPin, FileText, Loader2, DollarSign,
-  Siren, Navigation, Users, MessageSquareQuote, MessageCircle,
+  Siren, Navigation, Users, MessageSquareQuote, MessageCircle, Clock,
 } from "lucide-react";
 import BookingChat from "@/components/booking/BookingChat";
+
+interface PeerQuote {
+  id: string;
+  provider_id: string;
+  provider_name: string;
+  provider_role: string | null;
+  quoted_price: number;
+  created_at: string;
+  is_mine: boolean;
+}
 
 interface AvailableBooking {
   id: string;
