@@ -1,65 +1,50 @@
-# خطة التنفيذ — فلترة الجنس + دردشة محدودة بالسعر
 
-## 1) قاعدة البيانات (Migration واحد)
+## التعديلات المطلوبة
 
-### إضافة أعمدة
-- `profiles.gender` TEXT (`male` | `female`) — للمزودين
-- `bookings.gender_released` BOOLEAN DEFAULT false — لتعطيل فلترة الجنس
-- `bookings.gender_released_at` TIMESTAMPTZ
-- `bookings.gender_released_by` UUID
-- `booking_messages.quoted_price` موجود مسبقاً ✓
+### 1. صفحة تتبع الطلب — تخطيط أفقي (CustomerOrderTracker)
+- إعادة هيكلة المكوّن إلى شبكة `grid lg:grid-cols-3` على الكمبيوتر، عمود واحد على الموبايل.
+- العمود 1: **الخط الزمني (Timeline)** للحالة.
+- العمود 2: **طريقة الدفع** (يظهر بعد COMPLETED).
+- العمود 3: **التقييم** (يظهر بعد COMPLETED).
+- شريط الحالة (Badge) والإشعار يبقى علوياً ممتداً.
+- لا يُحذف أي قسم — فقط إعادة توزيع داخل Cards بعرض كامل ومسافات منسجمة.
 
-### تحديث Functions (لإضافة فلترة الجنس)
-- `available_bookings_for_providers()` — فلترة بـ `provider_gender` من `bookings.notes/internal` → نخزّن `bookings.required_gender` كعمود جديد
-- `bookings.required_gender` TEXT جديد، يُملأ من `provider_gender` في PatientForm
-- `list_booking_messages()` — لا تغيير في المنطق الأساسي
-- `provider_messages_inbox()` — إضافة فلتر الجنس
-- `find_nearest_providers()` — إضافة بارامتر `_required_gender`
+### 2. حاسبة السعر للمزود (ثابت) — عمولة 30%
+- تعديل واجهة إدخال السعر في `BookingChat.tsx` (حقل عرض السعر) لتصبح **حاسبة** تعرض:
+  - السعر الأساسي (إدخال المزود)
+  - نسبة المنصة: 30%
+  - قيمة العمولة بالدينار
+  - **السعر النهائي للعميل = الأساسي × 1.30**
+- زر «إرسال عرض السعر» يُرسل **السعر النهائي** (مع العمولة) عبر `send_booking_message` كـ `quoted_price`.
+- تُخزن التفاصيل في حقل `note` بصيغة منظّمة (JSON) + يبقى نص رسالة الدردشة قابلاً للقراءة.
 
-### RPC جديد
-- `admin_release_gender(_booking_id)` — فقط admin/cs، يضع `gender_released=true` ويسجل في `booking_history`
+### 3. الطلبات الزمنية — الساعة الأولى 30% + 10% لكل ساعة إضافية
+- نفس الحاسبة تكتشف نوع الخدمة (`pricing_type = 'hourly'`) وتُظهر:
+  - سعر الساعة الأولى + 30% منصة → سعر الساعة الأولى النهائي
+  - سعر الساعة الإضافية + 10% منصة
+  - معاينة لإجمالي افتراضي حسب عدد ساعات يدخله المزود (لأغراض العرض فقط)
+- يُرسل سعرين: `first_hour_total` و `extra_hour_total` ضمن JSON في `note`.
 
-### قاعدة فلترة الجنس
-في كل الاستعلامات: 
-```
-(b.gender_released = true OR b.required_gender IS NULL OR p.gender = b.required_gender)
-```
+### 4. الحساب الفعلي بعد الإنجاز (DB)
+- تعديل دالة `calc_escalating_price` لتغيير معامل الساعات الإضافية من 8% إلى **10%** لكل 60 دقيقة كاملة (بدلاً من 15 دقيقة × 8%).
+- إضافة جدول `quote_breakdown` (أو حقول JSONB في `provider_quotes`) لحفظ:
+  `pricing_type, base_price, platform_percent, platform_amount, final_price, extra_hour_base, extra_hour_percent, booking_id, provider_id, created_at`.
+- الخيار الأبسط: إضافة عمود `breakdown jsonb` إلى `provider_quotes`.
 
-## 2) الواجهة الأمامية
+### 5. عرض السعر للعميل والإدارة
+- في `ProviderQuotesSection` (إدارة) و `customer_quotes_for_booking` (عميل): إظهار `quoted_price` كسعر نهائي + تفاصيل من `breakdown` للإدارة فقط.
+- العميل يرى دائماً السعر النهائي شامل العمولة (هذا ما يُحفظ أصلاً في `quoted_price`).
 
-### تسجيل المزود (`ProviderOnboarding.tsx` / `ProviderRegister.tsx`)
-- إضافة حقل اختيار جنس إلزامي (RadioGroup ذكر/أنثى)
-- منع إكمال البروفايل (`profile_completed=true`) بدون gender
-- تحديث trigger `prevent_profile_privilege_escalation` ليتحقق من `gender NOT NULL`
+### الملفات المتأثرة
+- `src/components/booking/CustomerOrderTracker.tsx` — تخطيط أفقي
+- `src/components/booking/BookingChat.tsx` — حاسبة السعر
+- `src/components/admin/ProviderQuotesSection.tsx` — عرض breakdown للإدارة
+- Migration: إضافة `breakdown jsonb` إلى `provider_quotes` + تحديث `calc_escalating_price` لـ 10%/ساعة
+- تحديث `send_booking_message` لقبول `_breakdown jsonb` اختياري وتمريره إلى `provider_quotes`
 
-### نافذة إكمال للمزودين القدامى
-- في `ProviderDashboard.tsx`: عند `profile.gender IS NULL` → AlertDialog إلزامي قبل أي تفاعل
+### ملاحظات
+- لن يتم كسر أي وظيفة حالية: `quoted_price` يبقى السعر النهائي للعميل (كما هو الآن).
+- الحقل الجديد `breakdown` اختياري ولن يؤثر على عروض قديمة.
+- تغيير معامل التصعيد من 8%/15min إلى 10%/60min **يغير حساب الإكمال للطلبات الزمنية** — هل تؤكد ذلك؟ (هذا يتعارض مع ذاكرة سابقة [Overtime Pricing Logic: +8% كل 15 دقيقة]).
 
-### نموذج العميل (`PatientForm.tsx`)
-- موجود `provider_gender` ✓ — فقط نمرّره إلى `bookings.required_gender` في `BookingPage` و `create-guest-booking`
-
-### دردشة محدودة بالسعر (`chatTemplates.ts`)
-- تقليل أسئلة العميل إلى **5 فقط** (الأسئلة المحددة)
-- ردود المزود **5 ردود** + كل رد يطلب إدخال سعر إجباري
-- إزالة أي textarea حرة في `BookingChat.tsx` و `ProviderMessagesTab.tsx`
-
-### مكوّن `ProviderResponsePicker`
-- اختيار رد + Input للسعر (مطلوب) → ينحفظ في `booking_messages.quoted_price`
-
-### عرض الردود في `CustomerOrderTracker` / `TrackOrderPage`
-- جلب الردود مع: اسم المزود، جنسه، تخصصه، النص، السعر، الوقت
-- استخدام `list_booking_messages` + JOIN بـ profile
-
-### زر Release Gender (`BookingDetailsDrawer.tsx`)
-- يظهر فقط للأدمن وعندما `required_gender IS NOT NULL AND NOT gender_released`
-- AlertDialog تأكيد: "هل تؤكد موافقة العميل؟"
-- ينادي RPC ويعرض toast
-
-### فلترة قائمة المزودين عند الإسناد (`CSAssignmentDialog.tsx` / `BroadcastProvidersDialog.tsx`)
-- فلتر الجنس + التخصص + احترام `gender_released`
-
-## 3) أمان (PII)
-- `containsPII` موجود ✓ — يُستخدم كطبقة دفاع إضافية
-
-## ملاحظة
-سيتم تنفيذ Migration أولاً (بعد موافقتك)، ثم كود الواجهة في رسالة واحدة بعد إقرار الـ migration.
+**سؤال حاسم قبل التنفيذ:** هل القاعدة الجديدة (10% لكل ساعة إضافية) تستبدل القاعدة القديمة (8% كل 15 دقيقة) بالكامل، أم تنطبق فقط على عروض المزود الجديدة وتبقى القديمة للحساب التلقائي بعد الإكمال؟

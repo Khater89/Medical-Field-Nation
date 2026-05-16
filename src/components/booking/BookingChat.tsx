@@ -67,8 +67,20 @@ function ProviderResponsePicker({
   }, [messages]);
 
   const [selectedId, setSelectedId] = useState<string>("");
-  const [price, setPrice] = useState<string>("");
+  const [pricingMode, setPricingMode] = useState<"fixed" | "hourly">("fixed");
+  const [basePrice, setBasePrice] = useState<string>("");
+  const [extraHourBase, setExtraHourBase] = useState<string>("");
   const [duration, setDuration] = useState<string>("");
+
+  const PLATFORM_PCT = 0.30;
+  const EXTRA_HOUR_PCT = 0.10;
+
+  const baseNum = parseFloat(basePrice) || 0;
+  const extraNum = parseFloat(extraHourBase) || 0;
+  const platformAmount = +(baseNum * PLATFORM_PCT).toFixed(2);
+  const finalFirstHour = +(baseNum + platformAmount).toFixed(2);
+  const extraPlatformAmount = +(extraNum * EXTRA_HOUR_PCT).toFixed(2);
+  const finalExtraHour = +(extraNum + extraPlatformAmount).toFixed(2);
 
   if (!lastQuestion) {
     return (
@@ -79,14 +91,18 @@ function ProviderResponsePicker({
   }
 
   const tpl = PROVIDER_RESPONSES.find((r) => r.id === selectedId);
-  const priceNum = parseFloat(price);
-  const canSend = !!tpl && !!price && priceNum > 0 && (!tpl.needsDuration || duration.trim().length > 0);
+  const canSend =
+    !!tpl &&
+    baseNum > 0 &&
+    (pricingMode === "fixed" || extraNum > 0) &&
+    (!tpl.needsDuration || duration.trim().length > 0);
 
   return (
     <div className="space-y-2">
       <div className="text-[11px] bg-primary/5 border border-primary/20 rounded px-2 py-1.5">
         <span className="font-bold">سؤال العميل:</span> {lastQuestion}
       </div>
+
       <Select value={selectedId} onValueChange={setSelectedId} disabled={disabled}>
         <SelectTrigger className="h-9 text-xs">
           <SelectValue placeholder="اختر رداً جاهزاً..." />
@@ -99,6 +115,7 @@ function ProviderResponsePicker({
           ))}
         </SelectContent>
       </Select>
+
       {tpl?.needsDuration && (
         <Input
           placeholder="المدة المتوقعة (مثال: ساعة، 45 دقيقة)"
@@ -107,33 +124,95 @@ function ProviderResponsePicker({
           className="h-8 text-xs"
         />
       )}
-      <Input
-        type="number"
-        min={0}
-        step="0.5"
-        placeholder="السعر المطلوب بالدينار (إجباري) *"
-        value={price}
-        onChange={(e) => setPrice(e.target.value)}
-        className="h-9 text-sm font-bold"
-        dir="ltr"
-      />
+
+      {/* Price Calculator */}
+      <div className="rounded-lg border-2 border-primary/30 bg-gradient-to-br from-primary/5 to-transparent p-3 space-y-2">
+        <div className="flex items-center justify-between">
+          <h4 className="text-xs font-black flex items-center gap-1">
+            🧮 حاسبة السعر مع نسبة المنصة
+          </h4>
+          <div className="flex gap-1 text-[10px]">
+            <button
+              type="button"
+              onClick={() => setPricingMode("fixed")}
+              className={`px-2 py-0.5 rounded ${pricingMode === "fixed" ? "bg-primary text-primary-foreground" : "bg-muted"}`}
+            >ثابت</button>
+            <button
+              type="button"
+              onClick={() => setPricingMode("hourly")}
+              className={`px-2 py-0.5 rounded ${pricingMode === "hourly" ? "bg-primary text-primary-foreground" : "bg-muted"}`}
+            >حسب الوقت</button>
+          </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="text-[10px] text-muted-foreground">
+            {pricingMode === "fixed" ? "السعر الأساسي (دينار)" : "سعر الساعة الأولى الأساسي (دينار)"}
+          </label>
+          <Input
+            type="number" min={0} step="0.5"
+            placeholder="مثال: 100"
+            value={basePrice}
+            onChange={(e) => setBasePrice(e.target.value)}
+            className="h-8 text-sm font-bold" dir="ltr"
+          />
+        </div>
+
+        {pricingMode === "hourly" && (
+          <div className="space-y-1.5">
+            <label className="text-[10px] text-muted-foreground">سعر الساعة الإضافية الأساسي (دينار)</label>
+            <Input
+              type="number" min={0} step="0.5"
+              placeholder="مثال: 50"
+              value={extraHourBase}
+              onChange={(e) => setExtraHourBase(e.target.value)}
+              className="h-8 text-sm font-bold" dir="ltr"
+            />
+          </div>
+        )}
+
+        {baseNum > 0 && (
+          <div className="rounded bg-background/80 border p-2 space-y-1 text-[11px]">
+            <div className="flex justify-between"><span>السعر الأساسي:</span><strong dir="ltr">{baseNum} JOD</strong></div>
+            <div className="flex justify-between text-muted-foreground"><span>نسبة المنصة (30%):</span><span dir="ltr">+{platformAmount} JOD</span></div>
+            <div className="flex justify-between font-black text-primary border-t pt-1">
+              <span>{pricingMode === "hourly" ? "سعر الساعة الأولى النهائي:" : "السعر النهائي للعميل:"}</span>
+              <span dir="ltr">{finalFirstHour} JOD</span>
+            </div>
+            {pricingMode === "hourly" && extraNum > 0 && (
+              <>
+                <div className="flex justify-between mt-2 pt-1 border-t"><span>الساعة الإضافية الأساسي:</span><strong dir="ltr">{extraNum} JOD</strong></div>
+                <div className="flex justify-between text-muted-foreground"><span>نسبة المنصة (10%):</span><span dir="ltr">+{extraPlatformAmount} JOD</span></div>
+                <div className="flex justify-between font-black text-primary"><span>سعر الساعة الإضافية النهائي:</span><span dir="ltr">{finalExtraHour} JOD</span></div>
+              </>
+            )}
+          </div>
+        )}
+      </div>
+
       <Button
         size="sm"
         className="w-full"
         disabled={!canSend || disabled}
         onClick={() => {
           if (!tpl || !canSend) return;
+          const priceDisplay = pricingMode === "fixed"
+            ? `${finalFirstHour}`
+            : `${finalFirstHour} (الساعة الأولى) + ${finalExtraHour}/ساعة إضافية`;
+          const breakdownText = pricingMode === "fixed"
+            ? `\n\n💰 تفاصيل السعر:\n• الأساسي: ${baseNum} JOD\n• نسبة المنصة 30%: ${platformAmount} JOD\n• السعر النهائي: ${finalFirstHour} JOD`
+            : `\n\n💰 تفاصيل السعر:\n• ساعة أولى أساسي: ${baseNum} JOD + 30% (${platformAmount}) = ${finalFirstHour} JOD\n• ساعة إضافية أساسي: ${extraNum} JOD + 10% (${extraPlatformAmount}) = ${finalExtraHour} JOD`;
           const text = tpl.template
-            .replace("{{price}}", String(priceNum))
-            .replace("{{duration}}", duration.trim() || "");
-          onPick(text, lastQuestion, priceNum);
-          setSelectedId(""); setPrice(""); setDuration("");
+            .replace("{{price}}", priceDisplay)
+            .replace("{{duration}}", duration.trim() || "") + breakdownText;
+          onPick(text, lastQuestion, finalFirstHour);
+          setSelectedId(""); setBasePrice(""); setExtraHourBase(""); setDuration("");
         }}
       >
-        {disabled ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Send className="h-4 w-4 ml-1" />إرسال الرد مع السعر</>}
+        {disabled ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Send className="h-4 w-4 ml-1" />إرسال عرض السعر النهائي</>}
       </Button>
       <p className="text-[10px] text-muted-foreground text-center">
-        🔒 السعر إجباري — لا يمكن إرسال رد بدون تحديد سعر.
+        🔒 السعر النهائي المُرسل للعميل يشمل نسبة المنصة تلقائياً.
       </p>
     </div>
   );
