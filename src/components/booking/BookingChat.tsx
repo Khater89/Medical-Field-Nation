@@ -19,16 +19,19 @@ import { CUSTOMER_QUESTIONS, CUSTOMER_PRIVATE_QUESTIONS, QUESTIONS_BY_TEXT, PROV
 // ============== Templated Q&A pickers ==============
 
 function CustomerQuestionPicker({
-  disabled, onPick, isPrivate, targetName,
-}: { disabled: boolean; onPick: (question: string) => void; isPrivate: boolean; targetName?: string | null }) {
+  disabled, onPick, isPrivate, targetName, usedQuestions,
+}: { disabled: boolean; onPick: (question: string) => void; isPrivate: boolean; targetName?: string | null; usedQuestions: Set<string> }) {
   const [selected, setSelected] = useState<string>("");
-  const list = isPrivate ? CUSTOMER_PRIVATE_QUESTIONS : CUSTOMER_QUESTIONS;
-  const placeholder = isPrivate
+  const fullList = isPrivate ? CUSTOMER_PRIVATE_QUESTIONS : CUSTOMER_QUESTIONS;
+  const list = fullList.filter((q) => !usedQuestions.has(q.text));
+  const placeholder = list.length === 0
+    ? "✓ تم استخدام جميع الأسئلة المتاحة لهذا الطلب"
+    : isPrivate
     ? `اختر سؤالاً مخصصاً لـ ${targetName || "المزود"}...`
     : "اختر سؤالاً عاماً لإرساله لجميع المزودين المطابقين...";
   return (
     <div className="flex gap-2">
-      <Select value={selected} onValueChange={setSelected} disabled={disabled}>
+      <Select value={selected} onValueChange={setSelected} disabled={disabled || list.length === 0}>
         <SelectTrigger className="flex-1 h-9 text-xs">
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
@@ -40,7 +43,7 @@ function CustomerQuestionPicker({
       </Select>
       <Button
         size="sm"
-        disabled={!selected || disabled}
+        disabled={!selected || disabled || list.length === 0}
         onClick={() => { if (selected) { onPick(selected); setSelected(""); } }}
       >
         {disabled ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
