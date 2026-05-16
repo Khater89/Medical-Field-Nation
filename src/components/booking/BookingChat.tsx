@@ -19,16 +19,19 @@ import { CUSTOMER_QUESTIONS, CUSTOMER_PRIVATE_QUESTIONS, QUESTIONS_BY_TEXT, PROV
 // ============== Templated Q&A pickers ==============
 
 function CustomerQuestionPicker({
-  disabled, onPick, isPrivate, targetName,
-}: { disabled: boolean; onPick: (question: string) => void; isPrivate: boolean; targetName?: string | null }) {
+  disabled, onPick, isPrivate, targetName, usedQuestions,
+}: { disabled: boolean; onPick: (question: string) => void; isPrivate: boolean; targetName?: string | null; usedQuestions: Set<string> }) {
   const [selected, setSelected] = useState<string>("");
-  const list = isPrivate ? CUSTOMER_PRIVATE_QUESTIONS : CUSTOMER_QUESTIONS;
-  const placeholder = isPrivate
+  const fullList = isPrivate ? CUSTOMER_PRIVATE_QUESTIONS : CUSTOMER_QUESTIONS;
+  const list = fullList.filter((q) => !usedQuestions.has(q.text));
+  const placeholder = list.length === 0
+    ? "✓ تم استخدام جميع الأسئلة المتاحة لهذا الطلب"
+    : isPrivate
     ? `اختر سؤالاً مخصصاً لـ ${targetName || "المزود"}...`
     : "اختر سؤالاً عاماً لإرساله لجميع المزودين المطابقين...";
   return (
     <div className="flex gap-2">
-      <Select value={selected} onValueChange={setSelected} disabled={disabled}>
+      <Select value={selected} onValueChange={setSelected} disabled={disabled || list.length === 0}>
         <SelectTrigger className="flex-1 h-9 text-xs">
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
@@ -40,7 +43,7 @@ function CustomerQuestionPicker({
       </Select>
       <Button
         size="sm"
-        disabled={!selected || disabled}
+        disabled={!selected || disabled || list.length === 0}
         onClick={() => { if (selected) { onPick(selected); setSelected(""); } }}
       >
         {disabled ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
@@ -604,11 +607,30 @@ export default function BookingChat({
                         )}
                         {isPrivate && <Badge variant="outline" className="text-[9px] px-1 py-0 h-3.5">خاص</Badge>}
                       </div>
-                      <p className="break-words whitespace-pre-wrap">{m.body}</p>
+                      {(() => {
+                        // For customers, strip internal price breakdown section from body
+                        const displayBody = viewerRole === "customer"
+                          ? m.body.split(/\n\n💰\s*تفاصيل السعر:/)[0].trim()
+                          : m.body;
+                        return <p className="break-words whitespace-pre-wrap">{displayBody}</p>;
+                      })()}
                       {m.quoted_price && (
-                        <Badge variant="outline" className={`mt-1 text-[10px] gap-0.5 ${mine ? "bg-primary-foreground/20 border-primary-foreground/30" : ""}`}>
-                          <DollarSign className="h-2.5 w-2.5" />السعر المقترح: {m.quoted_price} JOD
-                        </Badge>
+                        viewerRole === "customer" ? (
+                          <div className={`mt-2 rounded-md px-2 py-1.5 text-[11px] ${mine ? "bg-primary-foreground/15 border border-primary-foreground/30" : "bg-background/80 border border-border"}`}>
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="opacity-70">سعر الخدمة:</span>
+                              <span className="line-through opacity-70" dir="ltr">{(Number(m.quoted_price) + 10).toFixed(2)} JOD</span>
+                            </div>
+                            <div className="flex items-center justify-between gap-2 font-black">
+                              <span>بعد الخصم:</span>
+                              <span dir="ltr">{Number(m.quoted_price).toFixed(2)} JOD</span>
+                            </div>
+                          </div>
+                        ) : (
+                          <Badge variant="outline" className={`mt-1 text-[10px] gap-0.5 ${mine ? "bg-primary-foreground/20 border-primary-foreground/30" : ""}`}>
+                            <DollarSign className="h-2.5 w-2.5" />السعر المقترح: {m.quoted_price} JOD
+                          </Badge>
+                        )
                       )}
                       <div className={`flex items-center gap-1 mt-1 ${mine ? "justify-start flex-row-reverse" : "justify-start"}`}>
                         <span className="text-[9px] opacity-60">{formatTime(m.created_at)}</span>
@@ -644,10 +666,20 @@ export default function BookingChat({
       {/* Composer — Templated Q&A only (no free text) */}
       <div className="border-t p-2 space-y-2 bg-muted/10">
         {viewerRole === "customer" ? (
-          <CustomerQuestionPicker
-            disabled={sending}
-            isPrivate={!!target}
-            targetName={target ? providers.find((p) => p.id === target)?.name : null}
+          (() => {
+            // Per-booking used-question set, scoped by target (private vs general)
+            const usedQuestions = new Set(
+              messages
+                .filter((m) => m.sender_role === "customer" && m.sender_id === viewerId)
+                .filter((m) => (target ? m.target_provider_id === target : !m.target_provider_id))
+                .map((m) => m.body.trim())
+            );
+            return (
+              <CustomerQuestionPicker
+                disabled={sending}
+                isPrivate={!!target}
+                targetName={target ? providers.find((p) => p.id === target)?.name : null}
+                usedQuestions={usedQuestions}
             onPick={async (q) => {
               const targetForThisMessage = target; // capture private target if any
               setBody(q);
@@ -691,6 +723,8 @@ export default function BookingChat({
               }, 0);
             }}
           />
+            );
+          })()
         ) : (
           <ProviderResponsePicker
             disabled={sending}
