@@ -337,7 +337,10 @@ const CustomerOrderTracker = ({ bookingId, onClose }: OrderTrackerProps) => {
             )}
           </CardContent>
         </Card>
-      )}
+        </div>
+      </div>
+
+      {/* Placeholder when not completed yet to keep grid balanced is unnecessary; grid collapses */}
     </div>
   );
 };
