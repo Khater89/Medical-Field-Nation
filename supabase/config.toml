@@ -20,3 +20,6 @@ verify_jwt = false
 
 [functions.admin-setup]
 verify_jwt = false
+
+[functions.automation-api]
+verify_jwt = false
