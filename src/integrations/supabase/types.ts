@@ -14,6 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      api_keys: {
+        Row: {
+          created_at: string
+          created_by: string
+          created_by_email: string | null
+          id: string
+          key_hash: string
+          key_prefix: string
+          label: string
+          last_endpoint: string | null
+          last_used_at: string | null
+          revoked_at: string | null
+          scopes: string[]
+          status: string
+          usage_count: number
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          created_by_email?: string | null
+          id?: string
+          key_hash: string
+          key_prefix: string
+          label?: string
+          last_endpoint?: string | null
+          last_used_at?: string | null
+          revoked_at?: string | null
+          scopes?: string[]
+          status?: string
+          usage_count?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          created_by_email?: string | null
+          id?: string
+          key_hash?: string
+          key_prefix?: string
+          label?: string
+          last_endpoint?: string | null
+          last_used_at?: string | null
+          revoked_at?: string | null
+          scopes?: string[]
+          status?: string
+          usage_count?: number
+        }
+        Relationships: []
+      }
       booking_contacts: {
         Row: {
           booking_id: string
@@ -923,6 +971,14 @@ export type Database = {
         Args: { _booking_id: string; _provider_id: string }
         Returns: boolean
       }
+      create_api_key: {
+        Args: { _label?: string; _scopes?: string[] }
+        Returns: {
+          id: string
+          key_prefix: string
+          plain_key: string
+        }[]
+      }
       customer_accept_quote: { Args: { _quote_id: string }; Returns: Json }
       customer_assign_provider: {
         Args: { _booking_id: string; _provider_id: string }
@@ -1084,6 +1140,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      revoke_api_key: { Args: { _id: string }; Returns: undefined }
       send_booking_message: {
         Args: {
           _body: string
@@ -1101,6 +1158,14 @@ export type Database = {
           target_user_id: string
         }
         Returns: undefined
+      }
+      verify_api_key: {
+        Args: { _endpoint?: string; _plain_key: string }
+        Returns: {
+          id: string
+          label: string
+          scopes: string[]
+        }[]
       }
     }
     Enums: {
