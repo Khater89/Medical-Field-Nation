@@ -324,6 +324,240 @@ const CSAgentsSection = () => {
   );
 };
 
+interface ApiKeyRow {
+  id: string;
+  label: string;
+  key_prefix: string;
+  scopes: string[];
+  status: string;
+  created_at: string;
+  revoked_at: string | null;
+  last_used_at: string | null;
+  last_endpoint: string | null;
+  usage_count: number;
+  created_by_email: string | null;
+}
+
+const SCOPE_OPTIONS = [
+  { id: "bookings:read", label: "قراءة الحجوزات" },
+  { id: "status:read", label: "قراءة حالة الطلبات" },
+  { id: "finance:read", label: "قراءة بيانات المالية" },
+];
+
+const ApiKeysSection = () => {
+  const { toast } = useToast();
+  const { isAdmin } = useAuth();
+  const [keys, setKeys] = useState<ApiKeyRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [label, setLabel] = useState("");
+  const [scopes, setScopes] = useState<string[]>(["bookings:read", "status:read"]);
+  const [creating, setCreating] = useState(false);
+  const [newKey, setNewKey] = useState<{ id: string; plain_key: string } | null>(null);
+  const [showKey, setShowKey] = useState(false);
+  const [revokingId, setRevokingId] = useState<string | null>(null);
+
+  const fetchKeys = useCallback(async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from("api_keys" as any)
+      .select("id, label, key_prefix, scopes, status, created_at, revoked_at, last_used_at, last_endpoint, usage_count, created_by_email")
+      .order("created_at", { ascending: false });
+    if (!error && data) setKeys(data as any);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { if (isAdmin) fetchKeys(); }, [isAdmin, fetchKeys]);
+
+  if (!isAdmin) return null;
+
+  const toggleScope = (s: string) =>
+    setScopes((prev) => (prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]));
+
+  const handleCreate = async () => {
+    if (scopes.length === 0) {
+      toast({ title: "اختر صلاحية واحدة على الأقل", variant: "destructive" });
+      return;
+    }
+    setCreating(true);
+    const { data, error } = await supabase.rpc("create_api_key" as any, {
+      _label: label.trim() || "Automation Key",
+      _scopes: scopes,
+    });
+    setCreating(false);
+    if (error) {
+      toast({ title: "فشل إنشاء المفتاح", description: error.message, variant: "destructive" });
+      return;
+    }
+    const row = Array.isArray(data) ? data[0] : data;
+    if (row?.plain_key) {
+      setNewKey({ id: row.id, plain_key: row.plain_key });
+      setShowKey(true);
+      setLabel("");
+      fetchKeys();
+    }
+  };
+
+  const handleRevoke = async (id: string) => {
+    if (!confirm("هل أنت متأكد من إلغاء هذا المفتاح؟ سيتوقف فوراً عن العمل.")) return;
+    setRevokingId(id);
+    const { error } = await supabase.rpc("revoke_api_key" as any, { _id: id });
+    setRevokingId(null);
+    if (error) {
+      toast({ title: "فشل الإلغاء", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "تم إلغاء المفتاح" });
+      fetchKeys();
+    }
+  };
+
+  const handleRegenerate = async (id: string) => {
+    if (!confirm("إعادة التوليد ستلغي المفتاح القديم وتنشئ مفتاحاً جديداً. متابعة؟")) return;
+    await supabase.rpc("revoke_api_key" as any, { _id: id });
+    await handleCreate();
+  };
+
+  const copyKey = (k: string) => {
+    navigator.clipboard.writeText(k);
+    toast({ title: "تم نسخ المفتاح" });
+  };
+
+  const projectUrl = import.meta.env.VITE_SUPABASE_URL;
+  const endpointBase = `${projectUrl}/functions/v1/automation-api`;
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-base">
+          <Key className="h-5 w-5 text-primary" />
+          Automation API Key
+        </CardTitle>
+        <CardDescription>
+          مفاتيح للوصول البرمجي من أدوات الأتمتة (n8n, Make, Zapier...). للأدمن فقط.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* Newly created key (one-time reveal) */}
+        {newKey && (
+          <div className="rounded-lg border border-warning/40 bg-warning/10 p-3 space-y-2">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-semibold text-warning-foreground">
+                ⚠️ احفظ هذا المفتاح الآن — لن يظهر مرة أخرى
+              </p>
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setShowKey((v) => !v)}>
+                {showKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </Button>
+            </div>
+            <div className="flex gap-2">
+              <Input
+                readOnly
+                value={showKey ? newKey.plain_key : "•".repeat(40)}
+                className="font-mono text-xs"
+                dir="ltr"
+              />
+              <Button size="sm" onClick={() => copyKey(newKey.plain_key)} className="gap-1.5">
+                <Copy className="h-4 w-4" />
+                نسخ
+              </Button>
+            </div>
+            <Button variant="outline" size="sm" onClick={() => { setNewKey(null); setShowKey(false); }}>
+              تم الحفظ، إخفاء
+            </Button>
+          </div>
+        )}
+
+        {/* Create form */}
+        <div className="space-y-2 border border-border rounded-lg p-3 bg-muted/20">
+          <Input
+            value={label}
+            onChange={(e) => setLabel(e.target.value)}
+            placeholder="اسم المفتاح (مثال: n8n production)"
+          />
+          <div className="flex flex-wrap gap-2">
+            {SCOPE_OPTIONS.map((s) => (
+              <button
+                key={s.id}
+                type="button"
+                onClick={() => toggleScope(s.id)}
+                className={`text-xs px-2 py-1 rounded border ${scopes.includes(s.id) ? "bg-primary text-primary-foreground border-primary" : "bg-background border-border"}`}
+              >
+                {s.label}
+              </button>
+            ))}
+          </div>
+          <Button onClick={handleCreate} disabled={creating} size="sm" className="gap-1.5 w-full">
+            {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Key className="h-4 w-4" />}
+            Generate API Key
+          </Button>
+        </div>
+
+        {/* Endpoint info */}
+        <div className="text-xs bg-muted/30 rounded p-2 space-y-1" dir="ltr">
+          <p className="font-semibold">Endpoint:</p>
+          <code className="block break-all">{endpointBase}/&lt;resource&gt;</code>
+          <p className="font-semibold mt-2">Headers:</p>
+          <code className="block">x-api-key: YOUR_KEY</code>
+          <p className="font-semibold mt-2">Resources:</p>
+          <code className="block">/bookings · /status?booking_number=MFN-... · /finance · /ping</code>
+        </div>
+
+        {/* List */}
+        {loading ? (
+          <div className="flex justify-center py-4"><Loader2 className="h-5 w-5 animate-spin text-primary" /></div>
+        ) : keys.length === 0 ? (
+          <p className="text-sm text-muted-foreground text-center py-2">لا توجد مفاتيح بعد</p>
+        ) : (
+          <div className="space-y-2">
+            {keys.map((k) => (
+              <div key={k.id} className="rounded-lg border border-border p-3 space-y-2">
+                <div className="flex items-center justify-between gap-2 flex-wrap">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium truncate">{k.label}</p>
+                    <p className="text-xs text-muted-foreground font-mono" dir="ltr">{k.key_prefix}••••••••</p>
+                  </div>
+                  <Badge variant={k.status === "active" ? "default" : "secondary"}>
+                    {k.status === "active" ? "نشط" : "ملغى"}
+                  </Badge>
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {(k.scopes || []).map((s) => (
+                    <Badge key={s} variant="outline" className="text-[10px]">{s}</Badge>
+                  ))}
+                </div>
+                <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-[11px] text-muted-foreground">
+                  <span>الاستخدام: <strong>{k.usage_count}</strong></span>
+                  <span>آخر استخدام: {k.last_used_at ? new Date(k.last_used_at).toLocaleString("ar") : "—"}</span>
+                  <span>آخر endpoint: {k.last_endpoint || "—"}</span>
+                  <span>أنشئ: {new Date(k.created_at).toLocaleDateString("ar")}</span>
+                  {k.created_by_email && <span className="col-span-2 truncate" dir="ltr">بواسطة: {k.created_by_email}</span>}
+                  {k.revoked_at && <span>ألغي: {new Date(k.revoked_at).toLocaleDateString("ar")}</span>}
+                </div>
+                {k.status === "active" && (
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline" size="sm" className="gap-1.5"
+                      onClick={() => handleRegenerate(k.id)}
+                    >
+                      <RefreshCw className="h-3.5 w-3.5" /> Regenerate
+                    </Button>
+                    <Button
+                      variant="destructive" size="sm" className="gap-1.5"
+                      onClick={() => handleRevoke(k.id)}
+                      disabled={revokingId === k.id}
+                    >
+                      {revokingId === k.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Ban className="h-3.5 w-3.5" />}
+                      Revoke
+                    </Button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
+
 const SettingsTab = () => {
   const { toast } = useToast();
   const { t } = useLanguage();
