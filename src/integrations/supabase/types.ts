@@ -971,6 +971,14 @@ export type Database = {
         Args: { _booking_id: string; _provider_id: string }
         Returns: boolean
       }
+      create_api_key: {
+        Args: { _label?: string; _scopes?: string[] }
+        Returns: {
+          id: string
+          key_prefix: string
+          plain_key: string
+        }[]
+      }
       customer_accept_quote: { Args: { _quote_id: string }; Returns: Json }
       customer_assign_provider: {
         Args: { _booking_id: string; _provider_id: string }
@@ -1132,6 +1140,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      revoke_api_key: { Args: { _id: string }; Returns: undefined }
       send_booking_message: {
         Args: {
           _body: string
