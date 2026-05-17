@@ -14,6 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      api_keys: {
+        Row: {
+          created_at: string
+          created_by: string
+          created_by_email: string | null
+          id: string
+          key_hash: string
+          key_prefix: string
+          label: string
+          last_endpoint: string | null
+          last_used_at: string | null
+          revoked_at: string | null
+          scopes: string[]
+          status: string
+          usage_count: number
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          created_by_email?: string | null
+          id?: string
+          key_hash: string
+          key_prefix: string
+          label?: string
+          last_endpoint?: string | null
+          last_used_at?: string | null
+          revoked_at?: string | null
+          scopes?: string[]
+          status?: string
+          usage_count?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          created_by_email?: string | null
+          id?: string
+          key_hash?: string
+          key_prefix?: string
+          label?: string
+          last_endpoint?: string | null
+          last_used_at?: string | null
+          revoked_at?: string | null
+          scopes?: string[]
+          status?: string
+          usage_count?: number
+        }
+        Relationships: []
+      }
       booking_contacts: {
         Row: {
           booking_id: string
@@ -1101,6 +1149,14 @@ export type Database = {
           target_user_id: string
         }
         Returns: undefined
+      }
+      verify_api_key: {
+        Args: { _endpoint?: string; _plain_key: string }
+        Returns: {
+          id: string
+          label: string
+          scopes: string[]
+        }[]
       }
     }
     Enums: {
