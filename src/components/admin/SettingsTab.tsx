@@ -685,6 +685,7 @@ const SettingsTab = () => {
       {/* Admins Section */}
       <AdminsSection />
       <CSAgentsSection />
+      <ApiKeysSection />
 
       <Card>
         <CardHeader>
