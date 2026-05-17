@@ -8,7 +8,9 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Loader2, Save, Percent, Wallet, AlertTriangle, Phone, Trash2, ShieldCheck, UserPlus, UserMinus, Mail, Landmark } from "lucide-react";
+import { Loader2, Save, Percent, Wallet, AlertTriangle, Phone, Trash2, ShieldCheck, UserPlus, UserMinus, Mail, Landmark, Key, Copy, RefreshCw, Ban, Eye, EyeOff } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface AdminUser {
   user_id: string;
