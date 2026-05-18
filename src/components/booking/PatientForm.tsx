@@ -296,7 +296,7 @@ const PatientForm = ({ data, onChange, showHours = true }: PatientFormProps) => 
                   }
                 }}
                 className={cn(
-                  "rounded-full border px-3 py-1 text-xs font-medium transition-all",
+                  "rounded-none border px-3 py-1 text-xs font-medium transition-all",
                   data.case_details.includes(`[${opt.label}]`)
                     ? "border-primary bg-primary/10 text-primary"
                     : "border-border bg-background hover:border-primary/30 text-muted-foreground"
