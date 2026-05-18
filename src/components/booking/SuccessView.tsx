@@ -25,90 +25,9 @@ const SuccessView = ({ onReset, bookingNumber, customerPhone }: SuccessViewProps
 
   const shareViaWhatsApp = () => {
     if (bookingNumber) {
-      const msg = `📋 تفاصيل طلبي في MFN:\n\n🔢 رقم الطلب: ${bookingNumber}\n📌 الحالة: تم الإرسال بنجاح\n\n🔗 تتبع الطلب:\n${window.location.origin}/track`;
-      // Send to customer's own phone if available, otherwise open WhatsApp with no recipient
-      const phone = customerPhone ? customerPhone.replace(/^0/, "962").replace(/\s/g, "") : "";
-      const waUrl = phone ? `https://wa.me/${phone}?text=${encodeURIComponent(msg)}` : `https://wa.me/?text=${encodeURIComponent(msg)}`;
-      window.open(waUrl, "_blank");
-    }
-  };
-
-  return (
-    <div className="flex flex-col items-center justify-center text-center py-16 space-y-8">
-      {/* Animated icon */}
-      <motion.div
-        initial={{ scale: 0, rotate: -180 }}
-        animate={{ scale: 1, rotate: 0 }}
-        transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.1 }}
-        className="relative"
-      >
-        <div className="h-24 w-24 rounded-full bg-success/10 flex items-center justify-center">
-          <CheckCircle2 className="h-12 w-12 text-success" />
-        </div>
-        <motion.div
-          initial={{ scale: 0, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ delay: 0.5, type: "spring", stiffness: 300 }}
-          className="absolute -top-2 -end-2 h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center"
-        >
-          <PartyPopper className="h-4 w-4 text-primary" />
-        </motion.div>
-      </motion.div>
-
-      {/* Text */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3, duration: 0.5 }}
-        className="space-y-3"
-      >
-        <h2 className="text-2xl sm:text-3xl font-black text-foreground">
-          {t("status.success")}
-        </h2>
-        <p className="text-muted-foreground max-w-sm mx-auto leading-relaxed">
-          {t("status.success.desc")}
-        </p>
-      </motion.div>
-
-      {/* Booking Number */}
-      {bookingNumber && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4, duration: 0.4 }}
-          className="w-full max-w-xs"
-        >
-          <div className="rounded-xl border-2 border-primary/20 bg-primary/5 p-4 space-y-2">
-            <p className="text-xs text-muted-foreground font-medium">{t("booking.number")}</p>
-            <div className="flex items-center justify-center gap-2">
-              <span className="text-xl font-black text-primary tracking-wider" dir="ltr">
-                {bookingNumber}
-              </span>
-              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={copyBookingNumber}>
-                <Copy className="h-4 w-4" />
-              </Button>
-            </div>
-            <p className="text-[10px] text-muted-foreground">{t("booking.number.note")}</p>
-          </div>
-        </motion.div>
-      )}
-
-      {/* Track & Share buttons */}
-      {bookingNumber && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5, duration: 0.4 }}
-          className="flex gap-2"
-        >
-          <Button
-            variant="outline"
-            size="sm"
-            className="gap-2"
-            onClick={() => navigate("/track")}
-          >
-            <Search className="h-4 w-4" />
-            تتبع طلبك
+      const msg = `📋 تفاصيل طلبي في MFN:\n\n🔢 رقم الطلب: ${bookingNumber}\n📌 الحالة: تم الإرسال بنجاح\n\n🔗 تتبع الطلب /الحجز الذاتي:\n${window.location.origin}/track`;
+...
+            تتبع الطلب /الحجز الذاتي
           </Button>
           <Button
             variant="outline"
