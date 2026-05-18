@@ -372,7 +372,7 @@ const PatientForm = ({ data, onChange, showHours = true }: PatientFormProps) => 
         {/* Free-text notes */}
         <div className="space-y-2">
           <Label className="text-xs text-muted-foreground">
-            {lang === "ar" ? "ملاحظات إضافية" : "Additional notes"}
+            {lang === "ar" ? "تصنيف الحالة (اختر ما طبق)" : "Additional notes"}
           </Label>
           <Textarea
             value={data.case_details}
