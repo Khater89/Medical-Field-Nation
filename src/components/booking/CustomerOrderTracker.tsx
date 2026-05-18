@@ -145,7 +145,7 @@ const CustomerOrderTracker = ({ bookingId, onClose }: OrderTrackerProps) => {
     <div className="space-y-4">
       {/* Status Badge */}
       <div className="flex items-center justify-between">
-        <h3 className="text-base font-bold">تتبع الطلب</h3>
+        <h3 className="text-base font-bold">تتبع الطلب /الحجز الذاتي</h3>
         <Badge variant={isCancelled ? "destructive" : booking.status === "COMPLETED" ? "outline" : "default"}>
           {STATUS_LABELS[booking.status] || booking.status}
         </Badge>

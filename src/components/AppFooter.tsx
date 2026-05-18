@@ -47,7 +47,7 @@ const AppFooter = () => {
             <div className="flex flex-col gap-2.5">
               <Link to="/track" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors">
                 <Mail className="h-3.5 w-3.5 shrink-0" />
-                <span>تتبع طلبك للتواصل بالمنسق</span>
+                <span>تتبع الطلب /الحجز الذاتي للتواصل بالمنسق</span>
               </Link>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <MapPin className="h-3.5 w-3.5 shrink-0" />

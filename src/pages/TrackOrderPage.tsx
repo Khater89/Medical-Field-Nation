@@ -222,7 +222,7 @@ const TrackOrderPage = () => {
 
       <main className="container max-w-lg py-8 px-4 space-y-6">
         <div className="text-center space-y-2">
-          <h1 className="text-xl font-bold text-foreground">تتبع طلبك</h1>
+          <h1 className="text-xl font-bold text-foreground">تتبع الطلب /الحجز الذاتي</h1>
           <p className="text-sm text-muted-foreground">
             أدخل رقم الحجز ورقم الهاتف لمتابعة حالة طلبك
           </p>
