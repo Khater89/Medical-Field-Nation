@@ -38,7 +38,7 @@ Deno.serve(async (req) => {
 
     if (bookingError || !booking) {
       return new Response(JSON.stringify({ error: "not_found" }), {
-        status: 404,
+        status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -54,7 +54,7 @@ Deno.serve(async (req) => {
 
     if (!storedPhone || !normalizedPhone.endsWith(storedPhone.slice(-7)) && !storedPhone.endsWith(normalizedPhone.slice(-7))) {
       return new Response(JSON.stringify({ error: "phone_mismatch" }), {
-        status: 403,
+        status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }

@@ -23,3 +23,12 @@ verify_jwt = false
 
 [functions.automation-api]
 verify_jwt = false
+
+[functions.track-booking]
+verify_jwt = false
+
+[functions.guest-send-message]
+verify_jwt = false
+
+[functions.guest-list-messages]
+verify_jwt = false
