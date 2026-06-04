@@ -25,7 +25,7 @@ const SuccessView = ({ onReset, bookingNumber, customerPhone }: SuccessViewProps
 
   const shareViaWhatsApp = () => {
     if (bookingNumber) {
-      const msg = `📋 تفاصيل طلبي في MFN:\n\n🔢 رقم الطلب: ${bookingNumber}\n📌 الحالة: تم الإرسال بنجاح\n\n🔗 تتبع الطلب /الحجز الذاتي:\n${window.location.origin}/track`;
+      const msg = `📋 تفاصيل طلبي في MFN:\n\n🔢 رقم الطلب: ${bookingNumber}\n📌 الحالة: تم الإرسال بنجاح\n\n🔗 تتبع الطلب /التعيين الذاتي :\n${window.location.origin}/track`;
       // Send to customer's own phone if available, otherwise open WhatsApp with no recipient
       const phone = customerPhone ? customerPhone.replace(/^0/, "962").replace(/\s/g, "") : "";
       const waUrl = phone ? `https://wa.me/${phone}?text=${encodeURIComponent(msg)}` : `https://wa.me/?text=${encodeURIComponent(msg)}`;
@@ -108,7 +108,7 @@ const SuccessView = ({ onReset, bookingNumber, customerPhone }: SuccessViewProps
             onClick={() => navigate("/track")}
           >
             <Search className="h-4 w-4" />
-            تتبع الطلب /التعيين الذاتي 极
+            تتبع الطلب /التعيين الذاتي 🔍
           </Button>
           <Button
             variant="outline"
