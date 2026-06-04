@@ -38,7 +38,7 @@ Deno.serve(async (req) => {
 
     if (bookingError || !booking) {
       return new Response(JSON.stringify({ error: "not_found" }), {
-        status: 404,
+        status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
