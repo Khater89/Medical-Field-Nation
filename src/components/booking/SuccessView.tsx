@@ -108,7 +108,7 @@ const SuccessView = ({ onReset, bookingNumber, customerPhone }: SuccessViewProps
             onClick={() => navigate("/track")}
           >
             <Search className="h-4 w-4" />
-            تتبع الطلب /التعيين الذاتي 极
+            تتبع الطلب /التعيين الذاتي 🔍
           </Button>
           <Button
             variant="outline"
