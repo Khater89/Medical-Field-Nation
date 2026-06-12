@@ -478,28 +478,30 @@ const LandingPage = () => {
 
 
       {/* ═══════ SERVICES ═══════ */}
-      <section id="services" className="py-20 scroll-mt-20">
-        <div className="container max-w-6xl space-y-12">
+      <section id="services" className="py-12 sm:py-20 scroll-mt-20">
+        <div className="container max-w-6xl px-4 sm:px-6 space-y-8 sm:space-y-12">
           <div className="text-center space-y-3 m3-reveal">
             <h2 className="m3-headline-md text-foreground">{t("landing.services_title")}</h2>
             <p className="m3-body-lg text-muted-foreground max-w-xl mx-auto">{t("landing.services_sub")}</p>
           </div>
 
-          {/* M3 Filter Chips (decorative — links to /booking with category hint) */}
-          <div className="m3-reveal flex flex-wrap justify-center gap-2">
-            {highlightedServices.map((s, i) => (
-              <Badge
-                key={i}
-                variant="outline"
-                className="rounded-full px-4 py-1.5 m3-label-md gap-1.5 cursor-default border-primary/25 bg-primary/5 text-foreground hover:bg-primary/10 transition-colors"
-              >
-                <s.icon className="h-3.5 w-3.5 text-primary" />
-                {t(s.key)}
-              </Badge>
-            ))}
+          {/* M3 Filter Chips — horizontally scrollable on mobile, wrapped on desktop */}
+          <div className="m3-reveal -mx-4 sm:mx-0">
+            <div className="flex sm:flex-wrap sm:justify-center gap-2 overflow-x-auto px-4 sm:px-0 pb-2 sm:pb-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden snap-x snap-mandatory">
+              {highlightedServices.map((s, i) => (
+                <Badge
+                  key={i}
+                  variant="outline"
+                  className="shrink-0 snap-start rounded-full px-4 py-1.5 m3-label-md gap-1.5 cursor-default border-primary/25 bg-primary/5 text-foreground hover:bg-primary/10 transition-colors"
+                >
+                  <s.icon className="h-3.5 w-3.5 text-primary" />
+                  {t(s.key)}
+                </Badge>
+              ))}
+            </div>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
             {highlightedServices.map((s, i) => (
               <Link
                 key={i}
@@ -509,10 +511,10 @@ const LandingPage = () => {
               >
                 <Card
                   variant="outlined"
-                  className="group h-full flex flex-col items-center text-center gap-3 p-5 hover:border-primary/40 hover:m3-elevation-2 transition-all"
+                  className="group h-full flex flex-col items-center text-center gap-3 p-4 sm:p-5 hover:border-primary/40 hover:m3-elevation-2 transition-all"
                 >
-                  <div className="h-14 w-14 rounded-full bg-primary/12 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                    <s.icon className="h-7 w-7 text-primary" />
+                  <div className="h-12 w-12 sm:h-14 sm:w-14 rounded-full bg-primary/12 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                    <s.icon className="h-6 w-6 sm:h-7 sm:w-7 text-primary" />
                   </div>
                   <p className="m3-label-lg text-foreground leading-snug">{t(s.key)}</p>
                 </Card>
