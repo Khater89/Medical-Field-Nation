@@ -68,6 +68,7 @@ const staggerFast = {
 const LandingPage = () => {
   const { t, isRTL } = useLanguage();
   const { toast } = useToast();
+  const revealRef = useM3ScrollReveal<HTMLDivElement>();
   const ArrowIcon = isRTL ? ArrowLeft : ArrowRight;
 
   // Emergency quick-booking state
