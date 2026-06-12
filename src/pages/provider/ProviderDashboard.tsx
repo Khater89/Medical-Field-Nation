@@ -34,6 +34,7 @@ import mfnLogo from "@/assets/mfn-logo.png";
 import AvailableBookingsTab from "@/components/provider/AvailableBookingsTab";
 import ProviderMessagesTab from "@/components/provider/ProviderMessagesTab";
 import LanguageToggle from "@/components/booking/LanguageToggle";
+import ProviderNotificationBell from "@/components/provider/ProviderNotificationBell";
 
 /* ── Types ── */
 
@@ -1001,6 +1002,7 @@ const ProviderDashboard = () => {
             </div>
           </Link>
           <div className="flex items-center gap-1">
+            <ProviderNotificationBell />
             <LanguageToggle />
             <Button variant="ghost" size="sm" onClick={handleSignOut} className="gap-1.5">
               <LogOut className="h-4 w-4" /> {t("action.logout")}
