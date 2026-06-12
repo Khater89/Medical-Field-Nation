@@ -32,3 +32,6 @@ verify_jwt = false
 
 [functions.guest-list-messages]
 verify_jwt = false
+
+[functions.booking-reminder-dispatcher]
+verify_jwt = false
