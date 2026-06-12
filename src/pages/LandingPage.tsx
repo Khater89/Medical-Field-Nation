@@ -572,9 +572,9 @@ const LandingPage = () => {
       </section>
 
       {/* ═══════ PRICING NOTE ═══════ */}
-      <section id="pricing" className="py-20 scroll-mt-20">
-        <div className="container max-w-4xl">
-          <Card variant="elevated" className="text-center space-y-4 p-10 m3-reveal">
+      <section id="pricing" className="py-12 sm:py-20 scroll-mt-20">
+        <div className="container max-w-4xl px-4 sm:px-6">
+          <Card variant="elevated" className="text-center space-y-4 p-6 sm:p-10 m3-reveal">
             <h2 className="m3-headline-md text-foreground">{t("landing.pricing_title")}</h2>
             <p className="m3-body-lg text-muted-foreground max-w-xl mx-auto">{t("landing.pricing_subtitle")}</p>
             <div className="pt-2">
