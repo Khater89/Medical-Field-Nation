@@ -399,22 +399,23 @@ const ProviderDashboard = () => {
     const [ledgerRes, balanceRes, settingsRes] = await Promise.all([
       supabase.from("provider_wallet_ledger").select("*").eq("provider_id", user.id).order("created_at", { ascending: false }),
       supabase.rpc("get_provider_balance", { _provider_id: user.id }),
-      supabase.from("platform_settings").select("*").eq("id", 1).maybeSingle(),
+      supabase.rpc("get_platform_public_settings" as any),
     ]);
     setLedger((ledgerRes.data as LedgerEntry[]) || []);
     const bal = balanceRes.data || 0;
     setBalance(bal);
-    if (settingsRes.data) {
-      setCoordinatorPhone((settingsRes.data as any).coordinator_phone || null);
-      setCoordinatorPhone2((settingsRes.data as any).coordinator_phone_2 || null);
-      const limit = (settingsRes.data as any).provider_debt_limit ?? -20;
+    const settingsRow: any = Array.isArray(settingsRes.data) ? (settingsRes.data as any[])[0] : settingsRes.data;
+    if (settingsRow) {
+      setCoordinatorPhone(settingsRow.coordinator_phone || null);
+      setCoordinatorPhone2(settingsRow.coordinator_phone_2 || null);
+      const limit = settingsRow.provider_debt_limit ?? -20;
       setDebtLimit(limit);
       setIsOnHold(bal < limit);
       setPlatformBank({
-        bank_name: (settingsRes.data as any).bank_name,
-        bank_iban: (settingsRes.data as any).bank_iban,
-        bank_cliq_alias: (settingsRes.data as any).bank_cliq_alias,
-        bank_account_holder: (settingsRes.data as any).bank_account_holder,
+        bank_name: settingsRow.bank_name,
+        bank_iban: settingsRow.bank_iban,
+        bank_cliq_alias: settingsRow.bank_cliq_alias,
+        bank_account_holder: settingsRow.bank_account_holder,
       });
     }
     // Fetch provider notifications
