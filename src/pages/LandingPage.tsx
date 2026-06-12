@@ -450,46 +450,32 @@ const LandingPage = () => {
       {/* ═══════ WHY US ═══════ */}
       <section className="py-20 bg-card/40">
         <div className="container max-w-6xl space-y-14">
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, amount: 0.3 }}
-            variants={fadeUp}
-            transition={{ duration: 0.6 }}
-            className="text-center space-y-3"
-          >
-            <h2 className="text-2xl sm:text-3xl font-black text-foreground">{t("landing.whyus")}</h2>
-            <p className="text-muted-foreground max-w-xl mx-auto">{t("landing.whyus.sub")}</p>
-          </motion.div>
+          <div className="text-center space-y-3 m3-reveal">
+            <Badge variant="secondary" className="rounded-full px-3 py-1 m3-label-md">
+              {t("landing.whyus.sub")}
+            </Badge>
+            <h2 className="m3-headline-md text-foreground">{t("landing.whyus")}</h2>
+          </div>
 
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, amount: 0.2 }}
-            variants={stagger}
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5"
-          >
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {features.map((f, i) => (
-              <motion.div
+              <Card
                 key={i}
-                variants={fadeUp}
-                transition={{ duration: 0.5 }}
-                whileHover={{ y: -6, transition: { duration: 0.2 } }}
-                className="group bg-card rounded-2xl p-6 border border-border hover:border-primary/30 transition-all hover:shadow-lg"
+                variant="elevated"
+                className="group p-6 m3-reveal hover:-translate-y-1.5 transition-transform [transition-duration:var(--m3-duration-medium2)] [transition-timing-function:var(--m3-easing-emphasized)]"
+                style={{ transitionDelay: `${i * 60}ms` }}
               >
-                <motion.div
-                  whileHover={{ rotate: [0, -10, 10, 0], transition: { duration: 0.4 } }}
-                  className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/15 transition-colors"
-                >
+                <div className="h-12 w-12 rounded-2xl bg-primary/12 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
                   <f.icon className="h-6 w-6 text-primary" />
-                </motion.div>
-                <h3 className="font-bold text-foreground mb-2">{t(f.titleKey)}</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">{t(f.descKey)}</p>
-              </motion.div>
+                </div>
+                <h3 className="m3-title-md text-foreground mb-2">{t(f.titleKey)}</h3>
+                <p className="m3-body-md text-muted-foreground leading-relaxed">{t(f.descKey)}</p>
+              </Card>
             ))}
-          </motion.div>
+          </div>
         </div>
       </section>
+
 
       {/* ═══════ SERVICES ═══════ */}
       <section id="services" className="py-20 scroll-mt-20">
