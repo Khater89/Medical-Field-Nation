@@ -1062,6 +1062,20 @@ export type Database = {
         }
         Returns: boolean
       }
+      get_platform_public_settings: {
+        Args: never
+        Returns: {
+          bank_account_holder: string
+          bank_cliq_alias: string
+          bank_iban: string
+          bank_name: string
+          coordinator_phone: string
+          coordinator_phone_2: string
+          deposit_percent: number
+          platform_fee_percent: number
+          provider_debt_limit: number
+        }[]
+      }
       get_provider_balance: { Args: { _provider_id: string }; Returns: number }
       get_provider_bookings: {
         Args: never

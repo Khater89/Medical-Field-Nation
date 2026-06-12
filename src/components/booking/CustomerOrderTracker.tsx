@@ -61,11 +61,12 @@ const CustomerOrderTracker = ({ bookingId, onClose }: OrderTrackerProps) => {
         supabase.from("bookings").select("*").eq("id", bookingId).single(),
         supabase.from("booking_history").select("*").eq("booking_id", bookingId).order("created_at", { ascending: true }),
         supabase.from("provider_ratings").select("*").eq("booking_id", bookingId).maybeSingle(),
-        supabase.from("platform_settings").select("*").eq("id", 1).maybeSingle(),
+        supabase.rpc("get_platform_public_settings" as any),
       ]);
       setBooking(bookingRes.data);
       setHistory(historyRes.data || []);
-      if (settingsRes.data) setPlatformSettings(settingsRes.data);
+      const settingsRow: any = Array.isArray(settingsRes.data) ? (settingsRes.data as any[])[0] : settingsRes.data;
+      if (settingsRow) setPlatformSettings(settingsRow);
       if (ratingRes.data) {
         setExistingRating(ratingRes.data);
         setRating(ratingRes.data.rating);
