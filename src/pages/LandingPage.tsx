@@ -479,63 +479,58 @@ const LandingPage = () => {
 
       {/* ═══════ SERVICES ═══════ */}
       <section id="services" className="py-20 scroll-mt-20">
-        <div className="container max-w-6xl space-y-14">
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, amount: 0.3 }}
-            variants={fadeUp}
-            transition={{ duration: 0.6 }}
-            className="text-center space-y-3"
-          >
-            <h2 className="text-2xl sm:text-3xl font-black text-foreground">{t("landing.services_title")}</h2>
-            <p className="text-muted-foreground max-w-xl mx-auto">{t("landing.services_sub")}</p>
-          </motion.div>
+        <div className="container max-w-6xl space-y-12">
+          <div className="text-center space-y-3 m3-reveal">
+            <h2 className="m3-headline-md text-foreground">{t("landing.services_title")}</h2>
+            <p className="m3-body-lg text-muted-foreground max-w-xl mx-auto">{t("landing.services_sub")}</p>
+          </div>
 
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, amount: 0.15 }}
-            variants={staggerFast}
-            className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4"
-          >
+          {/* M3 Filter Chips (decorative — links to /booking with category hint) */}
+          <div className="m3-reveal flex flex-wrap justify-center gap-2">
             {highlightedServices.map((s, i) => (
-              <motion.div
+              <Badge
                 key={i}
-                variants={scaleIn}
-                transition={{ duration: 0.4 }}
-                whileHover={{ y: -5, scale: 1.04, transition: { duration: 0.2 } }}
+                variant="outline"
+                className="rounded-full px-4 py-1.5 m3-label-md gap-1.5 cursor-default border-primary/25 bg-primary/5 text-foreground hover:bg-primary/10 transition-colors"
               >
-                <Link
-                  to="/booking"
-                  className="group flex flex-col items-center text-center gap-3 bg-card border border-border rounded-2xl p-5 hover:border-primary/40 hover:shadow-md transition-all h-full"
+                <s.icon className="h-3.5 w-3.5 text-primary" />
+                {t(s.key)}
+              </Badge>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+            {highlightedServices.map((s, i) => (
+              <Link
+                key={i}
+                to="/booking"
+                className="m3-reveal"
+                style={{ transitionDelay: `${i * 50}ms` }}
+              >
+                <Card
+                  variant="outlined"
+                  className="group h-full flex flex-col items-center text-center gap-3 p-5 hover:border-primary/40 hover:m3-elevation-2 transition-all"
                 >
-                  <div className="h-14 w-14 rounded-full bg-primary/10 flex items-center justify-center group-hover:bg-primary/15 transition-colors">
+                  <div className="h-14 w-14 rounded-full bg-primary/12 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
                     <s.icon className="h-7 w-7 text-primary" />
                   </div>
-                  <p className="text-sm font-semibold text-foreground leading-snug">{t(s.key)}</p>
-                </Link>
-              </motion.div>
+                  <p className="m3-label-lg text-foreground leading-snug">{t(s.key)}</p>
+                </Card>
+              </Link>
             ))}
-          </motion.div>
+          </div>
 
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={fadeUp}
-            transition={{ duration: 0.5 }}
-            className="text-center"
-          >
+          <div className="text-center m3-reveal">
             <Link to="/booking">
-              <Button variant="outline" size="lg" className="gap-2 rounded-full px-8">
+              <Button variant="tonal" size="lg" className="gap-2 px-8">
                 {t("landing.cta")}
                 <ArrowIcon className="h-4 w-4" />
               </Button>
             </Link>
-          </motion.div>
+          </div>
         </div>
       </section>
+
 
       {/* ═══════ IMAGE GALLERY ═══════ */}
       <ImageGallery />
