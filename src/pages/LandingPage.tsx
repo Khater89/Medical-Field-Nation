@@ -160,8 +160,9 @@ const LandingPage = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-background overflow-x-hidden">
+    <div ref={revealRef} className="min-h-screen bg-background overflow-x-hidden">
       <AppHeader />
+
 
       {/* ═══════ HERO ═══════ */}
       <section className="relative overflow-hidden">
