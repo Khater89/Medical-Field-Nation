@@ -1002,6 +1002,7 @@ const ProviderDashboard = () => {
             </div>
           </Link>
           <div className="flex items-center gap-1">
+            <ProviderNotificationBell />
             <LanguageToggle />
             <Button variant="ghost" size="sm" onClick={handleSignOut} className="gap-1.5">
               <LogOut className="h-4 w-4" /> {t("action.logout")}
