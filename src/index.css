@@ -131,55 +131,130 @@
   }
 }
 
+/* ===========================================================
+   Material Design 3 — Tokens layered on top of existing palette
+   (colors preserved; this adds M3 motion / shape / elevation /
+   typography scale / state layers / ripple)
+   =========================================================== */
 @layer base {
+  :root {
+    /* M3 Motion — Easing */
+    --m3-easing-standard: cubic-bezier(0.2, 0, 0, 1);
+    --m3-easing-standard-decelerate: cubic-bezier(0, 0, 0, 1);
+    --m3-easing-standard-accelerate: cubic-bezier(0.3, 0, 1, 1);
+    --m3-easing-emphasized: cubic-bezier(0.2, 0, 0, 1);
+    --m3-easing-emphasized-decelerate: cubic-bezier(0.05, 0.7, 0.1, 1);
+    --m3-easing-emphasized-accelerate: cubic-bezier(0.3, 0, 0.8, 0.15);
+
+    /* M3 Motion — Duration */
+    --m3-duration-short1: 50ms;
+    --m3-duration-short2: 100ms;
+    --m3-duration-short3: 150ms;
+    --m3-duration-short4: 200ms;
+    --m3-duration-medium1: 250ms;
+    --m3-duration-medium2: 300ms;
+    --m3-duration-medium3: 350ms;
+    --m3-duration-medium4: 400ms;
+    --m3-duration-long1: 450ms;
+    --m3-duration-long2: 500ms;
+    --m3-duration-long3: 550ms;
+    --m3-duration-long4: 600ms;
+
+    /* M3 Shape Scale */
+    --m3-shape-none: 0;
+    --m3-shape-xs: 4px;
+    --m3-shape-sm: 8px;
+    --m3-shape-md: 12px;
+    --m3-shape-lg: 16px;
+    --m3-shape-xl: 28px;
+    --m3-shape-full: 9999px;
+
+    /* M3 Elevation (Level 0–5) */
+    --m3-elevation-0: none;
+    --m3-elevation-1: 0 1px 2px 0 hsl(0 0% 0% / 0.30), 0 1px 3px 1px hsl(0 0% 0% / 0.15);
+    --m3-elevation-2: 0 1px 2px 0 hsl(0 0% 0% / 0.30), 0 2px 6px 2px hsl(0 0% 0% / 0.15);
+    --m3-elevation-3: 0 4px 8px 3px hsl(0 0% 0% / 0.15), 0 1px 3px 0 hsl(0 0% 0% / 0.30);
+    --m3-elevation-4: 0 6px 10px 4px hsl(0 0% 0% / 0.15), 0 2px 3px 0 hsl(0 0% 0% / 0.30);
+    --m3-elevation-5: 0 8px 12px 6px hsl(0 0% 0% / 0.15), 0 4px 4px 0 hsl(0 0% 0% / 0.30);
+
+    /* M3 State Layer Opacity */
+    --m3-state-hover: 0.08;
+    --m3-state-focus: 0.12;
+    --m3-state-pressed: 0.12;
+    --m3-state-dragged: 0.16;
+  }
+
   html {
     scroll-behavior: smooth;
   }
 
-  * {
-    @apply border-border;
-  }
+  * { @apply border-border; }
 
   body {
     @apply bg-background text-foreground antialiased;
     font-family: 'Roboto', 'Inter', system-ui, sans-serif;
     letter-spacing: 0.01em;
+    /* M3 fluid base */
+    font-size: clamp(14px, 0.875rem + 0.1vw, 16px);
   }
 
   .font-arabic {
     font-family: 'IBM Plex Sans Arabic', 'Roboto', 'Inter', system-ui, sans-serif;
   }
 
-  /* Material 3 typography scale */
-  h1 { letter-spacing: -0.02em; font-weight: 500; }
-  h2, h3 { letter-spacing: -0.01em; font-weight: 500; }
-  button { letter-spacing: 0.02em; }
+  /* M3 Typography Scale — Display, Headline, Title, Body, Label
+     applied as fluid clamp() so headings scale across breakpoints */
+  h1 {
+    font-size: clamp(2rem, 1.5rem + 2.5vw, 3.5rem);
+    line-height: 1.12;
+    letter-spacing: -0.02em;
+    font-weight: 500;
+  }
+  h2 {
+    font-size: clamp(1.5rem, 1.2rem + 1.5vw, 2.25rem);
+    line-height: 1.2;
+    letter-spacing: -0.015em;
+    font-weight: 500;
+  }
+  h3 {
+    font-size: clamp(1.25rem, 1.1rem + 0.8vw, 1.75rem);
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+    font-weight: 500;
+  }
+  h4 { font-size: clamp(1.125rem, 1rem + 0.4vw, 1.375rem); line-height: 1.3; font-weight: 500; }
+  h5 { font-size: 1.125rem; line-height: 1.35; font-weight: 500; }
+  h6 { font-size: 1rem; line-height: 1.4; font-weight: 500; }
+  button { letter-spacing: 0.02em; font-weight: 500; }
+
+  /* M3 focus-visible ring on every interactive element */
+  :where(button, a, [role="button"], input, select, textarea, summary, [tabindex]):focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px hsl(var(--ring) / 0.45);
+    border-radius: var(--m3-shape-sm);
+  }
+
+  /* Reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
 }
 
 @layer utilities {
-  /* Brand text gradient */
+  /* ── Brand text gradients (preserved) ── */
   .brand-text {
-    background: linear-gradient(
-      135deg,
-      hsl(var(--primary)) 0%,
-      hsl(var(--primary-glow)) 50%,
-      hsl(var(--primary)) 100%
-    );
+    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary-glow)) 50%, hsl(var(--primary)) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
-
-  /* Animated shimmer for brand */
   .brand-text-animated {
-    background: linear-gradient(
-      90deg,
-      hsl(var(--primary)) 0%,
-      hsl(var(--primary-glow)) 25%,
-      hsl(var(--primary)) 50%,
-      hsl(var(--primary-glow)) 75%,
-      hsl(var(--primary)) 100%
-    );
+    background: linear-gradient(90deg, hsl(var(--primary)) 0%, hsl(var(--primary-glow)) 25%, hsl(var(--primary)) 50%, hsl(var(--primary-glow)) 75%, hsl(var(--primary)) 100%);
     background-size: 400% auto;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -187,7 +262,6 @@
     animation: brand-shimmer 4s linear infinite;
     padding-inline: 0.05em;
   }
-
   @keyframes brand-shimmer {
     0% { background-position: 0% 0; }
     100% { background-position: 400% 0; }
@@ -197,16 +271,125 @@
     box-shadow: 0 0 0 1px hsl(var(--border)),
                 0 4px 24px -4px hsl(var(--primary) / 0.08);
   }
-
   .card-glow-hover {
     box-shadow: 0 0 0 1px hsl(var(--primary) / 0.3),
                 0 8px 32px -4px hsl(var(--primary) / 0.15);
   }
-
   .text-gradient {
     background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
+
+  /* ── M3 Typography utility classes ── */
+  .m3-display-lg  { font-size: clamp(3rem, 2rem + 4vw, 3.5625rem); line-height: 1.12; letter-spacing: -0.015em; font-weight: 400; }
+  .m3-display-md  { font-size: clamp(2.5rem, 1.8rem + 3vw, 2.8125rem); line-height: 1.15; font-weight: 400; }
+  .m3-display-sm  { font-size: clamp(2rem, 1.5rem + 2vw, 2.25rem); line-height: 1.22; font-weight: 400; }
+  .m3-headline-lg { font-size: 2rem; line-height: 1.25; font-weight: 500; }
+  .m3-headline-md { font-size: 1.75rem; line-height: 1.28; font-weight: 500; }
+  .m3-headline-sm { font-size: 1.5rem; line-height: 1.33; font-weight: 500; }
+  .m3-title-lg    { font-size: 1.375rem; line-height: 1.27; font-weight: 500; }
+  .m3-title-md    { font-size: 1rem; line-height: 1.5; font-weight: 500; letter-spacing: 0.009em; }
+  .m3-title-sm    { font-size: 0.875rem; line-height: 1.42; font-weight: 500; letter-spacing: 0.007em; }
+  .m3-body-lg     { font-size: 1rem; line-height: 1.5; letter-spacing: 0.031em; }
+  .m3-body-md     { font-size: 0.875rem; line-height: 1.42; letter-spacing: 0.017em; }
+  .m3-body-sm     { font-size: 0.75rem; line-height: 1.33; letter-spacing: 0.025em; }
+  .m3-label-lg    { font-size: 0.875rem; line-height: 1.42; font-weight: 500; letter-spacing: 0.007em; }
+  .m3-label-md    { font-size: 0.75rem; line-height: 1.33; font-weight: 500; letter-spacing: 0.04em; }
+  .m3-label-sm    { font-size: 0.6875rem; line-height: 1.45; font-weight: 500; letter-spacing: 0.04em; }
+
+  /* ── M3 Elevation utilities ── */
+  .m3-elevation-0 { box-shadow: var(--m3-elevation-0); }
+  .m3-elevation-1 { box-shadow: var(--m3-elevation-1); }
+  .m3-elevation-2 { box-shadow: var(--m3-elevation-2); }
+  .m3-elevation-3 { box-shadow: var(--m3-elevation-3); }
+  .m3-elevation-4 { box-shadow: var(--m3-elevation-4); }
+  .m3-elevation-5 { box-shadow: var(--m3-elevation-5); }
+
+  /* ── M3 State Layer (hover/pressed overlay) ── */
+  .m3-state-layer {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    transition: background-color var(--m3-duration-short3) var(--m3-easing-standard);
+  }
+  .m3-state-layer::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: currentColor;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--m3-duration-short3) var(--m3-easing-standard);
+    z-index: 0;
+  }
+  .m3-state-layer:hover::after  { opacity: var(--m3-state-hover); }
+  .m3-state-layer:focus-visible::after { opacity: var(--m3-state-focus); }
+  .m3-state-layer:active::after { opacity: var(--m3-state-pressed); }
+  .m3-state-layer > * { position: relative; z-index: 1; }
+
+  /* ── M3 Ripple (CSS-only, attach .m3-ripple to interactive el) ── */
+  .m3-ripple {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+  }
+  .m3-ripple::before {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: currentColor;
+    opacity: 0;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    transition: width var(--m3-duration-medium2) var(--m3-easing-standard-decelerate),
+                height var(--m3-duration-medium2) var(--m3-easing-standard-decelerate),
+                opacity var(--m3-duration-long2) var(--m3-easing-standard);
+  }
+  .m3-ripple:active::before {
+    width: 250%;
+    height: 250%;
+    opacity: 0.18;
+    transition: width 0ms, height 0ms, opacity 0ms;
+  }
+
+  /* ── M3 Scroll reveal helper (used with IntersectionObserver) ── */
+  .m3-reveal {
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity var(--m3-duration-long2) var(--m3-easing-emphasized-decelerate),
+                transform var(--m3-duration-long2) var(--m3-easing-emphasized-decelerate);
+  }
+  .m3-reveal.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* ── M3 surface tint helper ── */
+  .m3-surface-1 { background-color: hsl(var(--card)); box-shadow: var(--m3-elevation-1); }
+  .m3-surface-2 { background-color: hsl(var(--card)); box-shadow: var(--m3-elevation-2); }
+  .m3-surface-3 { background-color: hsl(var(--card)); box-shadow: var(--m3-elevation-3); }
+
+  /* ── 8px-grid spacing helpers ── */
+  .m3-stack-1 > * + * { margin-top: 8px; }
+  .m3-stack-2 > * + * { margin-top: 16px; }
+  .m3-stack-3 > * + * { margin-top: 24px; }
+  .m3-stack-4 > * + * { margin-top: 32px; }
 }
+
+/* ── Apply M3 transitions globally to shadcn primitives ── */
+@layer components {
+  :where(button, [role="button"], a) {
+    transition:
+      background-color var(--m3-duration-short3) var(--m3-easing-standard),
+      color var(--m3-duration-short3) var(--m3-easing-standard),
+      box-shadow var(--m3-duration-short4) var(--m3-easing-standard),
+      transform var(--m3-duration-short3) var(--m3-easing-standard);
+  }
+}
+
