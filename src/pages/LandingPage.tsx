@@ -448,8 +448,8 @@ const LandingPage = () => {
       </section>
 
       {/* ═══════ WHY US ═══════ */}
-      <section className="py-20 bg-card/40">
-        <div className="container max-w-6xl space-y-14">
+      <section className="py-12 sm:py-20 bg-card/40">
+        <div className="container max-w-6xl px-4 sm:px-6 space-y-10 sm:space-y-14">
           <div className="text-center space-y-3 m3-reveal">
             <Badge variant="secondary" className="rounded-full px-3 py-1 m3-label-md">
               {t("landing.whyus.sub")}
@@ -457,12 +457,12 @@ const LandingPage = () => {
             <h2 className="m3-headline-md text-foreground">{t("landing.whyus")}</h2>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
             {features.map((f, i) => (
               <Card
                 key={i}
                 variant="elevated"
-                className="group p-6 m3-reveal hover:-translate-y-1.5 transition-transform [transition-duration:var(--m3-duration-medium2)] [transition-timing-function:var(--m3-easing-emphasized)]"
+                className="group p-5 sm:p-6 m3-reveal hover:-translate-y-1.5 transition-transform [transition-duration:var(--m3-duration-medium2)] [transition-timing-function:var(--m3-easing-emphasized)]"
                 style={{ transitionDelay: `${i * 60}ms` }}
               >
                 <div className="h-12 w-12 rounded-2xl bg-primary/12 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
@@ -478,28 +478,30 @@ const LandingPage = () => {
 
 
       {/* ═══════ SERVICES ═══════ */}
-      <section id="services" className="py-20 scroll-mt-20">
-        <div className="container max-w-6xl space-y-12">
+      <section id="services" className="py-12 sm:py-20 scroll-mt-20">
+        <div className="container max-w-6xl px-4 sm:px-6 space-y-8 sm:space-y-12">
           <div className="text-center space-y-3 m3-reveal">
             <h2 className="m3-headline-md text-foreground">{t("landing.services_title")}</h2>
             <p className="m3-body-lg text-muted-foreground max-w-xl mx-auto">{t("landing.services_sub")}</p>
           </div>
 
-          {/* M3 Filter Chips (decorative — links to /booking with category hint) */}
-          <div className="m3-reveal flex flex-wrap justify-center gap-2">
-            {highlightedServices.map((s, i) => (
-              <Badge
-                key={i}
-                variant="outline"
-                className="rounded-full px-4 py-1.5 m3-label-md gap-1.5 cursor-default border-primary/25 bg-primary/5 text-foreground hover:bg-primary/10 transition-colors"
-              >
-                <s.icon className="h-3.5 w-3.5 text-primary" />
-                {t(s.key)}
-              </Badge>
-            ))}
+          {/* M3 Filter Chips — horizontally scrollable on mobile, wrapped on desktop */}
+          <div className="m3-reveal -mx-4 sm:mx-0">
+            <div className="flex sm:flex-wrap sm:justify-center gap-2 overflow-x-auto px-4 sm:px-0 pb-2 sm:pb-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden snap-x snap-mandatory">
+              {highlightedServices.map((s, i) => (
+                <Badge
+                  key={i}
+                  variant="outline"
+                  className="shrink-0 snap-start rounded-full px-4 py-1.5 m3-label-md gap-1.5 cursor-default border-primary/25 bg-primary/5 text-foreground hover:bg-primary/10 transition-colors"
+                >
+                  <s.icon className="h-3.5 w-3.5 text-primary" />
+                  {t(s.key)}
+                </Badge>
+              ))}
+            </div>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
             {highlightedServices.map((s, i) => (
               <Link
                 key={i}
@@ -509,10 +511,10 @@ const LandingPage = () => {
               >
                 <Card
                   variant="outlined"
-                  className="group h-full flex flex-col items-center text-center gap-3 p-5 hover:border-primary/40 hover:m3-elevation-2 transition-all"
+                  className="group h-full flex flex-col items-center text-center gap-3 p-4 sm:p-5 hover:border-primary/40 hover:m3-elevation-2 transition-all"
                 >
-                  <div className="h-14 w-14 rounded-full bg-primary/12 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                    <s.icon className="h-7 w-7 text-primary" />
+                  <div className="h-12 w-12 sm:h-14 sm:w-14 rounded-full bg-primary/12 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                    <s.icon className="h-6 w-6 sm:h-7 sm:w-7 text-primary" />
                   </div>
                   <p className="m3-label-lg text-foreground leading-snug">{t(s.key)}</p>
                 </Card>
@@ -536,8 +538,8 @@ const LandingPage = () => {
       <ImageGallery />
 
       {/* ═══════ HOW IT WORKS ═══════ */}
-      <section className="py-20 bg-card/40">
-        <div className="container max-w-5xl space-y-14">
+      <section className="py-12 sm:py-20 bg-card/40">
+        <div className="container max-w-5xl px-4 sm:px-6 space-y-10 sm:space-y-14">
           <div className="text-center space-y-3 m3-reveal">
             <Badge variant="secondary" className="rounded-full px-3 py-1 m3-label-md">
               {t("landing.howItWorks")}
@@ -545,7 +547,7 @@ const LandingPage = () => {
             <h2 className="m3-headline-md text-foreground">{t("landing.howItWorks")}</h2>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 relative">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 relative">
             {/* connecting line (desktop only) */}
             <div className="hidden sm:block absolute top-16 inset-x-0 mx-auto h-0.5 bg-border" style={{ width: "60%", left: "20%" }} />
 
@@ -553,7 +555,7 @@ const LandingPage = () => {
               <Card
                 key={i}
                 variant="filled"
-                className="relative p-6 m3-reveal text-center flex flex-col items-center gap-4"
+                className="relative p-5 sm:p-6 m3-reveal text-center flex flex-col items-center gap-4"
                 style={{ transitionDelay: `${i * 80}ms` }}
               >
                 <div className="relative z-10 h-14 w-14 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center m3-title-lg font-black m3-elevation-2">
@@ -570,9 +572,9 @@ const LandingPage = () => {
       </section>
 
       {/* ═══════ PRICING NOTE ═══════ */}
-      <section id="pricing" className="py-20 scroll-mt-20">
-        <div className="container max-w-4xl">
-          <Card variant="elevated" className="text-center space-y-4 p-10 m3-reveal">
+      <section id="pricing" className="py-12 sm:py-20 scroll-mt-20">
+        <div className="container max-w-4xl px-4 sm:px-6">
+          <Card variant="elevated" className="text-center space-y-4 p-6 sm:p-10 m3-reveal">
             <h2 className="m3-headline-md text-foreground">{t("landing.pricing_title")}</h2>
             <p className="m3-body-lg text-muted-foreground max-w-xl mx-auto">{t("landing.pricing_subtitle")}</p>
             <div className="pt-2">
