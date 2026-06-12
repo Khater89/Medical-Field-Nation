@@ -448,8 +448,8 @@ const LandingPage = () => {
       </section>
 
       {/* ═══════ WHY US ═══════ */}
-      <section className="py-20 bg-card/40">
-        <div className="container max-w-6xl space-y-14">
+      <section className="py-12 sm:py-20 bg-card/40">
+        <div className="container max-w-6xl px-4 sm:px-6 space-y-10 sm:space-y-14">
           <div className="text-center space-y-3 m3-reveal">
             <Badge variant="secondary" className="rounded-full px-3 py-1 m3-label-md">
               {t("landing.whyus.sub")}
@@ -457,12 +457,12 @@ const LandingPage = () => {
             <h2 className="m3-headline-md text-foreground">{t("landing.whyus")}</h2>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
             {features.map((f, i) => (
               <Card
                 key={i}
                 variant="elevated"
-                className="group p-6 m3-reveal hover:-translate-y-1.5 transition-transform [transition-duration:var(--m3-duration-medium2)] [transition-timing-function:var(--m3-easing-emphasized)]"
+                className="group p-5 sm:p-6 m3-reveal hover:-translate-y-1.5 transition-transform [transition-duration:var(--m3-duration-medium2)] [transition-timing-function:var(--m3-easing-emphasized)]"
                 style={{ transitionDelay: `${i * 60}ms` }}
               >
                 <div className="h-12 w-12 rounded-2xl bg-primary/12 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
