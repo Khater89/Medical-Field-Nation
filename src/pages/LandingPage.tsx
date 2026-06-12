@@ -537,70 +537,56 @@ const LandingPage = () => {
 
       {/* ═══════ HOW IT WORKS ═══════ */}
       <section className="py-20 bg-card/40">
-        <div className="container max-w-4xl space-y-14">
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, amount: 0.3 }}
-            variants={fadeUp}
-            transition={{ duration: 0.6 }}
-            className="text-center space-y-3"
-          >
-            <h2 className="text-2xl sm:text-3xl font-black text-foreground">{t("landing.howItWorks")}</h2>
-          </motion.div>
+        <div className="container max-w-5xl space-y-14">
+          <div className="text-center space-y-3 m3-reveal">
+            <Badge variant="secondary" className="rounded-full px-3 py-1 m3-label-md">
+              {t("landing.howItWorks")}
+            </Badge>
+            <h2 className="m3-headline-md text-foreground">{t("landing.howItWorks")}</h2>
+          </div>
 
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, amount: 0.2 }}
-            variants={stagger}
-            className="grid grid-cols-1 sm:grid-cols-3 gap-6 relative"
-          >
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 relative">
             {/* connecting line (desktop only) */}
             <div className="hidden sm:block absolute top-16 inset-x-0 mx-auto h-0.5 bg-border" style={{ width: "60%", left: "20%" }} />
 
             {steps.map((step, i) => (
-              <motion.div
+              <Card
                 key={i}
-                variants={fadeUp}
-                transition={{ duration: 0.5 }}
-                className="relative flex flex-col items-center text-center gap-4"
+                variant="filled"
+                className="relative p-6 m3-reveal text-center flex flex-col items-center gap-4"
+                style={{ transitionDelay: `${i * 80}ms` }}
               >
-                <div className="relative z-10 h-14 w-14 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center font-black text-lg shadow-md">
+                <div className="relative z-10 h-14 w-14 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center m3-title-lg font-black m3-elevation-2">
                   {step.num}
                 </div>
                 <div className="space-y-2">
-                  <h3 className="font-bold text-foreground">{t(step.titleKey)}</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed max-w-xs mx-auto">{t(step.descKey)}</p>
+                  <h3 className="m3-title-md text-foreground">{t(step.titleKey)}</h3>
+                  <p className="m3-body-md text-muted-foreground leading-relaxed max-w-xs mx-auto">{t(step.descKey)}</p>
                 </div>
-              </motion.div>
+              </Card>
             ))}
-          </motion.div>
+          </div>
         </div>
       </section>
 
       {/* ═══════ PRICING NOTE ═══════ */}
       <section id="pricing" className="py-20 scroll-mt-20">
         <div className="container max-w-4xl">
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, amount: 0.3 }}
-            variants={fadeUp}
-            transition={{ duration: 0.6 }}
-            className="text-center space-y-4 bg-card border border-border rounded-2xl p-10"
-          >
-            <h2 className="text-2xl sm:text-3xl font-black text-foreground">{t("landing.pricing_title")}</h2>
-            <p className="text-muted-foreground max-w-xl mx-auto">{t("landing.pricing_subtitle")}</p>
-            <Link to="/booking">
-              <Button size="lg" className="gap-2 rounded-full px-8 mt-4">
-                {t("landing.cta")}
-                <ArrowIcon className="h-4 w-4" />
-              </Button>
-            </Link>
-          </motion.div>
+          <Card variant="elevated" className="text-center space-y-4 p-10 m3-reveal">
+            <h2 className="m3-headline-md text-foreground">{t("landing.pricing_title")}</h2>
+            <p className="m3-body-lg text-muted-foreground max-w-xl mx-auto">{t("landing.pricing_subtitle")}</p>
+            <div className="pt-2">
+              <Link to="/booking">
+                <Button size="lg" className="gap-2 px-8">
+                  {t("landing.cta")}
+                  <ArrowIcon className="h-4 w-4" />
+                </Button>
+              </Link>
+            </div>
+          </Card>
         </div>
       </section>
+
 
       {/* ═══════ QR CODE SECTION ═══════ */}
       <section className="py-20 relative overflow-hidden">
