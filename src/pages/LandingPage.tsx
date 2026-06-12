@@ -538,8 +538,8 @@ const LandingPage = () => {
       <ImageGallery />
 
       {/* ═══════ HOW IT WORKS ═══════ */}
-      <section className="py-20 bg-card/40">
-        <div className="container max-w-5xl space-y-14">
+      <section className="py-12 sm:py-20 bg-card/40">
+        <div className="container max-w-5xl px-4 sm:px-6 space-y-10 sm:space-y-14">
           <div className="text-center space-y-3 m3-reveal">
             <Badge variant="secondary" className="rounded-full px-3 py-1 m3-label-md">
               {t("landing.howItWorks")}
@@ -547,7 +547,7 @@ const LandingPage = () => {
             <h2 className="m3-headline-md text-foreground">{t("landing.howItWorks")}</h2>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 relative">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 relative">
             {/* connecting line (desktop only) */}
             <div className="hidden sm:block absolute top-16 inset-x-0 mx-auto h-0.5 bg-border" style={{ width: "60%", left: "20%" }} />
 
@@ -555,7 +555,7 @@ const LandingPage = () => {
               <Card
                 key={i}
                 variant="filled"
-                className="relative p-6 m3-reveal text-center flex flex-col items-center gap-4"
+                className="relative p-5 sm:p-6 m3-reveal text-center flex flex-col items-center gap-4"
                 style={{ transitionDelay: `${i * 80}ms` }}
               >
                 <div className="relative z-10 h-14 w-14 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center m3-title-lg font-black m3-elevation-2">
