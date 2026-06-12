@@ -1,6 +1,12 @@
-import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 import { useLanguage } from "@/contexts/LanguageContext";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
+import { useM3ScrollReveal } from "@/hooks/useM3ScrollReveal";
 import heroMedical1 from "@/assets/hero-medical-1.jpg";
 import heroMedical2 from "@/assets/hero-medical-2.jpg";
 import heroMedical3 from "@/assets/hero-medical-3.jpg";
@@ -11,80 +17,55 @@ const images = [
   { src: heroMedical3, labelKey: "service.home_physiotherapy" },
 ];
 
+/**
+ * M3 Carousel — Hero/Multi-browse style.
+ * Uses shadcn Carousel (embla) with Material 3 styling (rounded-3xl, elevation-2).
+ */
 const ImageGallery = () => {
   const { t } = useLanguage();
-  const [hovered, setHovered] = useState<number | null>(null);
+  const ref = useM3ScrollReveal<HTMLDivElement>();
 
   return (
-    <section className="py-20">
+    <section ref={ref} className="py-20">
       <div className="container max-w-6xl space-y-10">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.3 }}
-          transition={{ duration: 0.6 }}
-          className="text-center space-y-3"
-        >
-          <h2 className="text-2xl sm:text-4xl font-black text-foreground shadow-xl rounded-xl">
-            {t("landing.gallery_title")}
-          </h2>
-          <p className="text-muted-foreground max-w-xl mx-auto">
+        <div className="text-center space-y-3 m3-reveal">
+          <h2 className="m3-headline-md text-foreground">{t("landing.gallery_title")}</h2>
+          <p className="m3-body-lg text-muted-foreground max-w-xl mx-auto">
             {t("landing.gallery_sub")}
           </p>
-        </motion.div>
+        </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-          {images.map((img, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, scale: 0.9 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: i * 0.1 }}
-              className="relative group cursor-pointer overflow-hidden rounded-2xl aspect-square"
-              onMouseEnter={() => setHovered(i)}
-              onMouseLeave={() => setHovered(null)}
-            >
-              <motion.img
-                src={img.src}
-                alt={t(img.labelKey)}
-                className="w-full h-full object-cover"
-                animate={{
-                  scale: hovered === i ? 1.08 : 1,
-                }}
-                transition={{ duration: 0.4 }}
-                loading="lazy"
-              />
-
-              {/* Overlay */}
-              <AnimatePresence>
-                {hovered === i && (
-                  <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.25 }}
-                    className="absolute inset-0 bg-gradient-to-t from-primary/80 via-primary/20 to-transparent flex items-end p-5"
-                  >
-                    <motion.p
-                      initial={{ y: 15, opacity: 0 }}
-                      animate={{ y: 0, opacity: 1 }}
-                      exit={{ y: 15, opacity: 0 }}
-                      transition={{ duration: 0.25 }}
-                      className="text-white font-bold text-lg"
-                    >
-                      {t(img.labelKey)}
-                    </motion.p>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              {/* Always-visible label on mobile */}
-              <div className="sm:hidden absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/60 to-transparent p-4">
-                <p className="text-white font-semibold text-sm">{t(img.labelKey)}</p>
-              </div>
-            </motion.div>
-          ))}
+        <div className="m3-reveal">
+          <Carousel
+            opts={{ align: "start", loop: true }}
+            className="w-full"
+          >
+            <CarouselContent className="-ml-4">
+              {images.map((img, i) => (
+                <CarouselItem
+                  key={i}
+                  className="pl-4 basis-full sm:basis-1/2 lg:basis-1/3"
+                >
+                  <figure className="group relative overflow-hidden rounded-3xl aspect-square m3-elevation-2 hover:m3-elevation-4 transition-shadow [transition-duration:var(--m3-duration-medium2)] [transition-timing-function:var(--m3-easing-emphasized)]">
+                    <img
+                      src={img.src}
+                      alt={t(img.labelKey)}
+                      loading="lazy"
+                      className="w-full h-full object-cover transition-transform duration-700 ease-[var(--m3-easing-emphasized)] group-hover:scale-105"
+                    />
+                    {/* M3 scrim + caption */}
+                    <figcaption className="absolute inset-x-0 bottom-0 p-5 bg-gradient-to-t from-black/75 via-black/35 to-transparent text-white">
+                      <span className="m3-label-lg uppercase tracking-wider opacity-90">
+                        {t(img.labelKey)}
+                      </span>
+                    </figcaption>
+                  </figure>
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+            <CarouselPrevious className="hidden sm:flex -left-4 m3-elevation-2" />
+            <CarouselNext className="hidden sm:flex -right-4 m3-elevation-2" />
+          </Carousel>
         </div>
       </div>
     </section>
