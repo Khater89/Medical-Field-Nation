@@ -34,6 +34,7 @@ import mfnLogo from "@/assets/mfn-logo.png";
 import AvailableBookingsTab from "@/components/provider/AvailableBookingsTab";
 import ProviderMessagesTab from "@/components/provider/ProviderMessagesTab";
 import LanguageToggle from "@/components/booking/LanguageToggle";
+import ProviderNotificationBell from "@/components/provider/ProviderNotificationBell";
 
 /* ── Types ── */
 
