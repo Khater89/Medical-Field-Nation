@@ -322,50 +322,56 @@ export default function BookingChat({
         if (bk) {
           setPriceLocked(!!bk.price_locked);
           setFinalPrice(bk.final_price ?? null);
+          setChatLocked(!!bk.chat_locked);
+          setBookingStatus(bk.status || "");
         }
       }
     } else {
-      const [{ data: msgs }, { data: qts }, { data: bk }] = await Promise.all([
+      const [{ data: msgs }, { data: qts }, { data: bk }, { data: sreq }, { data: contact }] = await Promise.all([
         supabase.rpc("list_booking_messages" as any, { _booking_id: bookingId }),
         supabase.rpc("booking_quotes_public" as any, { _booking_id: bookingId }),
-        supabase.from("bookings").select("price_locked, final_price").eq("id", bookingId).maybeSingle(),
+        supabase.from("bookings").select("price_locked, final_price, chat_locked, status").eq("id", bookingId).maybeSingle(),
+        supabase.from("booking_special_requests").select("*").eq("booking_id", bookingId).order("created_at", { ascending: false }),
+        supabase.rpc("get_booking_contact_info" as any, { _booking_id: bookingId }),
       ]);
       setMessages((msgs as any) || []);
       setQuotes((qts as any) || []);
+      setSpecialRequests((sreq as any) || []);
+      const contactRow = Array.isArray(contact) ? (contact as any[])[0] : contact;
+      setContactInfo(contactRow || null);
       if (bk) {
         setPriceLocked(!!(bk as any).price_locked);
         setFinalPrice((bk as any).final_price ?? null);
+        setChatLocked(!!(bk as any).chat_locked);
+        setBookingStatus((bk as any).status || "");
+      }
+
+      // Provider: mark special requests as seen
+      if (viewerRole === "provider" && (sreq as any[])?.some((r) => r.status === "SENT")) {
+        supabase.rpc("mark_special_requests_seen" as any, { _booking_id: bookingId });
       }
     }
     setLoading(false);
     setTimeout(() => scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" }), 100);
   };
 
-  // Send a typed quick-action message (customer only)
-  const sendQuickAction = async (text: string, messageType: string, actionKey: string) => {
+  // Customer: send a special request (separate from chat)
+  const sendSpecialRequest = async (text: string, requestType: string, actionKey: string) => {
     if (!viewerId || sending) return;
     setQuickAction(actionKey);
     setSending(true);
     try {
-      if (guestMode) {
-        const { data, error } = await supabase.functions.invoke("guest-send-message", {
-          body: { booking_number: guestMode.bookingNumber, phone: guestMode.phone, body: text, target_provider_id: target || null, message_type: messageType },
-        });
-        if (error || (data as any)?.error) throw new Error((data as any)?.error || error?.message || "send_failed");
-      } else {
-        const { data, error } = await supabase.rpc("send_booking_message" as any, {
-          _booking_id: bookingId,
-          _sender_role: "customer",
-          _body: text,
-          _quoted_price: null,
-          _target_provider_id: target || null,
-          _sender_display_name: viewerName || null,
-          _message_type: messageType,
-        });
-        if (error || (data as any)?.error) throw new Error((data as any)?.error || error?.message || "send_failed");
+      const { data, error } = await supabase.rpc("create_special_request" as any, {
+        _booking_id: bookingId,
+        _request_type: requestType,
+        _request_text: text,
+        _target_provider_id: target || null,
+      });
+      if (error || !(data as any)?.success) {
+        throw new Error((data as any)?.error || error?.message || "send_failed");
       }
       await fetchAll();
-      toast.success("تم إرسال الرسالة للمزوّد");
+      toast.success("تم إرسال الطلب الخاص للمزود");
     } catch (e: any) {
       toast.error(e.message || "تعذّر الإرسال");
     } finally {
