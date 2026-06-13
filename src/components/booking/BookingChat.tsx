@@ -304,6 +304,10 @@ export default function BookingChat({
   const [lockConfirmOpen, setLockConfirmOpen] = useState(false);
   const [locking, setLocking] = useState(false);
   const [quickAction, setQuickAction] = useState<string | null>(null);
+  const [chatLocked, setChatLocked] = useState<boolean>(false);
+  const [bookingStatus, setBookingStatus] = useState<string>("");
+  const [specialRequests, setSpecialRequests] = useState<any[]>([]);
+  const [contactInfo, setContactInfo] = useState<any | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const fetchAll = async () => {
