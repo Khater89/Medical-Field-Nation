@@ -55,14 +55,30 @@ Deno.serve(async (req) => {
       sender_display_name: displayName,
       body: body.trim(),
       target_provider_id: target_provider_id || null,
+      message_type: "NORMAL",
     });
-    if (insErr) throw insErr;
+    if (insErr) {
+      console.error("guest-send-message insert error:", JSON.stringify(insErr));
+      const msg = (insErr as any).message || "";
+      if (msg.includes("chat_locked")) {
+        return new Response(
+          JSON.stringify({ error: "chat_locked", detail: "تم قبول الطلب وأُغلقت الدردشة العامة. استخدم بيانات الاتصال للتواصل مباشرة." }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      return new Response(
+        JSON.stringify({ error: "insert_failed", detail: msg, code: (insErr as any).code }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     return new Response(JSON.stringify({ success: true }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {
-    return new Response(JSON.stringify({ error: "server_error", detail: String(err) }), {
+    console.error("guest-send-message error:", err);
+    const detail = err instanceof Error ? err.message : JSON.stringify(err);
+    return new Response(JSON.stringify({ error: "server_error", detail }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
