@@ -159,36 +159,72 @@ const FinanceTab = () => {
       }
     }
 
-    // Determine which platform_fee entries have been settled (have a matching settlement with same booking_id)
-    const settlementBookingIds = new Set(
-      allEntries
-        .filter((e) => e.reason === "settlement" && e.booking_id)
-        .map((e) => e.booking_id!)
-    );
+    // Aggregate per booking: total debt (sum of |platform_fee|) and total settled (sum of settlement credits).
+    // A booking can have MULTIPLE platform_fee entries (initial spread on ACCEPTED + overtime delta on COMPLETED).
+    // Settlements must be matched against the booking's total debt, not against a single entry.
+    const perBookingDebt = new Map<string, number>();
+    const perBookingSettled = new Map<string, number>();
+    for (const e of allEntries) {
+      if (!e.booking_id) continue;
+      if (e.reason === "platform_fee") {
+        perBookingDebt.set(e.booking_id, (perBookingDebt.get(e.booking_id) || 0) + Math.abs(Number(e.amount)));
+      } else if (e.reason === "settlement") {
+        perBookingSettled.set(e.booking_id, (perBookingSettled.get(e.booking_id) || 0) + Number(e.amount));
+      }
+    }
 
-    setLedger(allEntries.map((e: any) => {
-      const b = e.booking_id ? bookingMap[e.booking_id] : null;
-      const contact = e.booking_id ? contactMap[e.booking_id] : null;
-      const basePrice = b?.provider_share ?? null;
-      const finalPrice = b?.calculated_total ?? b?.agreed_price ?? null;
-      const platformAmount = e.reason === "platform_fee" ? Math.abs(e.amount) : null;
-      const platformPercent = basePrice && platformAmount ? Math.round((platformAmount / basePrice) * 100) : null;
-      return {
-        ...e,
-        booking_number: b?.booking_number || (e.booking_id ? e.booking_id.slice(0, 8) : null),
-        is_settled: e.reason === "platform_fee" && e.booking_id ? settlementBookingIds.has(e.booking_id) : false,
-        customer_name: contact?.customer_name || b?.customer_display_name || null,
-        service_name: b?.service_id ? serviceMap[b.service_id] || b.service_id : null,
-        base_price: basePrice,
-        final_price: finalPrice,
-        platform_percent: platformPercent,
-        platform_amount: platformAmount,
-        provider_net: basePrice,
-        booking_date: b?.scheduled_at || null,
-      };
-    }));
+    // Build a consolidated ledger:
+    //  - One synthetic platform_fee row per booking (sum of debits, with remaining outstanding),
+    //  - Keep all settlement rows as-is (history),
+    //  - Keep non-booking-linked entries as-is.
+    const consolidated: LedgerEntry[] = [];
+    const seenBookingDebt = new Set<string>();
+
+    for (const e of allEntries) {
+      if (e.reason === "platform_fee" && e.booking_id) {
+        if (seenBookingDebt.has(e.booking_id)) continue;
+        seenBookingDebt.add(e.booking_id);
+
+        const totalDebt = perBookingDebt.get(e.booking_id) || 0;
+        const totalSettled = perBookingSettled.get(e.booking_id) || 0;
+        const remaining = Math.max(0, Math.round((totalDebt - totalSettled) * 100) / 100);
+        const isSettled = remaining < 0.01;
+
+        const b = bookingMap[e.booking_id];
+        const contact = contactMap[e.booking_id];
+        const basePrice = b?.provider_share ?? null;
+        const finalPrice = b?.calculated_total ?? b?.agreed_price ?? null;
+        const platformPercent = basePrice && totalDebt ? Math.round((totalDebt / basePrice) * 100) : null;
+
+        consolidated.push({
+          ...e,
+          // Override displayed amount with remaining outstanding (negative if still owed)
+          amount: isSettled ? -totalDebt : -remaining,
+          booking_number: b?.booking_number || e.booking_id.slice(0, 8),
+          is_settled: isSettled,
+          customer_name: contact?.customer_name || b?.customer_display_name || null,
+          service_name: b?.service_id ? serviceMap[b.service_id] || b.service_id : null,
+          base_price: basePrice,
+          final_price: finalPrice,
+          platform_percent: platformPercent,
+          platform_amount: totalDebt,
+          provider_net: basePrice,
+          booking_date: b?.scheduled_at || null,
+        });
+      } else {
+        const b = e.booking_id ? bookingMap[e.booking_id] : null;
+        consolidated.push({
+          ...e,
+          booking_number: b?.booking_number || (e.booking_id ? e.booking_id.slice(0, 8) : null),
+          is_settled: false,
+        });
+      }
+    }
+
+    setLedger(consolidated);
     setLedgerLoading(false);
   };
+
 
   const openSettlementForEntry = (entry: LedgerEntry) => {
     setSettlementEntry(entry);
