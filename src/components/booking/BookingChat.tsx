@@ -999,6 +999,27 @@ export default function BookingChat({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Lock Price confirmation */}
+      <AlertDialog open={lockConfirmOpen} onOpenChange={(o) => !locking && setLockConfirmOpen(o)}>
+        <AlertDialogContent dir="rtl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>تثبيت السعر</AlertDialogTitle>
+            <AlertDialogDescription>
+              بعد تثبيت السعر، لن تتمكن من إرسال عرض سعر جديد لهذا الطلب. هل تريد المتابعة؟
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-row-reverse gap-2">
+            <AlertDialogCancel disabled={locking}>تراجع</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={locking}
+              onClick={(e) => { e.preventDefault(); handleLockPrice(); }}
+            >
+              {locking ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Lock className="h-4 w-4 ml-1" />تأكيد التثبيت</>}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
