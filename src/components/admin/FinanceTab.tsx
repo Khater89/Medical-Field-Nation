@@ -106,24 +106,23 @@ const FinanceTab = () => {
 
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
-    const { data: completedToday } = await supabase
-      .from("bookings")
-      .select("agreed_price, provider_share, actual_duration_minutes")
-      .eq("status", "COMPLETED")
-      .gte("completed_at", todayStart.toISOString());
-
+    // Earnings today = sum of positive amounts on ledger entries with reason=platform_fee_reversal? No —
+    // Platform earnings are the negative platform_fee amounts (debits to provider = revenue to platform).
+    // We sum all platform_fee debits created today (covers both initial spread and overtime additions),
+    // matching the actual recorded debt with the correct escalating-price formula.
+    const { data: feesToday } = await supabase
+      .from("provider_wallet_ledger")
+      .select("amount, reason, created_at")
+      .eq("reason", "platform_fee")
+      .gte("created_at", todayStart.toISOString());
     let earnings = 0;
-    for (const b of (completedToday || [])) {
-      if (b.agreed_price != null && b.provider_share != null && b.actual_duration_minutes != null) {
-        const hours = Math.max(1, Math.ceil(b.actual_duration_minutes / 60));
-        const clientTotal = b.agreed_price + (b.agreed_price * 0.5 * Math.max(0, hours - 1));
-        const providerTotal = b.provider_share + (b.provider_share * 0.5 * Math.max(0, hours - 1));
-        earnings += (clientTotal - providerTotal);
-      }
+    for (const f of (feesToday || [])) {
+      earnings += Math.abs(Number(f.amount || 0));
     }
     setTodayEarnings(earnings);
     setLoading(false);
   };
+
 
   useEffect(() => { fetchData(); }, []);
 
