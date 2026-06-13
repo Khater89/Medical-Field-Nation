@@ -318,6 +318,8 @@ export default function BookingChat({
       if (!error && data) {
         setMessages((data.messages as any) || []);
         setQuotes((data.quotes as any) || []);
+        setSpecialRequests(((data as any).special_requests as any[]) || []);
+        setContactInfo((data as any).contact_info || null);
         const bk = (data as any).booking;
         if (bk) {
           setPriceLocked(!!bk.price_locked);
