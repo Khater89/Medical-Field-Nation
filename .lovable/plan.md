@@ -1,67 +1,75 @@
-# n8n New-Booking Automation
+# خطة: فصل الرسائل عن عروض السعر + تثبيت السعر
 
-Goal: when a booking is created, fire a secure backend webhook to n8n. Expose secure internal endpoints n8n can call to match providers, create invitations, log alerts, and log automation runs. Add an Admin Dashboard section for booking alerts. Nothing in the existing booking, auth, roles, provider, customer, admin, or UI flows is removed or rewritten.
+## 1. تغييرات قاعدة البيانات (Migration واحد)
 
-## 1. Secrets (request via add_secret)
-- `N8N_NEW_BOOKING_WEBHOOK_URL`
-- `N8N_WEBHOOK_SECRET`
-- `INTERNAL_API_SECRET`
+**`booking_messages`** — إضافة عمود:
+- `message_type TEXT DEFAULT 'NORMAL'` مع CHECK لقيم: `NORMAL, REQUEST_BETTER_OFFER, REQUEST_PRICE_LOCK, REQUEST_OFFER, SYSTEM, OFFER_NOTICE`
 
-Booking still succeeds even if these are missing — the webhook step is best-effort and logged to `automation_logs`.
+> الجدول الحالي يستخدم `body` و`sender_role` و`target_provider_id` — سنبقي عليها كما هي. عروض السعر تبقى في `provider_quotes` الموجود.
 
-## 2. Database (single migration, additive only)
+**`bookings`** — إضافة أعمدة:
+- `price_locked BOOLEAN DEFAULT false`
+- `price_locked_at TIMESTAMPTZ`
+- `price_locked_by UUID`
+- `final_price NUMERIC`
+- `final_offer_id UUID` (يشير إلى `provider_quotes.id`)
 
-New tables:
+**RPC جديدة:**
 
-- `provider_invitations`
-  - `id`, `booking_id`, `provider_id`, `status` (sent|viewed|interested|declined|assigned|expired), `notification_status`, `sent_at`, `viewed_at`, `responded_at`, `created_at`
-  - RLS: admin/CS full; provider can read own rows.
-- `admin_alerts`
-  - `id`, `alert_type`, `booking_id`, `severity`, `title`, `message`, `status` (open|resolved), `created_at`, `resolved_at`
-  - RLS: admin/CS full.
-- `automation_logs`
-  - `id`, `booking_id`, `event_type`, `target`, `status`, `request_payload jsonb`, `response_payload jsonb`, `error_message text`, `created_at`
-  - RLS: admin full.
+`public.provider_lock_price(_booking_id uuid)` — security definer:
+- يتحقق أن المستدعي هو المزود المعيّن أو محجوز أو لديه quote
+- يجلب آخر quote للمزود لهذا الحجز
+- يُحدّث `bookings`: `price_locked=true, price_locked_at=now(), price_locked_by=auth.uid(), final_price=<latest quote>, final_offer_id=<id>, agreed_price=<latest>`
+- يُدرج رسالة SYSTEM: "✅ تم تثبيت السعر النهائي: X د.أ"
+- يُدرج سجل في `booking_history`
 
-Add columns to `bookings` (nullable, defaults safe):
-- `automation_status text default 'pending'` (pending|sent|failed|skipped)
-- `automation_last_attempt_at timestamptz`
+**حماية backend (Trigger):**
+- Trigger `BEFORE INSERT` على `provider_quotes` يرفض إذا `bookings.price_locked = true` مع `RAISE EXCEPTION 'price_locked'`.
 
-All new public tables get the required `GRANT` block (authenticated + service_role; no anon).
+## 2. تغييرات الواجهة الأمامية
 
-## 3. Edge functions
+### العميل — `CustomerOrderTracker.tsx` (والمكون المستخدم في BookingChat)
+إضافة قسم "الإجراءات السريعة" مع 3 أزرار chips:
+- "أرجو إرسال عرض الطلب" → `send_booking_message` مع `message_type='REQUEST_OFFER'` نص: "أرجو إرسال عرض الطلب."
+- "هل يمكنك تقديم عرض أفضل؟" → `REQUEST_BETTER_OFFER` (معطل إذا `price_locked`)
+- "ثبّت السعر" → `REQUEST_PRICE_LOCK`
 
-All deployed with `verify_jwt = false`; internal endpoints validate `Authorization: Bearer INTERNAL_API_SECRET` in code.
+إذا `price_locked`: badge "السعر مثبت" + "السعر النهائي: X د.أ" + تعطيل زر "عرض أفضل".
 
-- `notify-n8n-booking` (called by DB trigger via `pg_net`, or by `create-guest-booking` as fallback)
-  - Loads booking + customer + service.
-  - POSTs the spec payload to `N8N_NEW_BOOKING_WEBHOOK_URL` with header `X-MFN-Webhook-Secret`.
-  - Writes one row to `automation_logs`; sets `bookings.automation_status`.
-- `internal-providers-match` — `POST /providers-match-for-booking`
-  - Returns approved, non-suspended providers whose `role_type` matches service category and whose city/radius covers the booking, with the required projection.
-- `internal-provider-invitations-bulk` — `POST /provider-invitations-bulk-create`
-  - Bulk-inserts `provider_invitations` rows.
-- `internal-admin-alerts` — `POST /admin-alerts` (insert) used by n8n for the "new booking" admin alert.
-- `internal-automation-logs` — `POST /automation-logs` so n8n can append log entries.
-- `automation-retry` — admin-only, re-invokes `notify-n8n-booking` for one booking.
+> سنحتاج تعديل RPC `send_booking_message` لقبول `_message_type`.
 
-The five `internal-*` functions share a tiny auth helper that checks the bearer token.
+### المزود — `BookingChat.tsx` / تفاصيل الطلب
+فصل بصري كامل لقسمين:
 
-## 4. Wiring booking creation to n8n
+**قسم "الرسائل"**: textarea + زر "إرسال رسالة" → `send_booking_message` بدون سعر (`message_type='NORMAL'`).
 
-`supabase/functions/create-guest-booking/index.ts` — after the existing outbox/notification inserts, fire-and-forget invoke `notify-n8n-booking` with the new booking id. No behavior change if the call fails; current outbox + admin notification logic stays intact.
+**قسم "عرض السعر"**: input سعر + textarea ملاحظة + زر "إرسال عرض السعر" → insert في `provider_quotes` + رسالة SYSTEM "تم إرسال عرض سعر بقيمة X د.أ" (`message_type='OFFER_NOTICE'`).
+- زر "تثبيت السعر" → modal تأكيد → `provider_lock_price` RPC.
+- إذا `price_locked`: تعطيل input والأزرار + badge.
 
-For bookings created by other paths (CS, admin), add an `AFTER INSERT` trigger on `bookings` that calls the same function via `pg_net` — only if `N8N_NEW_BOOKING_WEBHOOK_URL` secret resolution succeeds at runtime. Safe no-op otherwise.
+### المزود — عرض رسائل العميل
+بناءً على `message_type` إظهار شارة ملوّنة:
+- REQUEST_OFFER → "📩 طلب إرسال عرض"
+- REQUEST_BETTER_OFFER → "💬 طلب تفاوض"
+- REQUEST_PRICE_LOCK → "🔒 طلب تثبيت السعر"
 
-## 5. Admin Dashboard — new "Alerts" tab
+### Admin
+في `BookingDetailsDrawer` / `BookingMessagesDialog`: إظهار badge "السعر مثبت" + `final_price` + `price_locked_by` + `price_locked_at`.
 
-Add `src/components/admin/BookingAlertsTab.tsx` and a new `TabsTrigger` in `AdminDashboard.tsx`. Existing tabs untouched. The tab lists rows from `admin_alerts` joined with `bookings`, showing booking number, service name, customer name, city/area, matched-provider count (from `provider_invitations`), notification status, and a link to the existing booking details drawer. Includes a "Retry automation" button that calls `automation-retry` when `automation_status='failed'`.
+## 3. Realtime
+الاشتراك الحالي على `bookings` UPDATE يلتقط تغيير `price_locked` تلقائياً. سنضيف اشتراك على `booking_messages` و`provider_quotes` حيث يلزم.
 
-## 6. Security
+## ملف تقني سريع
 
-- Webhook + internal secrets are server-side only (edge function env). Never imported into `src/`.
-- Provider-facing payloads from `internal-providers-match` exclude customer name, phone, full address, and exact coordinates — providers receive only booking number, service name, city/area, case description, and dashboard link (the match endpoint returns provider contact info to n8n, not customer info).
-- All new public tables have explicit GRANTs + RLS.
+- Migration: `add_price_lock_and_message_types`
+- تحديث RPCs: `send_booking_message` (+param), `provider_lock_price` (جديدة)
+- ملفات أمامية:
+  - `src/components/booking/CustomerOrderTracker.tsx` — أزرار سريعة + badge
+  - `src/components/booking/BookingChat.tsx` — فصل قسمين + تثبيت
+  - `src/components/admin/BookingDetailsDrawer.tsx` — عرض الحالة
+  - `src/integrations/supabase/types.ts` — يُعاد توليده تلقائياً بعد الـ migration
 
-## 7. Out of scope (explicitly preserved)
-No changes to: auth, roles, RLS on existing tables, services tab, providers tab, customer booking UI, provider dashboard, finance, suspensions, sync, existing edge functions other than appending the fire-and-forget invoke in `create-guest-booking`.
+## ملاحظات
+- نستخدم `provider_quotes` الموجود بدلاً من إنشاء `booking_offers` جديد لتجنّب تكرار البيانات.
+- الحقول `latest_offer_amount/id` ليست ضرورية — `final_price/final_offer_id` يكفيان مع آخر quote من `provider_quotes`.
+- لن أغيّر منطق التسعير الحالي (`agreed_price`)؛ سأحدّثه بنفس قيمة `final_price` عند التثبيت للحفاظ على التوافق.

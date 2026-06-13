@@ -9,7 +9,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Send, Loader2, Star, DollarSign, MessageCircle, User, Phone, Check, CheckCheck, Clock, UserCheck } from "lucide-react";
+import { Send, Loader2, Star, DollarSign, MessageCircle, User, Phone, Check, CheckCheck, Clock, UserCheck, Lock, MessageSquareQuote, HandCoins } from "lucide-react";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -299,6 +299,11 @@ export default function BookingChat({
   const [sending, setSending] = useState(false);
   const [assignDialog, setAssignDialog] = useState<string | null>(null);
   const [assigning, setAssigning] = useState(false);
+  const [priceLocked, setPriceLocked] = useState<boolean>(false);
+  const [finalPrice, setFinalPrice] = useState<number | null>(null);
+  const [lockConfirmOpen, setLockConfirmOpen] = useState(false);
+  const [locking, setLocking] = useState(false);
+  const [quickAction, setQuickAction] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const fetchAll = async () => {
@@ -309,18 +314,88 @@ export default function BookingChat({
       if (!error && data) {
         setMessages((data.messages as any) || []);
         setQuotes((data.quotes as any) || []);
+        const bk = (data as any).booking;
+        if (bk) {
+          setPriceLocked(!!bk.price_locked);
+          setFinalPrice(bk.final_price ?? null);
+        }
       }
     } else {
-      const [{ data: msgs }, { data: qts }] = await Promise.all([
+      const [{ data: msgs }, { data: qts }, { data: bk }] = await Promise.all([
         supabase.rpc("list_booking_messages" as any, { _booking_id: bookingId }),
         supabase.rpc("booking_quotes_public" as any, { _booking_id: bookingId }),
+        supabase.from("bookings").select("price_locked, final_price").eq("id", bookingId).maybeSingle(),
       ]);
       setMessages((msgs as any) || []);
       setQuotes((qts as any) || []);
+      if (bk) {
+        setPriceLocked(!!(bk as any).price_locked);
+        setFinalPrice((bk as any).final_price ?? null);
+      }
     }
     setLoading(false);
     setTimeout(() => scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" }), 100);
   };
+
+  // Send a typed quick-action message (customer only)
+  const sendQuickAction = async (text: string, messageType: string, actionKey: string) => {
+    if (!viewerId || sending) return;
+    setQuickAction(actionKey);
+    setSending(true);
+    try {
+      if (guestMode) {
+        const { data, error } = await supabase.functions.invoke("guest-send-message", {
+          body: { booking_number: guestMode.bookingNumber, phone: guestMode.phone, body: text, target_provider_id: target || null, message_type: messageType },
+        });
+        if (error || (data as any)?.error) throw new Error((data as any)?.error || error?.message || "send_failed");
+      } else {
+        const { data, error } = await supabase.rpc("send_booking_message" as any, {
+          _booking_id: bookingId,
+          _sender_role: "customer",
+          _body: text,
+          _quoted_price: null,
+          _target_provider_id: target || null,
+          _sender_display_name: viewerName || null,
+          _message_type: messageType,
+        });
+        if (error || (data as any)?.error) throw new Error((data as any)?.error || error?.message || "send_failed");
+      }
+      await fetchAll();
+      toast.success("تم إرسال الرسالة للمزوّد");
+    } catch (e: any) {
+      toast.error(e.message || "تعذّر الإرسال");
+    } finally {
+      setSending(false);
+      setQuickAction(null);
+    }
+  };
+
+  const handleLockPrice = async () => {
+    setLocking(true);
+    try {
+      const { data, error } = await supabase.rpc("provider_lock_price" as any, { _booking_id: bookingId });
+      if (error) throw error;
+      const res = data as any;
+      if (!res?.success) {
+        const code = res?.error || "lock_failed";
+        const map: Record<string, string> = {
+          no_offer: "يجب إرسال عرض سعر أولاً قبل تثبيت السعر.",
+          already_locked: "السعر مثبت مسبقاً.",
+          closed: "لا يمكن تثبيت السعر لطلب مغلق.",
+          not_found: "الطلب غير موجود.",
+        };
+        throw new Error(map[code] || code);
+      }
+      toast.success(`تم تثبيت السعر النهائي: ${res.final_price} د.أ`);
+      setLockConfirmOpen(false);
+      await fetchAll();
+    } catch (e: any) {
+      toast.error(e.message || "تعذّر تثبيت السعر");
+    } finally {
+      setLocking(false);
+    }
+  };
+
 
   useEffect(() => {
     fetchAll();
@@ -428,6 +503,84 @@ export default function BookingChat({
 
   return (
     <div className="border rounded-lg bg-card">
+      {/* Price Lock Banner */}
+      {priceLocked && (
+        <div className="border-b bg-success/10 px-3 py-2 flex items-center justify-between gap-3 flex-wrap">
+          <div className="flex items-center gap-2">
+            <Lock className="h-4 w-4 text-success" />
+            <Badge className="bg-success text-success-foreground gap-1">
+              <Lock className="h-3 w-3" /> السعر مثبت
+            </Badge>
+            {finalPrice != null && (
+              <span className="text-xs font-bold">
+                السعر النهائي: <span dir="ltr">{Number(finalPrice).toFixed(2)} د.أ</span>
+              </span>
+            )}
+          </div>
+          <span className="text-[10px] text-muted-foreground">لا يمكن إرسال عرض سعر جديد لهذا الطلب.</span>
+        </div>
+      )}
+
+      {/* Customer quick actions */}
+      {viewerRole === "customer" && (
+        <div className="border-b p-2 bg-muted/10 flex flex-wrap gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={sending || priceLocked}
+            onClick={() => sendQuickAction("أرجو إرسال عرض الطلب.", "REQUEST_OFFER", "offer")}
+            className="text-[11px] gap-1"
+          >
+            {quickAction === "offer" ? <Loader2 className="h-3 w-3 animate-spin" /> : <MessageSquareQuote className="h-3 w-3" />}
+            أرجو إرسال عرض الطلب
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={sending || priceLocked}
+            onClick={() => sendQuickAction("هل يمكنك تقديم عرض أفضل؟", "REQUEST_BETTER_OFFER", "better")}
+            className="text-[11px] gap-1"
+            title={priceLocked ? "تم تثبيت السعر — لا يمكن التفاوض" : ""}
+          >
+            {quickAction === "better" ? <Loader2 className="h-3 w-3 animate-spin" /> : <HandCoins className="h-3 w-3" />}
+            هل يمكنك تقديم عرض أفضل؟
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={sending || priceLocked}
+            onClick={() => sendQuickAction("يرجى تثبيت السعر.", "REQUEST_PRICE_LOCK", "lock")}
+            className="text-[11px] gap-1"
+          >
+            {quickAction === "lock" ? <Loader2 className="h-3 w-3 animate-spin" /> : <Lock className="h-3 w-3" />}
+            ثبّت السعر
+          </Button>
+        </div>
+      )}
+
+      {/* Provider price-lock action */}
+      {viewerRole === "provider" && !priceLocked && (() => {
+        const myLatestQuote = quotes.find((q) => q.is_mine);
+        if (!myLatestQuote) return null;
+        return (
+          <div className="border-b p-2 bg-warning/10 flex items-center justify-between gap-2 flex-wrap">
+            <div className="text-[11px]">
+              <span className="text-muted-foreground">آخر عرض لك: </span>
+              <strong dir="ltr">{myLatestQuote.quoted_price} د.أ</strong>
+            </div>
+            <Button
+              size="sm"
+              variant="default"
+              onClick={() => setLockConfirmOpen(true)}
+              className="gap-1 text-[11px]"
+            >
+              <Lock className="h-3 w-3" />
+              تثبيت السعر
+            </Button>
+          </div>
+        );
+      })()}
+
       {/* Providers strip — customer can filter to a single provider's thread */}
       {providers.length > 0 && (
         <div className="border-b p-3 space-y-2 bg-muted/20">
@@ -726,8 +879,14 @@ export default function BookingChat({
             );
           })()
         ) : (
+          priceLocked ? (
+            <div className="text-[11px] text-center text-muted-foreground py-3 border border-dashed rounded-md flex items-center justify-center gap-2">
+              <Lock className="h-3.5 w-3.5 text-success" />
+              تم تثبيت السعر، لا يمكن إرسال عرض جديد.
+            </div>
+          ) : (
           <ProviderResponsePicker
-            disabled={sending}
+            disabled={sending || priceLocked}
             messages={messages}
             myId={viewerId}
             onPick={async (responseText, originalQuestion, priceVal) => {
@@ -743,6 +902,22 @@ export default function BookingChat({
               };
               setMessages((prev) => [...prev, optimistic]);
               try {
+                // Upsert formal offer into provider_quotes (blocked by trigger if locked)
+                const { error: qErr } = await supabase
+                  .from("provider_quotes")
+                  .upsert({
+                    booking_id: bookingId,
+                    provider_id: viewerId,
+                    quoted_price: priceVal,
+                    note: responseText,
+                    status: "pending",
+                  } as any, { onConflict: "booking_id,provider_id" });
+                if (qErr) {
+                  if (/price_locked/i.test(qErr.message)) {
+                    throw new Error("لا يمكن إرسال عرض جديد لأن السعر مثبت.");
+                  }
+                  // non-fatal: continue with message
+                }
                 const { data, error } = await supabase.rpc("send_booking_message" as any, {
                   _booking_id: bookingId,
                   _sender_role: "provider",
@@ -750,16 +925,18 @@ export default function BookingChat({
                   _quoted_price: priceVal,
                   _target_provider_id: null,
                   _sender_display_name: viewerName || null,
+                  _message_type: "OFFER_NOTICE",
                 });
                 if (error || (data as any)?.error) throw new Error((data as any)?.error || error?.message || "send_failed");
                 await fetchAll();
-                toast.success("تم إرسال الرد");
+                toast.success("تم إرسال عرض السعر");
               } catch (e: any) {
                 setMessages((prev) => prev.filter((m) => m._tempId !== tempId));
                 toast.error(e.message || "تعذّر الإرسال");
               } finally { setSending(false); }
             }}
           />
+          )
         )}
         <p className="text-[10px] text-muted-foreground text-center px-2">
           🔒 جميع المحادثات محصورة داخل المنصة. غير مسموح بمشاركة أرقام أو روابط أو عناوين.
@@ -819,6 +996,27 @@ export default function BookingChat({
               }}
             >
               {assigning ? <Loader2 className="h-4 w-4 animate-spin" /> : "تأكيد الإسناد"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Lock Price confirmation */}
+      <AlertDialog open={lockConfirmOpen} onOpenChange={(o) => !locking && setLockConfirmOpen(o)}>
+        <AlertDialogContent dir="rtl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>تثبيت السعر</AlertDialogTitle>
+            <AlertDialogDescription>
+              بعد تثبيت السعر، لن تتمكن من إرسال عرض سعر جديد لهذا الطلب. هل تريد المتابعة؟
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-row-reverse gap-2">
+            <AlertDialogCancel disabled={locking}>تراجع</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={locking}
+              onClick={(e) => { e.preventDefault(); handleLockPrice(); }}
+            >
+              {locking ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Lock className="h-4 w-4 ml-1" />تأكيد التثبيت</>}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
