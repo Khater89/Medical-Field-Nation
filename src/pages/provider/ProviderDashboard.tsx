@@ -35,6 +35,7 @@ import AvailableBookingsTab from "@/components/provider/AvailableBookingsTab";
 import ProviderMessagesTab from "@/components/provider/ProviderMessagesTab";
 import LanguageToggle from "@/components/booking/LanguageToggle";
 import ProviderNotificationBell from "@/components/provider/ProviderNotificationBell";
+import ProviderSettlementCard from "@/components/provider/ProviderSettlementCard";
 
 /* ── Types ── */
 
