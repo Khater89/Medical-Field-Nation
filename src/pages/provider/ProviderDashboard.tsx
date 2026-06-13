@@ -1799,6 +1799,17 @@ const ProviderDashboard = () => {
               </CardContent>
             </Card>
 
+            {/* Settlement requests (CliQ payouts owed by platform) */}
+            {balance > 0 && (
+              <ProviderSettlementCard
+                availableBalance={balance}
+                onChanged={async () => {
+                  const balRes = await supabase.rpc("get_provider_balance", { _provider_id: user!.id });
+                  setBalance(balRes.data || 0);
+                }}
+              />
+            )}
+
             <h3 className="text-sm font-bold">{t("provider.wallet.history")}</h3>
             {ledger.length === 0 ? (
               <Card><CardContent className="py-10 text-center text-muted-foreground">{t("provider.wallet.no_transactions")}</CardContent></Card>
