@@ -304,6 +304,10 @@ export default function BookingChat({
   const [lockConfirmOpen, setLockConfirmOpen] = useState(false);
   const [locking, setLocking] = useState(false);
   const [quickAction, setQuickAction] = useState<string | null>(null);
+  const [chatLocked, setChatLocked] = useState<boolean>(false);
+  const [bookingStatus, setBookingStatus] = useState<string>("");
+  const [specialRequests, setSpecialRequests] = useState<any[]>([]);
+  const [contactInfo, setContactInfo] = useState<any | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const fetchAll = async () => {
@@ -318,50 +322,56 @@ export default function BookingChat({
         if (bk) {
           setPriceLocked(!!bk.price_locked);
           setFinalPrice(bk.final_price ?? null);
+          setChatLocked(!!bk.chat_locked);
+          setBookingStatus(bk.status || "");
         }
       }
     } else {
-      const [{ data: msgs }, { data: qts }, { data: bk }] = await Promise.all([
+      const [{ data: msgs }, { data: qts }, { data: bk }, { data: sreq }, { data: contact }] = await Promise.all([
         supabase.rpc("list_booking_messages" as any, { _booking_id: bookingId }),
         supabase.rpc("booking_quotes_public" as any, { _booking_id: bookingId }),
-        supabase.from("bookings").select("price_locked, final_price").eq("id", bookingId).maybeSingle(),
+        supabase.from("bookings").select("price_locked, final_price, chat_locked, status").eq("id", bookingId).maybeSingle(),
+        supabase.from("booking_special_requests").select("*").eq("booking_id", bookingId).order("created_at", { ascending: false }),
+        supabase.rpc("get_booking_contact_info" as any, { _booking_id: bookingId }),
       ]);
       setMessages((msgs as any) || []);
       setQuotes((qts as any) || []);
+      setSpecialRequests((sreq as any) || []);
+      const contactRow = Array.isArray(contact) ? (contact as any[])[0] : contact;
+      setContactInfo(contactRow || null);
       if (bk) {
         setPriceLocked(!!(bk as any).price_locked);
         setFinalPrice((bk as any).final_price ?? null);
+        setChatLocked(!!(bk as any).chat_locked);
+        setBookingStatus((bk as any).status || "");
+      }
+
+      // Provider: mark special requests as seen
+      if (viewerRole === "provider" && (sreq as any[])?.some((r) => r.status === "SENT")) {
+        supabase.rpc("mark_special_requests_seen" as any, { _booking_id: bookingId });
       }
     }
     setLoading(false);
     setTimeout(() => scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" }), 100);
   };
 
-  // Send a typed quick-action message (customer only)
-  const sendQuickAction = async (text: string, messageType: string, actionKey: string) => {
+  // Customer: send a special request (separate from chat)
+  const sendSpecialRequest = async (text: string, requestType: string, actionKey: string) => {
     if (!viewerId || sending) return;
     setQuickAction(actionKey);
     setSending(true);
     try {
-      if (guestMode) {
-        const { data, error } = await supabase.functions.invoke("guest-send-message", {
-          body: { booking_number: guestMode.bookingNumber, phone: guestMode.phone, body: text, target_provider_id: target || null, message_type: messageType },
-        });
-        if (error || (data as any)?.error) throw new Error((data as any)?.error || error?.message || "send_failed");
-      } else {
-        const { data, error } = await supabase.rpc("send_booking_message" as any, {
-          _booking_id: bookingId,
-          _sender_role: "customer",
-          _body: text,
-          _quoted_price: null,
-          _target_provider_id: target || null,
-          _sender_display_name: viewerName || null,
-          _message_type: messageType,
-        });
-        if (error || (data as any)?.error) throw new Error((data as any)?.error || error?.message || "send_failed");
+      const { data, error } = await supabase.rpc("create_special_request" as any, {
+        _booking_id: bookingId,
+        _request_type: requestType,
+        _request_text: text,
+        _target_provider_id: target || null,
+      });
+      if (error || !(data as any)?.success) {
+        throw new Error((data as any)?.error || error?.message || "send_failed");
       }
       await fetchAll();
-      toast.success("تم إرسال الرسالة للمزوّد");
+      toast.success("تم إرسال الطلب الخاص للمزود");
     } catch (e: any) {
       toast.error(e.message || "تعذّر الإرسال");
     } finally {
@@ -405,11 +415,20 @@ export default function BookingChat({
       return () => clearInterval(t);
     }
     // Authenticated: realtime + 5s polling fallback (in case channel drops)
-    const ch = supabase.channel(`booking_messages:${bookingId}`)
+    const ch = supabase.channel(`booking_chat:${bookingId}`)
       .on("postgres_changes",
         { event: "INSERT", schema: "public", table: "booking_messages", filter: `booking_id=eq.${bookingId}` },
         () => fetchAll()
-      ).subscribe();
+      )
+      .on("postgres_changes",
+        { event: "*", schema: "public", table: "booking_special_requests", filter: `booking_id=eq.${bookingId}` },
+        () => fetchAll()
+      )
+      .on("postgres_changes",
+        { event: "UPDATE", schema: "public", table: "bookings", filter: `id=eq.${bookingId}` },
+        () => fetchAll()
+      )
+      .subscribe();
     const poll = setInterval(fetchAll, 5000);
     return () => { supabase.removeChannel(ch); clearInterval(poll); };
   }, [bookingId, guestMode?.bookingNumber, guestMode?.phone]);
@@ -521,40 +540,129 @@ export default function BookingChat({
         </div>
       )}
 
-      {/* Customer quick actions */}
-      {viewerRole === "customer" && (
-        <div className="border-b p-2 bg-muted/10 flex flex-wrap gap-2">
-          <Button
-            size="sm"
-            variant="outline"
-            disabled={sending || priceLocked}
-            onClick={() => sendQuickAction("أرجو إرسال عرض الطلب.", "REQUEST_OFFER", "offer")}
-            className="text-[11px] gap-1"
-          >
-            {quickAction === "offer" ? <Loader2 className="h-3 w-3 animate-spin" /> : <MessageSquareQuote className="h-3 w-3" />}
-            أرجو إرسال عرض الطلب
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            disabled={sending || priceLocked}
-            onClick={() => sendQuickAction("هل يمكنك تقديم عرض أفضل؟", "REQUEST_BETTER_OFFER", "better")}
-            className="text-[11px] gap-1"
-            title={priceLocked ? "تم تثبيت السعر — لا يمكن التفاوض" : ""}
-          >
-            {quickAction === "better" ? <Loader2 className="h-3 w-3 animate-spin" /> : <HandCoins className="h-3 w-3" />}
-            هل يمكنك تقديم عرض أفضل؟
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            disabled={sending || priceLocked}
-            onClick={() => sendQuickAction("يرجى تثبيت السعر.", "REQUEST_PRICE_LOCK", "lock")}
-            className="text-[11px] gap-1"
-          >
-            {quickAction === "lock" ? <Loader2 className="h-3 w-3 animate-spin" /> : <Lock className="h-3 w-3" />}
-            ثبّت السعر
-          </Button>
+      {/* Chat locked banner + contact info */}
+      {chatLocked && (
+        <div className="border-b bg-info/10 px-3 py-2 space-y-2">
+          <div className="flex items-center gap-2 text-xs font-bold text-info">
+            <Lock className="h-4 w-4" />
+            تم قبول الطلب. تم إغلاق الدردشة العامة، ويمكنكم التواصل مباشرة عبر بيانات الاتصال.
+          </div>
+          {contactInfo ? (
+            <div className="rounded-md border bg-background p-2 text-[12px] space-y-1">
+              <div className="font-bold text-foreground flex items-center gap-1">
+                <User className="h-3.5 w-3.5" />
+                {contactInfo.role === "provider" ? "بيانات مقدم الخدمة" : "بيانات العميل"}
+              </div>
+              {contactInfo.full_name && <div>الاسم: <strong>{contactInfo.full_name}</strong></div>}
+              {contactInfo.phone && (
+                <div className="flex items-center gap-1">
+                  <Phone className="h-3 w-3" />
+                  <a href={`tel:${contactInfo.phone}`} dir="ltr" className="text-primary font-bold underline">
+                    {contactInfo.phone}
+                  </a>
+                  <a
+                    href={`https://wa.me/${String(contactInfo.phone).replace(/[^0-9]/g, "")}`}
+                    target="_blank" rel="noopener noreferrer"
+                    className="ml-2 text-success font-bold underline"
+                  >WhatsApp</a>
+                </div>
+              )}
+              {contactInfo.city && <div>المدينة: {contactInfo.city}</div>}
+              {contactInfo.address && <div>العنوان: {contactInfo.address}</div>}
+            </div>
+          ) : (
+            <p className="text-[11px] text-muted-foreground">جاري تحميل بيانات التواصل...</p>
+          )}
+        </div>
+      )}
+      {!chatLocked && (bookingStatus === "NEW" || bookingStatus === "ASSIGNED") && (
+        <div className="border-b bg-muted/30 px-3 py-1.5 text-[11px] text-muted-foreground text-center">
+          🔒 ستظهر بيانات التواصل بعد قبول الطلب.
+        </div>
+      )}
+
+      {/* Customer: special requests section (separated from general chat) */}
+      {viewerRole === "customer" && !chatLocked && (
+        <div className="border-b p-2 bg-amber-50/40 dark:bg-amber-950/10 space-y-2">
+          <p className="text-[11px] font-bold text-amber-700 dark:text-amber-300 flex items-center gap-1">
+            <MessageSquareQuote className="h-3 w-3" />
+            طلبات العرض والسعر (قسم منفصل عن الدردشة)
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={sending}
+              onClick={() => sendSpecialRequest("أرجو تقديم عرض الطلب", "REQUEST_OFFER", "offer")}
+              className="text-[11px] gap-1"
+            >
+              {quickAction === "offer" ? <Loader2 className="h-3 w-3 animate-spin" /> : <MessageSquareQuote className="h-3 w-3" />}
+              أرجو تقديم عرض الطلب
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={sending || priceLocked}
+              onClick={() => sendSpecialRequest("هل يمكنك تقديم عرض أفضل؟", "REQUEST_BETTER_OFFER", "better")}
+              className="text-[11px] gap-1"
+              title={priceLocked ? "السعر مثبت — لا يمكن التفاوض" : ""}
+            >
+              {quickAction === "better" ? <Loader2 className="h-3 w-3 animate-spin" /> : <HandCoins className="h-3 w-3" />}
+              هل يمكنك تقديم عرض أفضل؟
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={sending || priceLocked}
+              onClick={() => sendSpecialRequest("ثبّت السعر", "REQUEST_PRICE_LOCK", "lock")}
+              className="text-[11px] gap-1"
+            >
+              {quickAction === "lock" ? <Loader2 className="h-3 w-3 animate-spin" /> : <Lock className="h-3 w-3" />}
+              ثبّت السعر
+            </Button>
+          </div>
+          {specialRequests.length > 0 && (
+            <div className="space-y-1 max-h-32 overflow-y-auto">
+              {specialRequests.slice(0, 5).map((r) => (
+                <div key={r.id} className="text-[10.5px] flex items-center justify-between gap-2 rounded bg-background/60 border px-2 py-1">
+                  <span className="truncate">{r.request_text}</span>
+                  <Badge variant="outline" className="text-[9px] shrink-0">
+                    {r.status === "SENT" ? "مرسل" : r.status === "SEEN" ? "تمت رؤيته" : r.status === "RESPONDED" ? "تم الرد" : "مغلق"}
+                  </Badge>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Provider: incoming special requests */}
+      {viewerRole === "provider" && specialRequests.length > 0 && (
+        <div className="border-b p-2 bg-amber-50/40 dark:bg-amber-950/10 space-y-1.5">
+          <p className="text-[11px] font-bold text-amber-700 dark:text-amber-300 flex items-center gap-1">
+            <MessageSquareQuote className="h-3 w-3" />
+            طلبات العميل الخاصة
+          </p>
+          <div className="space-y-1 max-h-40 overflow-y-auto">
+            {specialRequests.map((r) => {
+              const label =
+                r.request_type === "REQUEST_OFFER" ? "📩 طلب إرسال عرض" :
+                r.request_type === "REQUEST_BETTER_OFFER" ? "💬 طلب عرض أفضل" :
+                "🔒 طلب تثبيت السعر";
+              return (
+                <div key={r.id} className="rounded border bg-background p-2 text-[11px] space-y-0.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <strong>{label}</strong>
+                    <span className="text-[9px] text-muted-foreground">{new Date(r.created_at).toLocaleString("ar-JO", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "short" })}</span>
+                  </div>
+                  <p className="text-muted-foreground">{r.request_text}</p>
+                  {r.request_type === "REQUEST_BETTER_OFFER" && priceLocked && (
+                    <p className="text-[10px] text-warning">السعر مثبت، لا يمكن إرسال عرض جديد.</p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
 
@@ -818,7 +926,12 @@ export default function BookingChat({
 
       {/* Composer — Templated Q&A only (no free text) */}
       <div className="border-t p-2 space-y-2 bg-muted/10">
-        {viewerRole === "customer" ? (
+        {chatLocked ? (
+          <div className="text-[11px] text-center text-muted-foreground py-3 border border-dashed rounded-md flex items-center justify-center gap-2">
+            <Lock className="h-3.5 w-3.5 text-info" />
+            تم إغلاق الدردشة بعد قبول الطلب. بيانات التواصل متاحة أعلاه.
+          </div>
+        ) : viewerRole === "customer" ? (
           (() => {
             // Per-booking used-question set, scoped by target (private vs general)
             const usedQuestions = new Set(
