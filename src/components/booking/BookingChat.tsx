@@ -531,40 +531,129 @@ export default function BookingChat({
         </div>
       )}
 
-      {/* Customer quick actions */}
-      {viewerRole === "customer" && (
-        <div className="border-b p-2 bg-muted/10 flex flex-wrap gap-2">
-          <Button
-            size="sm"
-            variant="outline"
-            disabled={sending || priceLocked}
-            onClick={() => sendQuickAction("أرجو إرسال عرض الطلب.", "REQUEST_OFFER", "offer")}
-            className="text-[11px] gap-1"
-          >
-            {quickAction === "offer" ? <Loader2 className="h-3 w-3 animate-spin" /> : <MessageSquareQuote className="h-3 w-3" />}
-            أرجو إرسال عرض الطلب
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            disabled={sending || priceLocked}
-            onClick={() => sendQuickAction("هل يمكنك تقديم عرض أفضل؟", "REQUEST_BETTER_OFFER", "better")}
-            className="text-[11px] gap-1"
-            title={priceLocked ? "تم تثبيت السعر — لا يمكن التفاوض" : ""}
-          >
-            {quickAction === "better" ? <Loader2 className="h-3 w-3 animate-spin" /> : <HandCoins className="h-3 w-3" />}
-            هل يمكنك تقديم عرض أفضل؟
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            disabled={sending || priceLocked}
-            onClick={() => sendQuickAction("يرجى تثبيت السعر.", "REQUEST_PRICE_LOCK", "lock")}
-            className="text-[11px] gap-1"
-          >
-            {quickAction === "lock" ? <Loader2 className="h-3 w-3 animate-spin" /> : <Lock className="h-3 w-3" />}
-            ثبّت السعر
-          </Button>
+      {/* Chat locked banner + contact info */}
+      {chatLocked && (
+        <div className="border-b bg-info/10 px-3 py-2 space-y-2">
+          <div className="flex items-center gap-2 text-xs font-bold text-info">
+            <Lock className="h-4 w-4" />
+            تم قبول الطلب. تم إغلاق الدردشة العامة، ويمكنكم التواصل مباشرة عبر بيانات الاتصال.
+          </div>
+          {contactInfo ? (
+            <div className="rounded-md border bg-background p-2 text-[12px] space-y-1">
+              <div className="font-bold text-foreground flex items-center gap-1">
+                <User className="h-3.5 w-3.5" />
+                {contactInfo.role === "provider" ? "بيانات مقدم الخدمة" : "بيانات العميل"}
+              </div>
+              {contactInfo.full_name && <div>الاسم: <strong>{contactInfo.full_name}</strong></div>}
+              {contactInfo.phone && (
+                <div className="flex items-center gap-1">
+                  <Phone className="h-3 w-3" />
+                  <a href={`tel:${contactInfo.phone}`} dir="ltr" className="text-primary font-bold underline">
+                    {contactInfo.phone}
+                  </a>
+                  <a
+                    href={`https://wa.me/${String(contactInfo.phone).replace(/[^0-9]/g, "")}`}
+                    target="_blank" rel="noopener noreferrer"
+                    className="ml-2 text-success font-bold underline"
+                  >WhatsApp</a>
+                </div>
+              )}
+              {contactInfo.city && <div>المدينة: {contactInfo.city}</div>}
+              {contactInfo.address && <div>العنوان: {contactInfo.address}</div>}
+            </div>
+          ) : (
+            <p className="text-[11px] text-muted-foreground">جاري تحميل بيانات التواصل...</p>
+          )}
+        </div>
+      )}
+      {!chatLocked && (bookingStatus === "NEW" || bookingStatus === "ASSIGNED") && (
+        <div className="border-b bg-muted/30 px-3 py-1.5 text-[11px] text-muted-foreground text-center">
+          🔒 ستظهر بيانات التواصل بعد قبول الطلب.
+        </div>
+      )}
+
+      {/* Customer: special requests section (separated from general chat) */}
+      {viewerRole === "customer" && !chatLocked && (
+        <div className="border-b p-2 bg-amber-50/40 dark:bg-amber-950/10 space-y-2">
+          <p className="text-[11px] font-bold text-amber-700 dark:text-amber-300 flex items-center gap-1">
+            <MessageSquareQuote className="h-3 w-3" />
+            طلبات العرض والسعر (قسم منفصل عن الدردشة)
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={sending}
+              onClick={() => sendSpecialRequest("أرجو تقديم عرض الطلب", "REQUEST_OFFER", "offer")}
+              className="text-[11px] gap-1"
+            >
+              {quickAction === "offer" ? <Loader2 className="h-3 w-3 animate-spin" /> : <MessageSquareQuote className="h-3 w-3" />}
+              أرجو تقديم عرض الطلب
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={sending || priceLocked}
+              onClick={() => sendSpecialRequest("هل يمكنك تقديم عرض أفضل؟", "REQUEST_BETTER_OFFER", "better")}
+              className="text-[11px] gap-1"
+              title={priceLocked ? "السعر مثبت — لا يمكن التفاوض" : ""}
+            >
+              {quickAction === "better" ? <Loader2 className="h-3 w-3 animate-spin" /> : <HandCoins className="h-3 w-3" />}
+              هل يمكنك تقديم عرض أفضل؟
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={sending || priceLocked}
+              onClick={() => sendSpecialRequest("ثبّت السعر", "REQUEST_PRICE_LOCK", "lock")}
+              className="text-[11px] gap-1"
+            >
+              {quickAction === "lock" ? <Loader2 className="h-3 w-3 animate-spin" /> : <Lock className="h-3 w-3" />}
+              ثبّت السعر
+            </Button>
+          </div>
+          {specialRequests.length > 0 && (
+            <div className="space-y-1 max-h-32 overflow-y-auto">
+              {specialRequests.slice(0, 5).map((r) => (
+                <div key={r.id} className="text-[10.5px] flex items-center justify-between gap-2 rounded bg-background/60 border px-2 py-1">
+                  <span className="truncate">{r.request_text}</span>
+                  <Badge variant="outline" className="text-[9px] shrink-0">
+                    {r.status === "SENT" ? "مرسل" : r.status === "SEEN" ? "تمت رؤيته" : r.status === "RESPONDED" ? "تم الرد" : "مغلق"}
+                  </Badge>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Provider: incoming special requests */}
+      {viewerRole === "provider" && specialRequests.length > 0 && (
+        <div className="border-b p-2 bg-amber-50/40 dark:bg-amber-950/10 space-y-1.5">
+          <p className="text-[11px] font-bold text-amber-700 dark:text-amber-300 flex items-center gap-1">
+            <MessageSquareQuote className="h-3 w-3" />
+            طلبات العميل الخاصة
+          </p>
+          <div className="space-y-1 max-h-40 overflow-y-auto">
+            {specialRequests.map((r) => {
+              const label =
+                r.request_type === "REQUEST_OFFER" ? "📩 طلب إرسال عرض" :
+                r.request_type === "REQUEST_BETTER_OFFER" ? "💬 طلب عرض أفضل" :
+                "🔒 طلب تثبيت السعر";
+              return (
+                <div key={r.id} className="rounded border bg-background p-2 text-[11px] space-y-0.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <strong>{label}</strong>
+                    <span className="text-[9px] text-muted-foreground">{new Date(r.created_at).toLocaleString("ar-JO", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "short" })}</span>
+                  </div>
+                  <p className="text-muted-foreground">{r.request_text}</p>
+                  {r.request_type === "REQUEST_BETTER_OFFER" && priceLocked && (
+                    <p className="text-[10px] text-warning">السعر مثبت، لا يمكن إرسال عرض جديد.</p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
 
