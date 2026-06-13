@@ -567,6 +567,9 @@ const FinanceTab = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Provider settlement requests (CliQ payouts owed to providers) */}
+      <SettlementRequestsSection />
     </div>
   );
 };
