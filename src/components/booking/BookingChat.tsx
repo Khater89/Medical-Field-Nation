@@ -902,16 +902,17 @@ export default function BookingChat({
               };
               setMessages((prev) => [...prev, optimistic]);
               try {
-                // Insert formal offer into provider_quotes (will be blocked by trigger if locked)
+                // Upsert formal offer into provider_quotes (blocked by trigger if locked)
                 const { error: qErr } = await supabase
                   .from("provider_quotes")
-                  .insert({
+                  .upsert({
                     booking_id: bookingId,
                     provider_id: viewerId,
                     quoted_price: priceVal,
                     note: responseText,
-                  } as any);
-                if (qErr && !/duplicate/i.test(qErr.message)) {
+                    status: "pending",
+                  } as any, { onConflict: "booking_id,provider_id" });
+                if (qErr) {
                   if (/price_locked/i.test(qErr.message)) {
                     throw new Error("لا يمكن إرسال عرض جديد لأن السعر مثبت.");
                   }
