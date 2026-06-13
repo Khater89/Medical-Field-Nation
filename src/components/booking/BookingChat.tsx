@@ -299,6 +299,11 @@ export default function BookingChat({
   const [sending, setSending] = useState(false);
   const [assignDialog, setAssignDialog] = useState<string | null>(null);
   const [assigning, setAssigning] = useState(false);
+  const [priceLocked, setPriceLocked] = useState<boolean>(false);
+  const [finalPrice, setFinalPrice] = useState<number | null>(null);
+  const [lockConfirmOpen, setLockConfirmOpen] = useState(false);
+  const [locking, setLocking] = useState(false);
+  const [quickAction, setQuickAction] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const fetchAll = async () => {
