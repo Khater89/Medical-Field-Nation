@@ -9,7 +9,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Send, Loader2, Star, DollarSign, MessageCircle, User, Phone, Check, CheckCheck, Clock, UserCheck } from "lucide-react";
+import { Send, Loader2, Star, DollarSign, MessageCircle, User, Phone, Check, CheckCheck, Clock, UserCheck, Lock, MessageSquareQuote, HandCoins } from "lucide-react";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
