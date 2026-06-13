@@ -503,6 +503,84 @@ export default function BookingChat({
 
   return (
     <div className="border rounded-lg bg-card">
+      {/* Price Lock Banner */}
+      {priceLocked && (
+        <div className="border-b bg-success/10 px-3 py-2 flex items-center justify-between gap-3 flex-wrap">
+          <div className="flex items-center gap-2">
+            <Lock className="h-4 w-4 text-success" />
+            <Badge className="bg-success text-success-foreground gap-1">
+              <Lock className="h-3 w-3" /> السعر مثبت
+            </Badge>
+            {finalPrice != null && (
+              <span className="text-xs font-bold">
+                السعر النهائي: <span dir="ltr">{Number(finalPrice).toFixed(2)} د.أ</span>
+              </span>
+            )}
+          </div>
+          <span className="text-[10px] text-muted-foreground">لا يمكن إرسال عرض سعر جديد لهذا الطلب.</span>
+        </div>
+      )}
+
+      {/* Customer quick actions */}
+      {viewerRole === "customer" && (
+        <div className="border-b p-2 bg-muted/10 flex flex-wrap gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={sending || priceLocked}
+            onClick={() => sendQuickAction("أرجو إرسال عرض الطلب.", "REQUEST_OFFER", "offer")}
+            className="text-[11px] gap-1"
+          >
+            {quickAction === "offer" ? <Loader2 className="h-3 w-3 animate-spin" /> : <MessageSquareQuote className="h-3 w-3" />}
+            أرجو إرسال عرض الطلب
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={sending || priceLocked}
+            onClick={() => sendQuickAction("هل يمكنك تقديم عرض أفضل؟", "REQUEST_BETTER_OFFER", "better")}
+            className="text-[11px] gap-1"
+            title={priceLocked ? "تم تثبيت السعر — لا يمكن التفاوض" : ""}
+          >
+            {quickAction === "better" ? <Loader2 className="h-3 w-3 animate-spin" /> : <HandCoins className="h-3 w-3" />}
+            هل يمكنك تقديم عرض أفضل؟
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={sending || priceLocked}
+            onClick={() => sendQuickAction("يرجى تثبيت السعر.", "REQUEST_PRICE_LOCK", "lock")}
+            className="text-[11px] gap-1"
+          >
+            {quickAction === "lock" ? <Loader2 className="h-3 w-3 animate-spin" /> : <Lock className="h-3 w-3" />}
+            ثبّت السعر
+          </Button>
+        </div>
+      )}
+
+      {/* Provider price-lock action */}
+      {viewerRole === "provider" && !priceLocked && (() => {
+        const myLatestQuote = quotes.find((q) => q.is_mine);
+        if (!myLatestQuote) return null;
+        return (
+          <div className="border-b p-2 bg-warning/10 flex items-center justify-between gap-2 flex-wrap">
+            <div className="text-[11px]">
+              <span className="text-muted-foreground">آخر عرض لك: </span>
+              <strong dir="ltr">{myLatestQuote.quoted_price} د.أ</strong>
+            </div>
+            <Button
+              size="sm"
+              variant="default"
+              onClick={() => setLockConfirmOpen(true)}
+              className="gap-1 text-[11px]"
+            >
+              <Lock className="h-3 w-3" />
+              تثبيت السعر
+            </Button>
+          </div>
+        );
+      })()}
+
       {/* Providers strip — customer can filter to a single provider's thread */}
       {providers.length > 0 && (
         <div className="border-b p-3 space-y-2 bg-muted/20">
