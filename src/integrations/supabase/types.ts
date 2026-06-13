@@ -138,6 +138,7 @@ export type Database = {
           booking_id: string
           created_at: string
           id: string
+          message_type: string
           quoted_price: number | null
           sender_display_name: string | null
           sender_id: string
@@ -149,6 +150,7 @@ export type Database = {
           booking_id: string
           created_at?: string
           id?: string
+          message_type?: string
           quoted_price?: number | null
           sender_display_name?: string | null
           sender_id: string
@@ -160,6 +162,7 @@ export type Database = {
           booking_id?: string
           created_at?: string
           id?: string
+          message_type?: string
           quoted_price?: number | null
           sender_display_name?: string | null
           sender_id?: string
@@ -249,6 +252,8 @@ export type Database = {
           deal_confirmed_by: string | null
           deposit_amount: number | null
           deposit_status: string | null
+          final_offer_id: string | null
+          final_price: number | null
           gender_released: boolean
           gender_released_at: string | null
           gender_released_by: string | null
@@ -261,6 +266,9 @@ export type Database = {
           payment_method: string
           payment_status: string
           platform_fee: number
+          price_locked: boolean
+          price_locked_at: string | null
+          price_locked_by: string | null
           provider_payout: number
           provider_share: number | null
           reject_reason: string | null
@@ -315,6 +323,8 @@ export type Database = {
           deal_confirmed_by?: string | null
           deposit_amount?: number | null
           deposit_status?: string | null
+          final_offer_id?: string | null
+          final_price?: number | null
           gender_released?: boolean
           gender_released_at?: string | null
           gender_released_by?: string | null
@@ -327,6 +337,9 @@ export type Database = {
           payment_method?: string
           payment_status?: string
           platform_fee?: number
+          price_locked?: boolean
+          price_locked_at?: string | null
+          price_locked_by?: string | null
           provider_payout?: number
           provider_share?: number | null
           reject_reason?: string | null
@@ -381,6 +394,8 @@ export type Database = {
           deal_confirmed_by?: string | null
           deposit_amount?: number | null
           deposit_status?: string | null
+          final_offer_id?: string | null
+          final_price?: number | null
           gender_released?: boolean
           gender_released_at?: string | null
           gender_released_by?: string | null
@@ -393,6 +408,9 @@ export type Database = {
           payment_method?: string
           payment_status?: string
           platform_fee?: number
+          price_locked?: boolean
+          price_locked_at?: string | null
+          price_locked_by?: string | null
           provider_payout?: number
           provider_share?: number | null
           reject_reason?: string | null
@@ -1141,6 +1159,7 @@ export type Database = {
         Args: { _booking_id: string }
         Returns: Json
       }
+      provider_lock_price: { Args: { _booking_id: string }; Returns: Json }
       provider_messages_inbox: {
         Args: never
         Returns: {
@@ -1199,17 +1218,30 @@ export type Database = {
         Returns: undefined
       }
       revoke_api_key: { Args: { _id: string }; Returns: undefined }
-      send_booking_message: {
-        Args: {
-          _body: string
-          _booking_id: string
-          _quoted_price?: number
-          _sender_display_name?: string
-          _sender_role: string
-          _target_provider_id?: string
-        }
-        Returns: Json
-      }
+      send_booking_message:
+        | {
+            Args: {
+              _body: string
+              _booking_id: string
+              _quoted_price?: number
+              _sender_display_name?: string
+              _sender_role: string
+              _target_provider_id?: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              _body: string
+              _booking_id: string
+              _message_type?: string
+              _quoted_price?: number
+              _sender_display_name?: string
+              _sender_role: string
+              _target_provider_id?: string
+            }
+            Returns: Json
+          }
       set_user_role: {
         Args: {
           new_role: Database["public"]["Enums"]["app_role"]
