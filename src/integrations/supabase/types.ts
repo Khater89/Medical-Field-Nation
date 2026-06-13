@@ -218,6 +218,53 @@ export type Database = {
           },
         ]
       }
+      booking_special_requests: {
+        Row: {
+          booking_id: string
+          created_at: string
+          customer_id: string
+          id: string
+          provider_id: string | null
+          request_text: string
+          request_type: string
+          responded_at: string | null
+          seen_at: string | null
+          status: string
+        }
+        Insert: {
+          booking_id: string
+          created_at?: string
+          customer_id: string
+          id?: string
+          provider_id?: string | null
+          request_text: string
+          request_type: string
+          responded_at?: string | null
+          seen_at?: string | null
+          status?: string
+        }
+        Update: {
+          booking_id?: string
+          created_at?: string
+          customer_id?: string
+          id?: string
+          provider_id?: string | null
+          request_text?: string
+          request_type?: string
+          responded_at?: string | null
+          seen_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_special_requests_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bookings: {
         Row: {
           accepted_at: string | null
@@ -233,6 +280,8 @@ export type Database = {
           assigned_provider_id: string | null
           booking_number: string | null
           calculated_total: number | null
+          chat_locked: boolean
+          chat_locked_at: string | null
           check_in_at: string | null
           check_out_at: string | null
           city: string
@@ -304,6 +353,8 @@ export type Database = {
           assigned_provider_id?: string | null
           booking_number?: string | null
           calculated_total?: number | null
+          chat_locked?: boolean
+          chat_locked_at?: string | null
           check_in_at?: string | null
           check_out_at?: string | null
           city: string
@@ -375,6 +426,8 @@ export type Database = {
           assigned_provider_id?: string | null
           booking_number?: string | null
           calculated_total?: number | null
+          chat_locked?: boolean
+          chat_locked_at?: string | null
           check_in_at?: string | null
           check_out_at?: string | null
           city?: string
@@ -1041,6 +1094,15 @@ export type Database = {
           plain_key: string
         }[]
       }
+      create_special_request: {
+        Args: {
+          _booking_id: string
+          _request_text: string
+          _request_type: string
+          _target_provider_id?: string
+        }
+        Returns: Json
+      }
       customer_accept_quote: { Args: { _quote_id: string }; Returns: Json }
       customer_assign_provider: {
         Args: { _booking_id: string; _provider_id: string }
@@ -1079,6 +1141,19 @@ export type Database = {
           _required: string
         }
         Returns: boolean
+      }
+      get_booking_contact_info: {
+        Args: { _booking_id: string }
+        Returns: {
+          address: string
+          avatar_url: string
+          city: string
+          full_name: string
+          lat: number
+          lng: number
+          phone: string
+          role: string
+        }[]
       }
       get_platform_public_settings: {
         Args: never
@@ -1153,6 +1228,10 @@ export type Database = {
           sender_role: string
           target_provider_id: string
         }[]
+      }
+      mark_special_requests_seen: {
+        Args: { _booking_id: string }
+        Returns: Json
       }
       mfn_is_staff: { Args: never; Returns: boolean }
       provider_confirm_agreement: {
