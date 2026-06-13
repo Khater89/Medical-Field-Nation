@@ -926,7 +926,12 @@ export default function BookingChat({
 
       {/* Composer — Templated Q&A only (no free text) */}
       <div className="border-t p-2 space-y-2 bg-muted/10">
-        {viewerRole === "customer" ? (
+        {chatLocked ? (
+          <div className="text-[11px] text-center text-muted-foreground py-3 border border-dashed rounded-md flex items-center justify-center gap-2">
+            <Lock className="h-3.5 w-3.5 text-info" />
+            تم إغلاق الدردشة بعد قبول الطلب. بيانات التواصل متاحة أعلاه.
+          </div>
+        ) : viewerRole === "customer" ? (
           (() => {
             // Per-booking used-question set, scoped by target (private vs general)
             const usedQuestions = new Set(
