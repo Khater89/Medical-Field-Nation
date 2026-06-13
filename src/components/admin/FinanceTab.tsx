@@ -20,6 +20,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { DataTable } from "@/components/ui/data-table";
 import type { ColumnDef } from "@tanstack/react-table";
+import SettlementRequestsSection from "@/components/admin/SettlementRequestsSection";
 
 interface ProviderDebt {
   user_id: string;
@@ -566,6 +567,9 @@ const FinanceTab = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Provider settlement requests (CliQ payouts owed to providers) */}
+      <SettlementRequestsSection />
     </div>
   );
 };

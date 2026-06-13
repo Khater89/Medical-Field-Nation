@@ -827,6 +827,57 @@ export type Database = {
           },
         ]
       }
+      provider_settlement_requests: {
+        Row: {
+          amount: number
+          created_at: string
+          finance_note: string | null
+          id: string
+          paid_at: string | null
+          paid_by: string | null
+          payment_reference: string | null
+          provider_id: string
+          requested_at: string
+          requested_by: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          finance_note?: string | null
+          id?: string
+          paid_at?: string | null
+          paid_by?: string | null
+          payment_reference?: string | null
+          provider_id: string
+          requested_at?: string
+          requested_by: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          finance_note?: string | null
+          id?: string
+          paid_at?: string | null
+          paid_by?: string | null
+          payment_reference?: string | null
+          provider_id?: string
+          requested_at?: string
+          requested_by?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       provider_wallet_ledger: {
         Row: {
           amount: number
@@ -1028,6 +1079,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_mark_settlement_paid: {
+        Args: {
+          _finance_note?: string
+          _id: string
+          _payment_reference: string
+        }
+        Returns: Json
+      }
+      admin_reject_settlement: {
+        Args: { _finance_note?: string; _id: string }
+        Returns: Json
+      }
       admin_release_gender: { Args: { _booking_id: string }; Returns: Json }
       available_bookings_for_providers: {
         Args: never
@@ -1283,6 +1346,7 @@ export type Database = {
           status: string
         }[]
       }
+      provider_request_settlement: { Args: never; Returns: Json }
       provider_reserve_booking: { Args: { _booking_id: string }; Returns: Json }
       provider_role_matches_category: {
         Args: { _category: string; _role_type: string }

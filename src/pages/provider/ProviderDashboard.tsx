@@ -35,6 +35,7 @@ import AvailableBookingsTab from "@/components/provider/AvailableBookingsTab";
 import ProviderMessagesTab from "@/components/provider/ProviderMessagesTab";
 import LanguageToggle from "@/components/booking/LanguageToggle";
 import ProviderNotificationBell from "@/components/provider/ProviderNotificationBell";
+import ProviderSettlementCard from "@/components/provider/ProviderSettlementCard";
 
 /* ── Types ── */
 
@@ -1797,6 +1798,17 @@ const ProviderDashboard = () => {
                 )}
               </CardContent>
             </Card>
+
+            {/* Settlement requests (CliQ payouts owed by platform) */}
+            {balance > 0 && (
+              <ProviderSettlementCard
+                availableBalance={balance}
+                onChanged={async () => {
+                  const balRes = await supabase.rpc("get_provider_balance", { _provider_id: user!.id });
+                  setBalance(balRes.data || 0);
+                }}
+              />
+            )}
 
             <h3 className="text-sm font-bold">{t("provider.wallet.history")}</h3>
             {ledger.length === 0 ? (
