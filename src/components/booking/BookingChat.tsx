@@ -879,8 +879,14 @@ export default function BookingChat({
             );
           })()
         ) : (
+          priceLocked ? (
+            <div className="text-[11px] text-center text-muted-foreground py-3 border border-dashed rounded-md flex items-center justify-center gap-2">
+              <Lock className="h-3.5 w-3.5 text-success" />
+              تم تثبيت السعر، لا يمكن إرسال عرض جديد.
+            </div>
+          ) : (
           <ProviderResponsePicker
-            disabled={sending}
+            disabled={sending || priceLocked}
             messages={messages}
             myId={viewerId}
             onPick={async (responseText, originalQuestion, priceVal) => {
@@ -896,6 +902,21 @@ export default function BookingChat({
               };
               setMessages((prev) => [...prev, optimistic]);
               try {
+                // Insert formal offer into provider_quotes (will be blocked by trigger if locked)
+                const { error: qErr } = await supabase
+                  .from("provider_quotes")
+                  .insert({
+                    booking_id: bookingId,
+                    provider_id: viewerId,
+                    quoted_price: priceVal,
+                    note: responseText,
+                  } as any);
+                if (qErr && !/duplicate/i.test(qErr.message)) {
+                  if (/price_locked/i.test(qErr.message)) {
+                    throw new Error("لا يمكن إرسال عرض جديد لأن السعر مثبت.");
+                  }
+                  // non-fatal: continue with message
+                }
                 const { data, error } = await supabase.rpc("send_booking_message" as any, {
                   _booking_id: bookingId,
                   _sender_role: "provider",
@@ -903,16 +924,18 @@ export default function BookingChat({
                   _quoted_price: priceVal,
                   _target_provider_id: null,
                   _sender_display_name: viewerName || null,
+                  _message_type: "OFFER_NOTICE",
                 });
                 if (error || (data as any)?.error) throw new Error((data as any)?.error || error?.message || "send_failed");
                 await fetchAll();
-                toast.success("تم إرسال الرد");
+                toast.success("تم إرسال عرض السعر");
               } catch (e: any) {
                 setMessages((prev) => prev.filter((m) => m._tempId !== tempId));
                 toast.error(e.message || "تعذّر الإرسال");
               } finally { setSending(false); }
             }}
           />
+          )
         )}
         <p className="text-[10px] text-muted-foreground text-center px-2">
           🔒 جميع المحادثات محصورة داخل المنصة. غير مسموح بمشاركة أرقام أو روابط أو عناوين.
