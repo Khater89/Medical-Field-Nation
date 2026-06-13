@@ -314,18 +314,88 @@ export default function BookingChat({
       if (!error && data) {
         setMessages((data.messages as any) || []);
         setQuotes((data.quotes as any) || []);
+        const bk = (data as any).booking;
+        if (bk) {
+          setPriceLocked(!!bk.price_locked);
+          setFinalPrice(bk.final_price ?? null);
+        }
       }
     } else {
-      const [{ data: msgs }, { data: qts }] = await Promise.all([
+      const [{ data: msgs }, { data: qts }, { data: bk }] = await Promise.all([
         supabase.rpc("list_booking_messages" as any, { _booking_id: bookingId }),
         supabase.rpc("booking_quotes_public" as any, { _booking_id: bookingId }),
+        supabase.from("bookings").select("price_locked, final_price").eq("id", bookingId).maybeSingle(),
       ]);
       setMessages((msgs as any) || []);
       setQuotes((qts as any) || []);
+      if (bk) {
+        setPriceLocked(!!(bk as any).price_locked);
+        setFinalPrice((bk as any).final_price ?? null);
+      }
     }
     setLoading(false);
     setTimeout(() => scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" }), 100);
   };
+
+  // Send a typed quick-action message (customer only)
+  const sendQuickAction = async (text: string, messageType: string, actionKey: string) => {
+    if (!viewerId || sending) return;
+    setQuickAction(actionKey);
+    setSending(true);
+    try {
+      if (guestMode) {
+        const { data, error } = await supabase.functions.invoke("guest-send-message", {
+          body: { booking_number: guestMode.bookingNumber, phone: guestMode.phone, body: text, target_provider_id: target || null, message_type: messageType },
+        });
+        if (error || (data as any)?.error) throw new Error((data as any)?.error || error?.message || "send_failed");
+      } else {
+        const { data, error } = await supabase.rpc("send_booking_message" as any, {
+          _booking_id: bookingId,
+          _sender_role: "customer",
+          _body: text,
+          _quoted_price: null,
+          _target_provider_id: target || null,
+          _sender_display_name: viewerName || null,
+          _message_type: messageType,
+        });
+        if (error || (data as any)?.error) throw new Error((data as any)?.error || error?.message || "send_failed");
+      }
+      await fetchAll();
+      toast.success("تم إرسال الرسالة للمزوّد");
+    } catch (e: any) {
+      toast.error(e.message || "تعذّر الإرسال");
+    } finally {
+      setSending(false);
+      setQuickAction(null);
+    }
+  };
+
+  const handleLockPrice = async () => {
+    setLocking(true);
+    try {
+      const { data, error } = await supabase.rpc("provider_lock_price" as any, { _booking_id: bookingId });
+      if (error) throw error;
+      const res = data as any;
+      if (!res?.success) {
+        const code = res?.error || "lock_failed";
+        const map: Record<string, string> = {
+          no_offer: "يجب إرسال عرض سعر أولاً قبل تثبيت السعر.",
+          already_locked: "السعر مثبت مسبقاً.",
+          closed: "لا يمكن تثبيت السعر لطلب مغلق.",
+          not_found: "الطلب غير موجود.",
+        };
+        throw new Error(map[code] || code);
+      }
+      toast.success(`تم تثبيت السعر النهائي: ${res.final_price} د.أ`);
+      setLockConfirmOpen(false);
+      await fetchAll();
+    } catch (e: any) {
+      toast.error(e.message || "تعذّر تثبيت السعر");
+    } finally {
+      setLocking(false);
+    }
+  };
+
 
   useEffect(() => {
     fetchAll();
