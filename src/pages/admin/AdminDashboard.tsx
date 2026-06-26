@@ -73,7 +73,7 @@ const AdminDashboard = () => {
             </TabsTrigger>
             <TabsTrigger value="vendors" className="flex flex-col gap-1 py-2 text-xs">
               <Store className="h-4 w-4" />
-              السوق
+              السوق الطبي
             </TabsTrigger>
             <TabsTrigger value="finance" className="flex flex-col gap-1 py-2 text-xs">
               <Landmark className="h-4 w-4" />
