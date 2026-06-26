@@ -8,10 +8,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Minus, Plus, ShoppingCart, Pill, Store } from "lucide-react";
+import { Minus, Plus, ShoppingCart, Pill, Store, MessageCircle } from "lucide-react";
 import BackButton from "@/components/ui/back-button";
 import { useCart } from "@/contexts/MarketplaceCartContext";
 import { toast } from "sonner";
+import MarketplaceChatDialog from "@/components/marketplace/MarketplaceChatDialog";
 
 interface Product {
   id: string;
@@ -43,6 +44,7 @@ export default function ProductPage() {
   const [images, setImages] = useState<string[]>([]);
   const [qty, setQty] = useState(1);
   const [loading, setLoading] = useState(true);
+  const [chatOpen, setChatOpen] = useState(false);
   const { addItem } = useCart();
 
   useEffect(() => {
@@ -170,14 +172,17 @@ export default function ProductPage() {
             )}
 
             {vendor && (
-              <Card className="p-3 flex items-center justify-between">
-                <div className="flex items-center gap-2">
+              <Card className="p-3 flex items-center justify-between gap-3 flex-wrap">
+                <Link to={`/marketplace/vendor/${vendor.id}`} className="flex items-center gap-2">
                   <Store className="h-4 w-4 text-primary" />
                   <div>
                     <div className="font-semibold text-sm">{vendor.store_name}</div>
                     {vendor.city && <div className="text-xs text-muted-foreground">{vendor.city}</div>}
                   </div>
-                </div>
+                </Link>
+                <Button size="sm" variant="outline" className="gap-1" onClick={() => setChatOpen(true)}>
+                  <MessageCircle className="h-3 w-3" /> اسأل عن المنتج
+                </Button>
               </Card>
             )}
 
@@ -198,6 +203,16 @@ export default function ProductPage() {
             </div>
           </div>
         </div>
+        {vendor && product && (
+          <MarketplaceChatDialog
+            open={chatOpen}
+            onOpenChange={setChatOpen}
+            vendorId={vendor.id}
+            vendorName={vendor.store_name}
+            productId={product.id}
+            productName={product.name_ar}
+          />
+        )}
       </main>
       <AppFooter />
     </div>
