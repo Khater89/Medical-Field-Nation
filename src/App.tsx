@@ -126,6 +126,17 @@ const App = () => {
                 }
               />
 
+              {/* Vendor (marketplace) */}
+              <Route path="/vendor/register" element={<ProtectedRoute><VendorRegister /></ProtectedRoute>} />
+              <Route
+                path="/vendor"
+                element={
+                  <ProtectedRoute requiredRole="vendor">
+                    <VendorDashboard />
+                  </ProtectedRoute>
+                }
+              />
+
               {/* Catch-all */}
               <Route path="*" element={<NotFound />} />
             </Routes>
