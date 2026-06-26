@@ -15,6 +15,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import BackButton from "@/components/ui/back-button";
+import AcknowledgementDialog, { CUSTOMER_ORDER_ACK_TEXT } from "@/components/marketplace/AcknowledgementDialog";
 
 type DeliveryMethod = "VENDOR_DELIVERY" | "PICKUP" | "SHIPPING_COMPANY";
 type PaymentMethod = "CASH_ON_DELIVERY" | "ONLINE" | "CLIQ";
@@ -24,6 +25,7 @@ export default function CheckoutPage() {
   const { user, profile, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [submitting, setSubmitting] = useState(false);
+  const [ackOpen, setAckOpen] = useState(false);
 
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
@@ -61,7 +63,7 @@ export default function CheckoutPage() {
     return Array.from(map.entries()); // [[vendor_id, items[]], ...]
   }, [items]);
 
-  const handleSubmit = async () => {
+  const validateAndOpenAck = () => {
     if (!user) return;
     if (!customerName.trim() || !customerPhone.trim()) {
       toast.error("الرجاء تعبئة الاسم ورقم الهاتف");
@@ -75,7 +77,12 @@ export default function CheckoutPage() {
       toast.error("السلة فارغة");
       return;
     }
+    setAckOpen(true);
+  };
 
+  const handleSubmit = async () => {
+    if (!user) return;
+    setAckOpen(false);
     setSubmitting(true);
     try {
       const createdOrders: string[] = [];
@@ -101,6 +108,8 @@ export default function CheckoutPage() {
             delivery_address: deliveryMethod === "PICKUP" ? null : address,
             delivery_city: deliveryMethod === "PICKUP" ? null : city,
             notes: notes || null,
+            customer_acknowledged_at: new Date().toISOString(),
+            customer_acknowledgement_text: CUSTOMER_ORDER_ACK_TEXT,
           })
           .select("id, order_number")
           .single();
@@ -234,12 +243,21 @@ export default function CheckoutPage() {
               <span>الإجمالي</span>
               <span>{subtotal.toFixed(2)} JOD</span>
             </div>
-            <Button className="w-full" size="lg" onClick={handleSubmit} disabled={submitting || items.length === 0}>
+            <Button className="w-full" size="lg" onClick={validateAndOpenAck} disabled={submitting || items.length === 0}>
               {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : "تأكيد الطلب"}
             </Button>
           </Card>
         </div>
       </main>
+      <AcknowledgementDialog
+        open={ackOpen}
+        onOpenChange={setAckOpen}
+        title="إقرار العميل قبل تثبيت الطلب"
+        text={CUSTOMER_ORDER_ACK_TEXT}
+        confirmLabel="أوافق وأثبت الطلب"
+        loading={submitting}
+        onConfirm={handleSubmit}
+      />
       <AppFooter />
     </div>
   );

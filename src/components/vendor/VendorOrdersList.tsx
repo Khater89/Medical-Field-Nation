@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import AcknowledgementDialog, { VENDOR_ACCEPT_ACK_TEXT } from "@/components/marketplace/AcknowledgementDialog";
 
 const STATUS_FLOW: Record<string, { next: string; label: string }[]> = {
   pending: [{ next: "confirmed", label: "تأكيد الطلب" }, { next: "cancelled", label: "إلغاء" }],
@@ -28,6 +29,8 @@ const STATUS_LABEL: Record<string, string> = {
 export default function VendorOrdersList({ vendorId }: { vendorId: string }) {
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [ackOrderId, setAckOrderId] = useState<string | null>(null);
+  const [accepting, setAccepting] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -51,6 +54,23 @@ export default function VendorOrdersList({ vendorId }: { vendorId: string }) {
     const { error } = await supabase.from("marketplace_orders").update(patch).eq("id", orderId);
     if (error) return toast.error(error.message);
     toast.success("تم تحديث الحالة");
+    load();
+  };
+
+  const confirmAccept = async () => {
+    if (!ackOrderId) return;
+    setAccepting(true);
+    const { error } = await supabase.rpc("marketplace_vendor_accept_order", {
+      _order_id: ackOrderId,
+      _acknowledgement_text: VENDOR_ACCEPT_ACK_TEXT,
+    });
+    setAccepting(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("تم قبول الطلب");
+    setAckOrderId(null);
     load();
   };
 
@@ -95,16 +115,33 @@ export default function VendorOrdersList({ vendorId }: { vendorId: string }) {
             </div>
             {STATUS_FLOW[o.status] && (
               <div className="flex flex-wrap gap-2 pt-2">
-                {STATUS_FLOW[o.status].map((a) => (
-                  <Button key={a.next} size="sm" variant={a.next === "cancelled" ? "destructive" : "default"} onClick={() => updateStatus(o.id, a.next)}>
-                    {a.label}
-                  </Button>
-                ))}
+                {STATUS_FLOW[o.status].map((a) => {
+                  const isAccept = o.status === "pending" && a.next === "confirmed";
+                  return (
+                    <Button
+                      key={a.next}
+                      size="sm"
+                      variant={a.next === "cancelled" ? "destructive" : "default"}
+                      onClick={() => isAccept ? setAckOrderId(o.id) : updateStatus(o.id, a.next)}
+                    >
+                      {a.label}
+                    </Button>
+                  );
+                })}
               </div>
             )}
           </CardContent>
         </Card>
       ))}
+      <AcknowledgementDialog
+        open={!!ackOrderId}
+        onOpenChange={(v) => !v && setAckOrderId(null)}
+        title="إقرار الجهة البائعة عند قبول الطلب"
+        text={VENDOR_ACCEPT_ACK_TEXT}
+        confirmLabel="أوافق وأقبل الطلب"
+        loading={accepting}
+        onConfirm={confirmAccept}
+      />
     </div>
   );
 }
