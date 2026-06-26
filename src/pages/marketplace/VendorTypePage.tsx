@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useNavigate } from "react-router-dom";
 import AppHeader from "@/components/AppHeader";
 import AppFooter from "@/components/AppFooter";
 import MarketplaceSubNav from "@/components/marketplace/MarketplaceSubNav";
@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, ArrowLeft } from "lucide-react";
 
 const LABELS: Record<string, string> = {
   pharmacy: "الصيدليات",
