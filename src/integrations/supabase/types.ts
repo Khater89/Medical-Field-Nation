@@ -652,6 +652,9 @@ export type Database = {
       }
       marketplace_messages: {
         Row: {
+          attachment_name: string | null
+          attachment_type: string | null
+          attachment_url: string | null
           body: string
           chat_id: string
           created_at: string
@@ -661,6 +664,9 @@ export type Database = {
           sender_role: string
         }
         Insert: {
+          attachment_name?: string | null
+          attachment_type?: string | null
+          attachment_url?: string | null
           body: string
           chat_id: string
           created_at?: string
@@ -670,6 +676,9 @@ export type Database = {
           sender_role: string
         }
         Update: {
+          attachment_name?: string | null
+          attachment_type?: string | null
+          attachment_url?: string | null
           body?: string
           chat_id?: string
           created_at?: string
@@ -2031,10 +2040,18 @@ export type Database = {
         Args: { _product_id?: string; _vendor_id: string }
         Returns: string
       }
-      marketplace_send_message: {
-        Args: { _body: string; _chat_id: string }
-        Returns: Json
-      }
+      marketplace_send_message:
+        | { Args: { _body: string; _chat_id: string }; Returns: Json }
+        | {
+            Args: {
+              _attachment_name?: string
+              _attachment_type?: string
+              _attachment_url?: string
+              _body: string
+              _chat_id: string
+            }
+            Returns: Json
+          }
       marketplace_set_chat_identity: {
         Args: { _chat_id: string; _name: string; _phone: string }
         Returns: Json

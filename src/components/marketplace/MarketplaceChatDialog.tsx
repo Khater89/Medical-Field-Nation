@@ -4,8 +4,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Loader2, Send, MessagesSquare, ShieldCheck } from "lucide-react";
+import { Loader2, Send, MessagesSquare, ShieldCheck, Paperclip } from "lucide-react";
 import { toast } from "sonner";
+import ChatAttachment from "./ChatAttachment";
 
 interface Props {
   open: boolean;
@@ -23,12 +24,26 @@ interface Msg {
   sender_name?: string | null;
   body: string;
   created_at: string;
+  attachment_url?: string | null;
+  attachment_type?: string | null;
+  attachment_name?: string | null;
 }
 
 const LS_NAME = "mp_guest_name";
 const LS_PHONE = "mp_guest_phone";
 const tokenKey = (vendorId: string, productId?: string | null) =>
   `mp_guest_token:${vendorId}:${productId || "none"}`;
+
+const fileToBase64 = (f: File) =>
+  new Promise<string>((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => {
+      const s = (r.result as string).split(",")[1] || "";
+      resolve(s);
+    };
+    r.onerror = reject;
+    r.readAsDataURL(f);
+  });
 
 export default function MarketplaceChatDialog({ open, onOpenChange, vendorId, vendorName, productId, productName }: Props) {
   const [chatId, setChatId] = useState<string | null>(null);
@@ -37,6 +52,7 @@ export default function MarketplaceChatDialog({ open, onOpenChange, vendorId, ve
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -44,6 +60,7 @@ export default function MarketplaceChatDialog({ open, onOpenChange, vendorId, ve
   const [opening, setOpening] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -54,12 +71,9 @@ export default function MarketplaceChatDialog({ open, onOpenChange, vendorId, ve
     setIdentified(false);
     setChatId(null);
     setMessages([]);
-    // If we have token + identity already, auto-open
     const savedName = localStorage.getItem(LS_NAME);
     const savedPhone = localStorage.getItem(LS_PHONE);
-    if (tok && savedName && savedPhone) {
-      openChat(savedName, savedPhone, tok);
-    }
+    if (tok && savedName && savedPhone) openChat(savedName, savedPhone, tok);
   }, [open, vendorId, productId]);
 
   const openChat = async (n: string, p: string, tok: string | null) => {
@@ -83,7 +97,6 @@ export default function MarketplaceChatDialog({ open, onOpenChange, vendorId, ve
     setLoading(false);
   };
 
-  // Realtime subscription on chat messages
   useEffect(() => {
     if (!chatId) return;
     const ch = supabase
@@ -102,17 +115,44 @@ export default function MarketplaceChatDialog({ open, onOpenChange, vendorId, ve
     await openChat(name.trim(), phone.trim(), guestToken);
   };
 
+  const sendPayload = async (extra: { body?: string; attachment_url?: string; attachment_type?: string; attachment_name?: string }) => {
+    const { data, error } = await supabase.functions.invoke("mp-guest", {
+      body: {
+        action: "send_message", chat_id: chatId, guest_token: guestToken,
+        body: extra.body || "",
+        attachment_url: extra.attachment_url || null,
+        attachment_type: extra.attachment_type || null,
+        attachment_name: extra.attachment_name || null,
+      },
+    });
+    if (error || data?.error) { toast.error(data?.error || error?.message || "تعذّر الإرسال"); return false; }
+    if (data?.message) setMessages((prev) => prev.find((m) => m.id === data.message.id) ? prev : [...prev, data.message]);
+    return true;
+  };
+
   const send = async () => {
     if (!chatId || !guestToken || !input.trim()) return;
     setSending(true);
     const text = input.trim();
-    const { data, error } = await supabase.functions.invoke("mp-guest", {
-      body: { action: "send_message", chat_id: chatId, guest_token: guestToken, body: text },
-    });
+    const ok = await sendPayload({ body: text });
     setSending(false);
-    if (error || data?.error) return toast.error(data?.error || error?.message || "تعذّر الإرسال");
-    setInput("");
-    if (data?.message) setMessages((prev) => prev.find((m) => m.id === data.message.id) ? prev : [...prev, data.message]);
+    if (ok) setInput("");
+  };
+
+  const onPickFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    e.target.value = "";
+    if (!f || !chatId || !guestToken) return;
+    if (f.size > 10 * 1024 * 1024) return toast.error("الحد الأقصى 10MB");
+    setUploading(true);
+    try {
+      const b64 = await fileToBase64(f);
+      const { data, error } = await supabase.functions.invoke("mp-guest", {
+        body: { action: "upload_attachment", chat_id: chatId, guest_token: guestToken, file_base64: b64, mime: f.type, filename: f.name },
+      });
+      if (error || data?.error) { toast.error(data?.error || error?.message || "فشل الرفع"); return; }
+      await sendPayload({ attachment_url: data.url, attachment_type: data.type, attachment_name: data.name });
+    } finally { setUploading(false); }
   };
 
   return (
@@ -142,9 +182,6 @@ export default function MarketplaceChatDialog({ open, onOpenChange, vendorId, ve
             <Button className="w-full" onClick={handleIdentify} disabled={opening}>
               {opening ? <Loader2 className="h-4 w-4 animate-spin" /> : "متابعة وبدء الدردشة"}
             </Button>
-            <p className="text-[11px] text-muted-foreground text-center">
-              تظهر بياناتك للمتجر فقط لتسهيل الرد عليك.
-            </p>
           </div>
         ) : loading ? (
           <div className="flex-1 flex items-center justify-center"><Loader2 className="h-6 w-6 animate-spin" /></div>
@@ -152,14 +189,15 @@ export default function MarketplaceChatDialog({ open, onOpenChange, vendorId, ve
           <>
             <div ref={scrollRef} className="flex-1 overflow-y-auto p-3 space-y-2 bg-muted/30">
               {messages.length === 0 ? (
-                <div className="text-center text-xs text-muted-foreground pt-8">ابدأ المحادثة بكتابة رسالتك أدناه.</div>
+                <div className="text-center text-xs text-muted-foreground pt-8">ابدأ المحادثة بكتابة رسالتك أو إرسال مرفق.</div>
               ) : (
                 messages.map((m) => {
                   const mine = m.sender_role === "customer";
                   return (
                     <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
                       <div className={`max-w-[75%] rounded-2xl px-3 py-2 text-sm ${mine ? "bg-primary text-primary-foreground" : "bg-background border"}`}>
-                        {m.body}
+                        {m.body && <div className="whitespace-pre-wrap">{m.body}</div>}
+                        {m.attachment_url && <ChatAttachment url={m.attachment_url} type={m.attachment_type} name={m.attachment_name} />}
                       </div>
                     </div>
                   );
@@ -167,12 +205,14 @@ export default function MarketplaceChatDialog({ open, onOpenChange, vendorId, ve
               )}
             </div>
             <div className="p-3 border-t flex items-center gap-2">
-              <Input
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
+              <input ref={fileRef} type="file" hidden onChange={onPickFile}
+                accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx" />
+              <Button type="button" size="icon" variant="outline" onClick={() => fileRef.current?.click()} disabled={uploading || sending}>
+                {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Paperclip className="h-4 w-4" />}
+              </Button>
+              <Input value={input} onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && (e.preventDefault(), send())}
-                placeholder="اكتب رسالتك..."
-              />
+                placeholder="اكتب رسالتك..." />
               <Button onClick={send} disabled={sending || !input.trim()} size="icon">
                 {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
               </Button>
