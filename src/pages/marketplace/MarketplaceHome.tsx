@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Pill, Stethoscope, HeartPulse, Package } from "lucide-react";
+import BackButton from "@/components/ui/back-button";
 
 interface Category {
   id: string;
@@ -58,6 +59,7 @@ export default function MarketplaceHome() {
       <MarketplaceSubNav />
 
       <main className="container max-w-6xl py-6 space-y-10 flex-1">
+        <BackButton to="/" label="الرئيسية" />
         {/* Hero */}
         <section className="rounded-2xl bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-6 md:p-10 border border-border">
           <h1 className="text-2xl md:text-4xl font-extrabold mb-2">سوق MFN الطبي</h1>

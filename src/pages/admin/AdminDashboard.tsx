@@ -16,6 +16,7 @@ import SuspensionRequestsTab from "@/components/admin/SuspensionRequestsTab";
 import FinanceTab from "@/components/admin/FinanceTab";
 import AnalyticsCards from "@/components/admin/AnalyticsCards";
 import MarketplaceVendorsTab from "@/components/admin/MarketplaceVendorsTab";
+import BackButton from "@/components/ui/back-button";
 
 const AdminDashboard = () => {
   const { user, signOut } = useAuth();
@@ -39,6 +40,7 @@ const AdminDashboard = () => {
             </div>
           </Link>
           <div className="flex items-center gap-1">
+            <BackButton to="/" label="رجوع" />
             <LanguageToggle />
             <Button variant="outline" size="sm" className="gap-1.5" onClick={() => navigate("/booking")}>
               <PlusCircle className="h-4 w-4" />

@@ -21,6 +21,7 @@ import {
   MapPin, Phone, CalendarDays, Clock, Ban, Eye,
 } from "lucide-react";
 import CustomerOrderTracker from "@/components/booking/CustomerOrderTracker";
+import BackButton from "@/components/ui/back-button";
 
 interface BookingRow {
   id: string;
@@ -165,7 +166,10 @@ const ProfilePage = () => {
       <AppHeader />
 
       <main className="container max-w-2xl py-6 px-4 space-y-6">
-        <h2 className="text-xl font-bold text-foreground">حسابي</h2>
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="text-xl font-bold text-foreground">حسابي</h2>
+          <BackButton to="/" label="الرئيسية" />
+        </div>
 
         <Tabs defaultValue={defaultTab} className="space-y-4">
           <TabsList className="grid w-full grid-cols-2">

@@ -8,6 +8,7 @@ import mfnLogo from "@/assets/mfn-logo.png";
 import NotificationBell from "@/components/admin/NotificationBell";
 import BookingsTab from "@/components/admin/BookingsTab";
 import ProvidersTab from "@/components/admin/ProvidersTab";
+import BackButton from "@/components/ui/back-button";
 
 const CSDashboard = () => {
   const { user, signOut } = useAuth();
@@ -31,6 +32,7 @@ const CSDashboard = () => {
             </div>
           </Link>
           <div className="flex items-center gap-1">
+            <BackButton to="/" label="رجوع" />
             <Button variant="outline" size="sm" className="gap-1.5" onClick={() => navigate("/booking")}>
               <PlusCircle className="h-4 w-4" /> حجز جديد
             </Button>

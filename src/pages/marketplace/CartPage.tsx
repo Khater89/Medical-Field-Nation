@@ -6,6 +6,7 @@ import { useCart } from "@/contexts/MarketplaceCartContext";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Minus, Plus, Trash2, ShoppingBag } from "lucide-react";
+import BackButton from "@/components/ui/back-button";
 
 export default function CartPage() {
   const { items, updateQty, removeItem, subtotal, vendorsCount, clear } = useCart();
@@ -16,6 +17,7 @@ export default function CartPage() {
       <AppHeader />
       <MarketplaceSubNav />
       <main className="container max-w-4xl py-6 flex-1">
+        <BackButton label="رجوع" className="mb-3" />
         <h1 className="text-2xl font-bold mb-4">سلة الشراء</h1>
 
         {items.length === 0 ? (

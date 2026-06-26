@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Minus, Plus, ShoppingCart, Pill, Store } from "lucide-react";
+import BackButton from "@/components/ui/back-button";
 import { useCart } from "@/contexts/MarketplaceCartContext";
 import { toast } from "sonner";
 
@@ -122,6 +123,7 @@ export default function ProductPage() {
       <AppHeader />
       <MarketplaceSubNav />
       <main className="container max-w-6xl py-6 flex-1">
+        <BackButton label="رجوع" className="mb-3" />
         <div className="grid md:grid-cols-2 gap-6">
           <div>
             <div className="aspect-square bg-muted rounded-xl overflow-hidden">

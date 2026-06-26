@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Loader2, Package } from "lucide-react";
+import BackButton from "@/components/ui/back-button";
 
 const STATUS_LABEL: Record<string, string> = {
   NEW: "جديد",
@@ -53,6 +54,7 @@ export default function MyOrdersPage() {
       <AppHeader />
       <MarketplaceSubNav />
       <main className="container max-w-4xl py-6 flex-1">
+        <BackButton to="/marketplace" label="رجوع للسوق" className="mb-3" />
         <h1 className="text-2xl font-bold mb-4">طلباتي</h1>
         {loading ? (
           <div className="space-y-3">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-24" />)}</div>

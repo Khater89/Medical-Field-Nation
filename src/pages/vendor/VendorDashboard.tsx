@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Package, ShoppingBag, Store, LogOut, Loader2 } from "lucide-react";
+import BackButton from "@/components/ui/back-button";
 import { toast } from "sonner";
 import VendorProductsManager from "@/components/vendor/VendorProductsManager";
 import VendorOrdersList from "@/components/vendor/VendorOrdersList";
@@ -64,6 +65,7 @@ export default function VendorDashboard() {
       <header className="bg-background border-b sticky top-0 z-30">
         <div className="container py-3 px-4 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
+            <BackButton to="/" label="الرئيسية" />
             <Store className="h-6 w-6 text-primary shrink-0" />
             <div className="min-w-0">
               <div className="font-bold truncate">{vendor.store_name}</div>
