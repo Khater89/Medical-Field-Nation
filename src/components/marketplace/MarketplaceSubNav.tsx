@@ -1,7 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Store, ShoppingCart, Package } from "lucide-react";
+import { Store, ShoppingCart, Package, MessagesSquare } from "lucide-react";
 import { useCart } from "@/contexts/MarketplaceCartContext";
 
 export default function MarketplaceSubNav() {
@@ -10,8 +10,10 @@ export default function MarketplaceSubNav() {
 
   const tabs = [
     { to: "/marketplace", label: "الرئيسية", icon: Store, exact: true },
+    { to: "/marketplace/my-messages", label: "محادثاتي", icon: MessagesSquare, exact: false },
     { to: "/marketplace/orders", label: "طلباتي", icon: Package, exact: false },
   ];
+
 
   return (
     <div className="border-b border-border/60 bg-card/40">
