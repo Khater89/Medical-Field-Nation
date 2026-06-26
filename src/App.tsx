@@ -36,6 +36,8 @@ import VendorDashboard from "./pages/vendor/VendorDashboard";
 import VendorPage from "./pages/marketplace/VendorPage";
 import VendorsListPage from "./pages/marketplace/VendorsListPage";
 import MarketplaceMessagesPage from "./pages/marketplace/MarketplaceMessagesPage";
+import GuestMessagesPage from "./pages/marketplace/GuestMessagesPage";
+
 import { MarketplaceCartProvider } from "./contexts/MarketplaceCartContext";
 import NotFound from "./pages/NotFound";
 
