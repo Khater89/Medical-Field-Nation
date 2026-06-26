@@ -8,6 +8,7 @@ import { Scene3HowItWorks } from "./scenes/Scene3HowItWorks";
 import { Scene4Stats } from "./scenes/Scene4Stats";
 import { Scene5CTA } from "./scenes/Scene5CTA";
 import { Starfield, ShootingStars } from "./components/Starfield";
+import { ScenePhotos } from "./scenes/ScenePhotos";
 
 const TRANSITION_DURATION = 20;
 
@@ -49,6 +50,13 @@ export const MainVideo: React.FC = () => {
         />
         <TransitionSeries.Sequence durationInFrames={110}>
           <Scene2Services />
+        </TransitionSeries.Sequence>
+        <TransitionSeries.Transition
+          presentation={fade()}
+          timing={springTiming({ config: { damping: 200 }, durationInFrames: TRANSITION_DURATION })}
+        />
+        <TransitionSeries.Sequence durationInFrames={130}>
+          <ScenePhotos />
         </TransitionSeries.Sequence>
         <TransitionSeries.Transition
           presentation={slide({ direction: "from-left" })}
