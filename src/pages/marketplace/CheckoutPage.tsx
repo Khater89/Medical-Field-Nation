@@ -108,6 +108,8 @@ export default function CheckoutPage() {
             delivery_address: deliveryMethod === "PICKUP" ? null : address,
             delivery_city: deliveryMethod === "PICKUP" ? null : city,
             notes: notes || null,
+            customer_acknowledged_at: new Date().toISOString(),
+            customer_acknowledgement_text: CUSTOMER_ORDER_ACK_TEXT,
           })
           .select("id, order_number")
           .single();
