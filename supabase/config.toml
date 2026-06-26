@@ -35,3 +35,6 @@ verify_jwt = false
 
 [functions.booking-reminder-dispatcher]
 verify_jwt = false
+
+[functions.mp-guest]
+verify_jwt = false

@@ -36,19 +36,16 @@ export default function CheckoutPage() {
   const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>("VENDOR_DELIVERY");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("CASH_ON_DELIVERY");
 
-  useEffect(() => {
-    if (!authLoading && !user) {
-      toast.info("يرجى تسجيل الدخول لإتمام الشراء");
-      navigate(`/auth?redirect=${encodeURIComponent("/marketplace/checkout")}`);
-    }
-  }, [authLoading, user, navigate]);
-
+  // Guests are allowed. Prefill from profile if signed in, else from localStorage.
   useEffect(() => {
     if (profile) {
-      setCustomerName(profile.full_name || "");
-      setCustomerPhone(profile.phone || "");
+      setCustomerName(profile.full_name || localStorage.getItem("mp_guest_name") || "");
+      setCustomerPhone(profile.phone || localStorage.getItem("mp_guest_phone") || "");
       setCustomerEmail(user?.email || "");
       setCity(profile.city || "");
+    } else {
+      setCustomerName(localStorage.getItem("mp_guest_name") || "");
+      setCustomerPhone(localStorage.getItem("mp_guest_phone") || "");
     }
   }, [profile, user]);
 
@@ -64,7 +61,6 @@ export default function CheckoutPage() {
   }, [items]);
 
   const validateAndOpenAck = () => {
-    if (!user) return;
     if (!customerName.trim() || !customerPhone.trim()) {
       toast.error("الرجاء تعبئة الاسم ورقم الهاتف");
       return;
@@ -81,59 +77,69 @@ export default function CheckoutPage() {
   };
 
   const handleSubmit = async () => {
-    if (!user) return;
     setAckOpen(false);
     setSubmitting(true);
     try {
+      localStorage.setItem("mp_guest_name", customerName);
+      localStorage.setItem("mp_guest_phone", customerPhone);
+
       const createdOrders: string[] = [];
 
-      for (const [vendor_id, vItems] of groups) {
-        const vSubtotal = vItems.reduce((s, i) => s + i.price * i.quantity, 0);
-
-        const { data: order, error: orderErr } = await supabase
-          .from("marketplace_orders")
-          .insert({
-            customer_user_id: user.id,
-            vendor_id,
-            payment_method: paymentMethod,
-            delivery_method: deliveryMethod,
-            subtotal: vSubtotal,
-            delivery_fee: 0,
-            discount: 0,
-            total: vSubtotal,
-            currency: "JOD",
-            customer_name: customerName,
-            customer_phone: customerPhone,
-            customer_email: customerEmail || null,
-            delivery_address: deliveryMethod === "PICKUP" ? null : address,
-            delivery_city: deliveryMethod === "PICKUP" ? null : city,
-            notes: notes || null,
-            customer_acknowledged_at: new Date().toISOString(),
-            customer_acknowledgement_text: CUSTOMER_ORDER_ACK_TEXT,
-          })
-          .select("id, order_number")
-          .single();
-
-        if (orderErr || !order) throw orderErr || new Error("فشل إنشاء الطلب");
-
-        const itemsPayload = vItems.map((i) => ({
-          order_id: order.id,
-          product_id: i.product_id,
-          product_name: i.name,
-          unit_price: i.price,
-          quantity: i.quantity,
-          line_total: i.price * i.quantity,
-        }));
-
-        const { error: itemsErr } = await supabase.from("marketplace_order_items").insert(itemsPayload);
-        if (itemsErr) throw itemsErr;
-
-        createdOrders.push(order.id);
+      if (user) {
+        // Authenticated path (RLS-backed direct insert)
+        for (const [vendor_id, vItems] of groups) {
+          const vSubtotal = vItems.reduce((s, i) => s + i.price * i.quantity, 0);
+          const { data: order, error: orderErr } = await supabase
+            .from("marketplace_orders")
+            .insert({
+              customer_user_id: user.id,
+              vendor_id,
+              payment_method: paymentMethod,
+              delivery_method: deliveryMethod,
+              subtotal: vSubtotal, delivery_fee: 0, discount: 0, total: vSubtotal, currency: "JOD",
+              customer_name: customerName, customer_phone: customerPhone, customer_email: customerEmail || null,
+              delivery_address: deliveryMethod === "PICKUP" ? null : address,
+              delivery_city: deliveryMethod === "PICKUP" ? null : city,
+              notes: notes || null,
+              customer_acknowledged_at: new Date().toISOString(),
+              customer_acknowledgement_text: CUSTOMER_ORDER_ACK_TEXT,
+            }).select("id, order_number").single();
+          if (orderErr || !order) throw orderErr || new Error("فشل إنشاء الطلب");
+          const itemsPayload = vItems.map((i) => ({
+            order_id: order.id, product_id: i.product_id, product_name: i.name,
+            unit_price: i.price, quantity: i.quantity, line_total: i.price * i.quantity,
+          }));
+          const { error: itemsErr } = await supabase.from("marketplace_order_items").insert(itemsPayload);
+          if (itemsErr) throw itemsErr;
+          createdOrders.push(order.id);
+        }
+      } else {
+        // Guest path via edge function
+        const guestToken = localStorage.getItem("mp_guest_order_token") || crypto.randomUUID();
+        localStorage.setItem("mp_guest_order_token", guestToken);
+        for (const [vendor_id, vItems] of groups) {
+          const { data, error } = await supabase.functions.invoke("mp-guest", {
+            body: {
+              action: "create_order",
+              vendor_id,
+              items: vItems.map((i) => ({ product_id: i.product_id, quantity: i.quantity })),
+              delivery_method: deliveryMethod,
+              delivery_address: deliveryMethod === "PICKUP" ? null : address,
+              delivery_city: deliveryMethod === "PICKUP" ? null : city,
+              notes: notes || null,
+              name: customerName, phone: customerPhone,
+              guest_token: guestToken,
+              acknowledgement_text: CUSTOMER_ORDER_ACK_TEXT,
+            },
+          });
+          if (error || data?.error) throw new Error(data?.error || error?.message || "فشل إنشاء الطلب");
+          createdOrders.push(data.order_id);
+        }
       }
 
       clear();
       toast.success("تم إنشاء طلبك بنجاح");
-      navigate("/marketplace/orders");
+      navigate(user ? "/marketplace/orders" : "/marketplace");
     } catch (e: any) {
       console.error(e);
       toast.error(e?.message || "حدث خطأ أثناء إنشاء الطلب");
@@ -142,7 +148,7 @@ export default function CheckoutPage() {
     }
   };
 
-  if (authLoading || !user) {
+  if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="h-6 w-6 animate-spin text-primary" />

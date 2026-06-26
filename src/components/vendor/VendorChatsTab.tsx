@@ -82,9 +82,10 @@ export default function VendorChatsTab({ vendorId }: { vendorId: string }) {
               <button key={c.id} onClick={() => setActive(c)}
                 className={`w-full text-start p-3 hover:bg-muted/50 ${active?.id === c.id ? "bg-muted" : ""}`}>
                 <div className="flex items-center justify-between gap-2">
-                  <div className="text-sm font-semibold truncate">عميل #{c.customer_user_id.slice(0, 6)}</div>
+                  <div className="text-sm font-semibold truncate">{c.customer_name || "عميل"}</div>
                   {c.unread_for_vendor > 0 && <Badge variant="destructive">{c.unread_for_vendor}</Badge>}
                 </div>
+                {c.customer_phone && <div className="text-xs text-primary mt-0.5" dir="ltr">{c.customer_phone}</div>}
                 <div className="text-xs text-muted-foreground truncate mt-1">{c.last_message_preview || "-"}</div>
               </button>
             ))}

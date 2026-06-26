@@ -587,7 +587,9 @@ export type Database = {
           customer_consent_at: string | null
           customer_name: string | null
           customer_phone: string | null
-          customer_user_id: string
+          customer_phone_norm: string | null
+          customer_user_id: string | null
+          guest_token: string | null
           id: string
           last_message_at: string
           last_message_preview: string | null
@@ -602,7 +604,9 @@ export type Database = {
           customer_consent_at?: string | null
           customer_name?: string | null
           customer_phone?: string | null
-          customer_user_id: string
+          customer_phone_norm?: string | null
+          customer_user_id?: string | null
+          guest_token?: string | null
           id?: string
           last_message_at?: string
           last_message_preview?: string | null
@@ -617,7 +621,9 @@ export type Database = {
           customer_consent_at?: string | null
           customer_name?: string | null
           customer_phone?: string | null
-          customer_user_id?: string
+          customer_phone_norm?: string | null
+          customer_user_id?: string | null
+          guest_token?: string | null
           id?: string
           last_message_at?: string
           last_message_preview?: string | null
@@ -650,7 +656,8 @@ export type Database = {
           chat_id: string
           created_at: string
           id: string
-          sender_id: string
+          sender_id: string | null
+          sender_name: string | null
           sender_role: string
         }
         Insert: {
@@ -658,7 +665,8 @@ export type Database = {
           chat_id: string
           created_at?: string
           id?: string
-          sender_id: string
+          sender_id?: string | null
+          sender_name?: string | null
           sender_role: string
         }
         Update: {
@@ -666,7 +674,8 @@ export type Database = {
           chat_id?: string
           created_at?: string
           id?: string
-          sender_id?: string
+          sender_id?: string | null
+          sender_name?: string | null
           sender_role?: string
         }
         Relationships: [
@@ -739,6 +748,7 @@ export type Database = {
           customer_email: string | null
           customer_name: string | null
           customer_phone: string | null
+          customer_phone_norm: string | null
           customer_user_id: string | null
           delivered_at: string | null
           delivery_address: string | null
@@ -748,6 +758,7 @@ export type Database = {
           delivery_lng: number | null
           delivery_method: Database["public"]["Enums"]["marketplace_delivery_method"]
           discount: number
+          guest_token: string | null
           id: string
           internal_note: string | null
           notes: string | null
@@ -777,6 +788,7 @@ export type Database = {
           customer_email?: string | null
           customer_name?: string | null
           customer_phone?: string | null
+          customer_phone_norm?: string | null
           customer_user_id?: string | null
           delivered_at?: string | null
           delivery_address?: string | null
@@ -786,6 +798,7 @@ export type Database = {
           delivery_lng?: number | null
           delivery_method: Database["public"]["Enums"]["marketplace_delivery_method"]
           discount?: number
+          guest_token?: string | null
           id?: string
           internal_note?: string | null
           notes?: string | null
@@ -815,6 +828,7 @@ export type Database = {
           customer_email?: string | null
           customer_name?: string | null
           customer_phone?: string | null
+          customer_phone_norm?: string | null
           customer_user_id?: string | null
           delivered_at?: string | null
           delivery_address?: string | null
@@ -824,6 +838,7 @@ export type Database = {
           delivery_lng?: number | null
           delivery_method?: Database["public"]["Enums"]["marketplace_delivery_method"]
           discount?: number
+          guest_token?: string | null
           id?: string
           internal_note?: string | null
           notes?: string | null
@@ -2029,6 +2044,7 @@ export type Database = {
         Returns: Json
       }
       mfn_is_staff: { Args: never; Returns: boolean }
+      mp_normalize_phone: { Args: { _p: string }; Returns: string }
       provider_confirm_agreement: {
         Args: { _booking_id: string }
         Returns: Json
