@@ -89,25 +89,50 @@ Deno.serve(async (req) => {
     }
 
     if (action === "send_message") {
-      const { chat_id, guest_token, body: text } = body;
-      if (!text?.trim()) return jr({ error: "empty" }, 400);
+      const { chat_id, guest_token, body: text, attachment_url, attachment_type, attachment_name } = body;
+      const hasText = !!text?.trim();
+      const hasAtt = !!attachment_url;
+      if (!hasText && !hasAtt) return jr({ error: "empty" }, 400);
       const { data: chat } = await sb.from("marketplace_chats")
         .select("id,guest_token,vendor_id,customer_name").eq("id", chat_id).maybeSingle();
       if (!chat || chat.guest_token !== guest_token) return jr({ error: "forbidden" }, 403);
       const { data: msg, error } = await sb.from("marketplace_messages").insert({
         chat_id, sender_id: null, sender_role: "customer",
-        sender_name: chat.customer_name, body: text.trim(),
+        sender_name: chat.customer_name, body: hasText ? text.trim() : "",
+        attachment_url: attachment_url || null,
+        attachment_type: attachment_type || null,
+        attachment_name: attachment_name || null,
       }).select("*").single();
       if (error) return jr({ error: error.message }, 400);
-      
+
+      const preview = hasText ? text.trim().slice(0, 120) : "📎 مرفق";
       const { data: cur } = await sb.from("marketplace_chats")
         .select("unread_for_vendor").eq("id", chat_id).maybeSingle();
       await sb.from("marketplace_chats").update({
         last_message_at: new Date().toISOString(),
-        last_message_preview: text.trim().slice(0, 120),
+        last_message_preview: preview,
         unread_for_vendor: (cur?.unread_for_vendor || 0) + 1,
       }).eq("id", chat_id);
       return jr({ message: msg });
+    }
+
+    if (action === "upload_attachment") {
+      const { chat_id, guest_token, file_base64, mime, filename } = body;
+      if (!chat_id || !guest_token || !file_base64) return jr({ error: "missing_fields" }, 400);
+      const { data: chat } = await sb.from("marketplace_chats")
+        .select("id,guest_token").eq("id", chat_id).maybeSingle();
+      if (!chat || chat.guest_token !== guest_token) return jr({ error: "forbidden" }, 403);
+      const bin = Uint8Array.from(atob(file_base64), (c) => c.charCodeAt(0));
+      const ext = (filename?.split(".").pop() || "bin").toLowerCase().slice(0, 8);
+      const path = `chats/${chat_id}/${crypto.randomUUID()}.${ext}`;
+      const up = await sb.storage.from("marketplace-chat").upload(path, bin, {
+        contentType: mime || "application/octet-stream", upsert: false,
+      });
+      if (up.error) return jr({ error: up.error.message }, 400);
+      const signed = await sb.storage.from("marketplace-chat")
+        .createSignedUrl(path, 60 * 60 * 24 * 365);
+      if (signed.error) return jr({ error: signed.error.message }, 400);
+      return jr({ url: signed.data.signedUrl, type: mime, name: filename });
     }
 
     if (action === "create_order") {
