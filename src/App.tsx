@@ -24,6 +24,7 @@ import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import TrackOrderPage from "./pages/TrackOrderPage";
 import MarketplaceHome from "./pages/marketplace/MarketplaceHome";
+import MarketplaceEnterPage from "./pages/marketplace/MarketplaceEnterPage";
 import CategoryPage from "./pages/marketplace/CategoryPage";
 import VendorTypePage from "./pages/marketplace/VendorTypePage";
 import ProductPage from "./pages/marketplace/ProductPage";
@@ -66,6 +67,7 @@ const App = () => {
               <Route path="/track" element={<TrackOrderPage />} />
               {/* Marketplace */}
               <Route path="/marketplace" element={<MarketplaceHome />} />
+              <Route path="/marketplace/enter" element={<MarketplaceEnterPage />} />
               <Route path="/marketplace/category/:slug" element={<CategoryPage />} />
               <Route path="/marketplace/type/:type" element={<VendorTypePage />} />
               <Route path="/marketplace/product/:id" element={<ProductPage />} />

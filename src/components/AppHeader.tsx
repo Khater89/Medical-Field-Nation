@@ -49,7 +49,7 @@ const AppHeader = () => {
   const navLinks = [
     { label: t("nav.home"), href: "/" },
     { label: t("nav.services") || "الخدمات", href: "/#services" },
-    { label: "السوق", href: "/marketplace" },
+    { label: "السوق الطبي", href: "/marketplace/enter" },
     { label: "تتبع الطلب /التعيين الذاتي ", href: "/track" },
   ];
 

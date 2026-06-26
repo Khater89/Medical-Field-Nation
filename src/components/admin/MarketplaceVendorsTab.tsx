@@ -83,7 +83,7 @@ export default function MarketplaceVendorsTab() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>إدارة بائعي السوق</CardTitle>
+        <CardTitle>إدارة بائعي السوق الطبي</CardTitle>
         <div className="flex flex-wrap gap-2 pt-2">
           <Select value={filter} onValueChange={setFilter}>
             <SelectTrigger className="w-40"><SelectValue /></SelectTrigger>
