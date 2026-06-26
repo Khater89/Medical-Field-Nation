@@ -18,9 +18,8 @@ export const Scene5CTA: React.FC = () => {
   // Pulsing glow on button
   const pulseScale = 1 + 0.03 * Math.sin((frame - 55) * 0.15);
 
-  // Phone number
-  const phoneOpacity = interpolate(frame, [60, 75], [0, 1], { extrapolateRight: "clamp" });
-  const phoneY = interpolate(frame, [60, 78], [20, 0], { extrapolateRight: "clamp" });
+  // (phone number removed)
+
 
   return (
     <AbsoluteFill style={{ justifyContent: "center", alignItems: "center" }}>
