@@ -438,7 +438,7 @@ const LandingPage = () => {
               playsInline
               poster={heroMedicalImg}
             >
-              <source src="/mfn-promo.mp4" type="video/mp4" />
+              <source src="/mfn-promo-v2.mp4" type="video/mp4" />
             </video>
             {/* Mask any hardcoded phone number burned into the promo video */}
             <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[18%] bg-gradient-to-t from-black via-black/85 to-transparent" />
