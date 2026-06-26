@@ -52,6 +52,13 @@ export const MainVideo: React.FC = () => {
           <Scene2Services />
         </TransitionSeries.Sequence>
         <TransitionSeries.Transition
+          presentation={fade()}
+          timing={springTiming({ config: { damping: 200 }, durationInFrames: TRANSITION_DURATION })}
+        />
+        <TransitionSeries.Sequence durationInFrames={130}>
+          <ScenePhotos />
+        </TransitionSeries.Sequence>
+        <TransitionSeries.Transition
           presentation={slide({ direction: "from-left" })}
           timing={springTiming({ config: { damping: 200 }, durationInFrames: TRANSITION_DURATION })}
         />
