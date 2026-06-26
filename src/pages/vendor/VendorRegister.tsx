@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -22,7 +22,11 @@ const TYPES: { value: VendorType; ar: string; en: string; icon: any; desc: strin
 export default function VendorRegister() {
   const { user, loading, isVendor } = useAuth();
   const navigate = useNavigate();
-  const [type, setType] = useState<VendorType>("pharmacy");
+  const [searchParams] = useSearchParams();
+  const initialType = (searchParams.get("type") as VendorType) || "pharmacy";
+  const [type, setType] = useState<VendorType>(
+    ["pharmacy", "medical_devices", "prosthetics"].includes(initialType) ? initialType : "pharmacy"
+  );
   const [storeName, setStoreName] = useState("");
   const [phone, setPhone] = useState("");
   const [city, setCity] = useState("");
@@ -31,8 +35,11 @@ export default function VendorRegister() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    if (!loading && !user) navigate("/auth?redirect=/vendor/register");
-  }, [loading, user, navigate]);
+    if (!loading && !user) {
+      const qs = searchParams.get("type") ? `?type=${searchParams.get("type")}` : "";
+      navigate(`/auth?redirect=${encodeURIComponent("/vendor/register" + qs)}`);
+    }
+  }, [loading, user, navigate, searchParams]);
 
   useEffect(() => {
     if (isVendor) navigate("/vendor");
