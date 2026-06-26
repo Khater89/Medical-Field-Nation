@@ -103,9 +103,11 @@ const AuthPage = () => {
             .from("user_roles").select("role").eq("user_id", authedUser.id);
           const isAdminR = roles?.some((r) => r.role === "admin");
           const isCSR = roles?.some((r) => r.role === "cs");
+          const isVendorR = roles?.some((r) => r.role === "vendor");
           const isProviderR = roles?.some((r) => r.role === "provider");
           if (isAdminR) navigate("/admin", { replace: true });
           else if (isCSR) navigate("/cs", { replace: true });
+          else if (isVendorR) navigate("/vendor", { replace: true });
           else if (isProviderR) {
             const { data: prof } = await supabase
               .from("profiles").select("provider_status, profile_completed")
@@ -115,7 +117,16 @@ const AuthPage = () => {
             } else {
               navigate("/account-review", { replace: true });
             }
-          } else navigate("/", { replace: true });
+          } else {
+            // Customer — or a vendor whose application is still pending approval
+            const { data: pendingVendor } = await supabase
+              .from("marketplace_vendors")
+              .select("id, status")
+              .eq("owner_user_id", authedUser.id)
+              .maybeSingle();
+            if (pendingVendor) navigate("/vendor", { replace: true });
+            else navigate("/", { replace: true });
+          }
         }
       }
     } catch (err: any) {
