@@ -65,7 +65,10 @@ export default function VendorOrdersList({ vendorId }: { vendorId: string }) {
       _acknowledgement_text: VENDOR_ACCEPT_ACK_TEXT,
     });
     setAccepting(false);
-    if (error) return toast.error(error.message);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
     toast.success("تم قبول الطلب");
     setAckOrderId(null);
     load();
