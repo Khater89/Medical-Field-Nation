@@ -24,6 +24,7 @@ import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import TrackOrderPage from "./pages/TrackOrderPage";
 import MarketplaceHome from "./pages/marketplace/MarketplaceHome";
+import MarketplaceEnterPage from "./pages/marketplace/MarketplaceEnterPage";
 import CategoryPage from "./pages/marketplace/CategoryPage";
 import VendorTypePage from "./pages/marketplace/VendorTypePage";
 import ProductPage from "./pages/marketplace/ProductPage";
