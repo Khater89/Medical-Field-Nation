@@ -63,7 +63,7 @@ export default function CheckoutPage() {
     return Array.from(map.entries()); // [[vendor_id, items[]], ...]
   }, [items]);
 
-  const handleSubmit = async () => {
+  const validateAndOpenAck = () => {
     if (!user) return;
     if (!customerName.trim() || !customerPhone.trim()) {
       toast.error("الرجاء تعبئة الاسم ورقم الهاتف");
@@ -77,7 +77,12 @@ export default function CheckoutPage() {
       toast.error("السلة فارغة");
       return;
     }
+    setAckOpen(true);
+  };
 
+  const handleSubmit = async () => {
+    if (!user) return;
+    setAckOpen(false);
     setSubmitting(true);
     try {
       const createdOrders: string[] = [];
