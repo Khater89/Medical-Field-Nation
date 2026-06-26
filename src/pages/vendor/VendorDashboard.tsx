@@ -6,12 +6,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Package, ShoppingBag, Store, LogOut, Loader2 } from "lucide-react";
+import { Package, ShoppingBag, Store, LogOut, Loader2, MessagesSquare, Bell } from "lucide-react";
 import BackButton from "@/components/ui/back-button";
 import { toast } from "sonner";
 import VendorProductsManager from "@/components/vendor/VendorProductsManager";
 import VendorOrdersList from "@/components/vendor/VendorOrdersList";
 import VendorStoreInfo from "@/components/vendor/VendorStoreInfo";
+import VendorChatsTab from "@/components/vendor/VendorChatsTab";
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   pending: { label: "بانتظار الموافقة", color: "bg-yellow-100 text-yellow-800" },
@@ -103,9 +104,10 @@ export default function VendorDashboard() {
         )}
 
         <Tabs defaultValue="products">
-          <TabsList className="grid grid-cols-3 w-full">
+          <TabsList className="grid grid-cols-4 w-full">
             <TabsTrigger value="products"><Package className="h-4 w-4 mr-1" /> المنتجات</TabsTrigger>
             <TabsTrigger value="orders"><ShoppingBag className="h-4 w-4 mr-1" /> الطلبات</TabsTrigger>
+            <TabsTrigger value="chats"><MessagesSquare className="h-4 w-4 mr-1" /> الرسائل</TabsTrigger>
             <TabsTrigger value="store"><Store className="h-4 w-4 mr-1" /> بيانات المتجر</TabsTrigger>
           </TabsList>
           <TabsContent value="products" className="mt-4">
@@ -113,6 +115,9 @@ export default function VendorDashboard() {
           </TabsContent>
           <TabsContent value="orders" className="mt-4">
             <VendorOrdersList vendorId={vendor.id} />
+          </TabsContent>
+          <TabsContent value="chats" className="mt-4">
+            <VendorChatsTab vendorId={vendor.id} />
           </TabsContent>
           <TabsContent value="store" className="mt-4">
             <VendorStoreInfo vendor={vendor} onUpdated={(v) => setVendor(v)} />

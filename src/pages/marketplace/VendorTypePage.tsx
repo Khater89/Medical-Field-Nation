@@ -39,18 +39,22 @@ const CTA_LABELS: Record<string, { title: string; sub: string }> = {
 
 export default function VendorTypePage() {
   const { type } = useParams<{ type: string }>();
+  const [vendors, setVendors] = useState<any[]>([]);
   const [products, setProducts] = useState<ProductCardData[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     (async () => {
       setLoading(true);
-      const { data: vendors } = await supabase
+      const { data: vs } = await supabase
         .from("marketplace_vendors")
-        .select("id")
+        .select("id,store_name,logo_url,city,area_text,is_open")
         .eq("status", "approved")
-        .eq("vendor_type", type as any);
-      const vendorIds = (vendors || []).map((v: any) => v.id);
+        .eq("vendor_type", type as any)
+        .order("created_at", { ascending: false })
+        .limit(12);
+      setVendors(vs || []);
+      const vendorIds = (vs || []).map((v: any) => v.id);
       if (vendorIds.length === 0) {
         setProducts([]);
         setLoading(false);
@@ -97,21 +101,47 @@ export default function VendorTypePage() {
           </Card>
         )}
 
-        {loading ? (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <Skeleton key={i} className="aspect-[3/4] rounded-lg" />
-            ))}
-          </div>
-        ) : products.length === 0 ? (
-          <Card className="p-8 text-center text-muted-foreground">لا توجد منتجات متاحة في هذا القسم بعد.</Card>
-        ) : (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {products.map((p) => (
-              <ProductCard key={p.id} product={p} />
-            ))}
-          </div>
+        {vendors.length > 0 && (
+          <section>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-lg font-bold">المتاجر المتاحة</h2>
+              <Link to={`/marketplace/pharmacies?type=${type}`} className="text-sm text-primary underline">عرض الكل</Link>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {vendors.map((v) => (
+                <Link key={v.id} to={`/marketplace/vendor/${v.id}`}>
+                  <Card className="p-3 hover:shadow-md transition-shadow h-full">
+                    <div className="h-12 w-12 rounded-lg bg-primary/10 overflow-hidden flex items-center justify-center mb-2">
+                      {v.logo_url ? <img src={v.logo_url} alt="" className="w-full h-full object-cover" /> : <span className="text-primary text-lg">🏪</span>}
+                    </div>
+                    <div className="font-semibold text-sm truncate">{v.store_name}</div>
+                    <div className="text-xs text-muted-foreground truncate">{v.city || "-"}</div>
+                    <div className={`text-xs mt-1 ${v.is_open ? "text-green-700" : "text-red-700"}`}>{v.is_open ? "مفتوحة" : "مغلقة"}</div>
+                  </Card>
+                </Link>
+              ))}
+            </div>
+          </section>
         )}
+
+        <section>
+          <h2 className="text-lg font-bold mb-3">منتجات هذا القسم</h2>
+          {loading ? (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <Skeleton key={i} className="aspect-[3/4] rounded-lg" />
+              ))}
+            </div>
+          ) : products.length === 0 ? (
+            <Card className="p-8 text-center text-muted-foreground">لا توجد منتجات متاحة في هذا القسم بعد.</Card>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {products.map((p) => (
+                <ProductCard key={p.id} product={p} />
+              ))}
+            </div>
+          )}
+        </section>
       </main>
       <AppFooter />
     </div>

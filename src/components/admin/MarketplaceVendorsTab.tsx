@@ -49,12 +49,29 @@ export default function MarketplaceVendorsTab() {
 
   useEffect(() => { load(); }, []);
 
-  const setStatus = async (id: string, status: string) => {
-    const patch: any = { status };
-    if (status === "approved") patch.approved_at = new Date().toISOString();
-    const { error } = await supabase.from("marketplace_vendors").update(patch).eq("id", id);
+  const approve = async (id: string) => {
+    const { error } = await supabase.rpc("admin_approve_vendor", { _id: id });
     if (error) return toast.error(error.message);
-    toast.success("تم التحديث");
+    toast.success("تم اعتماد المتجر وتفعيله");
+    load();
+  };
+  const reject = async (id: string) => {
+    const reason = prompt("سبب الرفض:") || "";
+    const { error } = await supabase.rpc("admin_reject_vendor", { _id: id, _reason: reason });
+    if (error) return toast.error(error.message);
+    toast.success("تم رفض الطلب");
+    load();
+  };
+  const toggleActive = async (id: string, active: boolean) => {
+    const { error } = await supabase.rpc("admin_toggle_vendor_active", { _id: id, _active: active });
+    if (error) return toast.error(error.message);
+    toast.success(active ? "تم التفعيل" : "تم الإيقاف");
+    load();
+  };
+  const suspend = async (id: string) => {
+    const { error } = await supabase.from("marketplace_vendors").update({ status: "suspended" }).eq("id", id);
+    if (error) return toast.error(error.message);
+    toast.success("تم الإيقاف");
     load();
   };
 
@@ -115,18 +132,26 @@ export default function MarketplaceVendorsTab() {
                   <div className="flex flex-wrap gap-2">
                     {v.status === "pending" && (
                       <>
-                        <Button size="sm" onClick={() => setStatus(v.id, "approved")}><CheckCircle2 className="h-4 w-4 mr-1" /> موافقة</Button>
-                        <Button size="sm" variant="destructive" onClick={() => setStatus(v.id, "rejected")}><XCircle className="h-4 w-4 mr-1" /> رفض</Button>
+                        <Button size="sm" onClick={() => approve(v.id)}><CheckCircle2 className="h-4 w-4 mr-1" /> موافقة وتفعيل</Button>
+                        <Button size="sm" variant="destructive" onClick={() => reject(v.id)}><XCircle className="h-4 w-4 mr-1" /> رفض</Button>
                       </>
                     )}
                     {v.status === "approved" && (
-                      <Button size="sm" variant="outline" onClick={() => setStatus(v.id, "suspended")}><Pause className="h-4 w-4 mr-1" /> إيقاف مؤقت</Button>
+                      <>
+                        <Button size="sm" variant="outline" onClick={() => toggleActive(v.id, !v.is_active)}>
+                          {v.is_active ? <><Pause className="h-4 w-4 mr-1" /> تعطيل</> : <><Play className="h-4 w-4 mr-1" /> تفعيل</>}
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => suspend(v.id)}><Pause className="h-4 w-4 mr-1" /> إيقاف مؤقت</Button>
+                      </>
                     )}
                     {v.status === "suspended" && (
-                      <Button size="sm" onClick={() => setStatus(v.id, "approved")}><Play className="h-4 w-4 mr-1" /> إعادة تفعيل</Button>
+                      <Button size="sm" onClick={() => approve(v.id)}><Play className="h-4 w-4 mr-1" /> إعادة تفعيل</Button>
                     )}
                     {v.status === "rejected" && (
-                      <Button size="sm" onClick={() => setStatus(v.id, "approved")}><CheckCircle2 className="h-4 w-4 mr-1" /> اعتماد</Button>
+                      <Button size="sm" onClick={() => approve(v.id)}><CheckCircle2 className="h-4 w-4 mr-1" /> اعتماد</Button>
+                    )}
+                    {v.license_number && (
+                      <Badge variant="outline" className="text-xs">ترخيص: {v.license_number}</Badge>
                     )}
                   </div>
                 </CardContent>

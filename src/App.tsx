@@ -32,6 +32,9 @@ import CheckoutPage from "./pages/marketplace/CheckoutPage";
 import MyOrdersPage from "./pages/marketplace/MyOrdersPage";
 import VendorRegister from "./pages/vendor/VendorRegister";
 import VendorDashboard from "./pages/vendor/VendorDashboard";
+import VendorPage from "./pages/marketplace/VendorPage";
+import VendorsListPage from "./pages/marketplace/VendorsListPage";
+import MarketplaceMessagesPage from "./pages/marketplace/MarketplaceMessagesPage";
 import { MarketplaceCartProvider } from "./contexts/MarketplaceCartContext";
 import NotFound from "./pages/NotFound";
 
@@ -131,11 +134,14 @@ const App = () => {
               <Route
                 path="/vendor"
                 element={
-                  <ProtectedRoute requiredRole="vendor">
+                  <ProtectedRoute>
                     <VendorDashboard />
                   </ProtectedRoute>
                 }
               />
+              <Route path="/marketplace/vendor/:id" element={<VendorPage />} />
+              <Route path="/marketplace/pharmacies" element={<VendorsListPage />} />
+              <Route path="/marketplace/messages" element={<ProtectedRoute><MarketplaceMessagesPage /></ProtectedRoute>} />
 
               {/* Catch-all */}
               <Route path="*" element={<NotFound />} />
