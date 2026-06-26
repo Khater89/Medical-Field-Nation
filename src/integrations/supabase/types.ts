@@ -584,6 +584,9 @@ export type Database = {
       marketplace_chats: {
         Row: {
           created_at: string
+          customer_consent_at: string | null
+          customer_name: string | null
+          customer_phone: string | null
           customer_user_id: string
           id: string
           last_message_at: string
@@ -596,6 +599,9 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          customer_consent_at?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
           customer_user_id: string
           id?: string
           last_message_at?: string
@@ -608,6 +614,9 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          customer_consent_at?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
           customer_user_id?: string
           id?: string
           last_message_at?: string
@@ -725,6 +734,8 @@ export type Database = {
           confirmed_at: string | null
           created_at: string
           currency: string
+          customer_acknowledged_at: string | null
+          customer_acknowledgement_text: string | null
           customer_email: string | null
           customer_name: string | null
           customer_phone: string | null
@@ -749,6 +760,9 @@ export type Database = {
           subtotal: number
           total: number
           updated_at: string
+          vendor_acknowledged_at: string | null
+          vendor_acknowledged_by: string | null
+          vendor_acknowledgement_text: string | null
           vendor_id: string
           vendor_payout: number
         }
@@ -758,6 +772,8 @@ export type Database = {
           confirmed_at?: string | null
           created_at?: string
           currency?: string
+          customer_acknowledged_at?: string | null
+          customer_acknowledgement_text?: string | null
           customer_email?: string | null
           customer_name?: string | null
           customer_phone?: string | null
@@ -782,6 +798,9 @@ export type Database = {
           subtotal?: number
           total?: number
           updated_at?: string
+          vendor_acknowledged_at?: string | null
+          vendor_acknowledged_by?: string | null
+          vendor_acknowledgement_text?: string | null
           vendor_id: string
           vendor_payout?: number
         }
@@ -791,6 +810,8 @@ export type Database = {
           confirmed_at?: string | null
           created_at?: string
           currency?: string
+          customer_acknowledged_at?: string | null
+          customer_acknowledgement_text?: string | null
           customer_email?: string | null
           customer_name?: string | null
           customer_phone?: string | null
@@ -815,6 +836,9 @@ export type Database = {
           subtotal?: number
           total?: number
           updated_at?: string
+          vendor_acknowledged_at?: string | null
+          vendor_acknowledged_by?: string | null
+          vendor_acknowledgement_text?: string | null
           vendor_id?: string
           vendor_payout?: number
         }
@@ -1994,6 +2018,14 @@ export type Database = {
       }
       marketplace_send_message: {
         Args: { _body: string; _chat_id: string }
+        Returns: Json
+      }
+      marketplace_set_chat_identity: {
+        Args: { _chat_id: string; _name: string; _phone: string }
+        Returns: Json
+      }
+      marketplace_vendor_accept_order: {
+        Args: { _acknowledgement_text: string; _order_id: string }
         Returns: Json
       }
       mfn_is_staff: { Args: never; Returns: boolean }
