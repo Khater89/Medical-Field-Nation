@@ -243,12 +243,21 @@ export default function CheckoutPage() {
               <span>الإجمالي</span>
               <span>{subtotal.toFixed(2)} JOD</span>
             </div>
-            <Button className="w-full" size="lg" onClick={handleSubmit} disabled={submitting || items.length === 0}>
+            <Button className="w-full" size="lg" onClick={validateAndOpenAck} disabled={submitting || items.length === 0}>
               {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : "تأكيد الطلب"}
             </Button>
           </Card>
         </div>
       </main>
+      <AcknowledgementDialog
+        open={ackOpen}
+        onOpenChange={setAckOpen}
+        title="إقرار العميل قبل تثبيت الطلب"
+        text={CUSTOMER_ORDER_ACK_TEXT}
+        confirmLabel="أوافق وأثبت الطلب"
+        loading={submitting}
+        onConfirm={handleSubmit}
+      />
       <AppFooter />
     </div>
   );
