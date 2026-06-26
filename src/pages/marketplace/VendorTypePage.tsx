@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import AppHeader from "@/components/AppHeader";
 import AppFooter from "@/components/AppFooter";
 import MarketplaceSubNav from "@/components/marketplace/MarketplaceSubNav";
@@ -7,12 +7,33 @@ import ProductCard, { ProductCardData } from "@/components/marketplace/ProductCa
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
 
 const LABELS: Record<string, string> = {
   pharmacy: "الصيدليات",
   medical_devices: "الأجهزة الطبية",
   prosthetics: "الأطراف الصناعية",
   other: "أخرى",
+};
+
+const CTA_LABELS: Record<string, { title: string; sub: string }> = {
+  pharmacy: {
+    title: "أضف صيدليتك",
+    sub: "أنشئ صيدليتك الإلكترونية وأدر منتجاتك وعروضك بنفسك",
+  },
+  medical_devices: {
+    title: "أضف متجرك للأجهزة الطبية",
+    sub: "اعرض أجهزتك الطبية ومواصفاتها وأسعارها لآلاف العملاء",
+  },
+  prosthetics: {
+    title: "أضف مركز الأطراف الصناعية",
+    sub: "اعرض خدماتك ومنتجاتك من الأطراف الصناعية وأجهزة التأهيل",
+  },
+  other: {
+    title: "أضف متجرك إلى السوق الطبي",
+    sub: "انضم إلى السوق الطبي وابدأ بعرض منتجاتك",
+  },
 };
 
 export default function VendorTypePage() {
