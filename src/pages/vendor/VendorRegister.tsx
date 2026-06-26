@@ -35,8 +35,11 @@ export default function VendorRegister() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    if (!loading && !user) navigate("/auth?redirect=/vendor/register");
-  }, [loading, user, navigate]);
+    if (!loading && !user) {
+      const qs = searchParams.get("type") ? `?type=${searchParams.get("type")}` : "";
+      navigate(`/auth?redirect=${encodeURIComponent("/vendor/register" + qs)}`);
+    }
+  }, [loading, user, navigate, searchParams]);
 
   useEffect(() => {
     if (isVendor) navigate("/vendor");
