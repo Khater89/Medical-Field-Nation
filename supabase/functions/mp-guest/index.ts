@@ -28,6 +28,87 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const action = body?.action as string;
 
+    // ---- Guest phone OTP + sessions ----
+    if (action === "request_otp") {
+      const phone_norm = normalizePhone(body?.phone || "");
+      if (phone_norm.length < 7) return jr({ error: "invalid_phone" }, 400);
+      // throttle: max 3 per 10 min
+      const since = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+      const { count } = await sb.from("marketplace_guest_otps")
+        .select("id", { count: "exact", head: true })
+        .eq("phone_norm", phone_norm).gte("created_at", since);
+      if ((count || 0) >= 3) return jr({ error: "rate_limited" }, 429);
+
+      const code = String(Math.floor(100000 + Math.random() * 900000));
+      const expires_at = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+      await sb.from("marketplace_guest_otps").insert({ phone_norm, code, expires_at });
+
+      // Try Twilio if configured
+      const sid = Deno.env.get("TWILIO_ACCOUNT_SID");
+      const tok = Deno.env.get("TWILIO_AUTH_TOKEN");
+      const from = Deno.env.get("TWILIO_FROM");
+      let sent = false;
+      if (sid && tok && from) {
+        try {
+          const to = "+962" + phone_norm; // Jordan default
+          const form = new URLSearchParams({ To: to, From: from, Body: `رمز التحقق للسوق الطبي: ${code}` });
+          const r = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
+            method: "POST",
+            headers: { "Authorization": "Basic " + btoa(`${sid}:${tok}`), "Content-Type": "application/x-www-form-urlencoded" },
+            body: form.toString(),
+          });
+          sent = r.ok;
+          if (!r.ok) console.error("twilio_error", await r.text());
+        } catch (e) { console.error("twilio_exception", e); }
+      } else {
+        console.log(`[mp-guest] OTP for ${phone_norm}: ${code} (no SMS provider configured)`);
+      }
+      // When no SMS provider, echo OTP so guest can still verify (transitional dev mode).
+      return jr({ success: true, sent, dev_otp: sent ? null : code });
+    }
+
+    if (action === "verify_otp") {
+      const phone_norm = normalizePhone(body?.phone || "");
+      const code = String(body?.code || "").trim();
+      const name = String(body?.name || "").trim() || null;
+      if (phone_norm.length < 7 || code.length < 4) return jr({ error: "invalid_input" }, 400);
+      const { data: rec } = await sb.from("marketplace_guest_otps")
+        .select("*").eq("phone_norm", phone_norm).is("used_at", null)
+        .gt("expires_at", new Date().toISOString())
+        .order("created_at", { ascending: false }).limit(1).maybeSingle();
+      if (!rec) return jr({ error: "otp_expired" }, 400);
+      if ((rec.attempts || 0) >= 5) return jr({ error: "too_many_attempts" }, 429);
+      if (rec.code !== code) {
+        await sb.from("marketplace_guest_otps").update({ attempts: (rec.attempts || 0) + 1 }).eq("id", rec.id);
+        return jr({ error: "invalid_code" }, 400);
+      }
+      await sb.from("marketplace_guest_otps").update({ used_at: new Date().toISOString() }).eq("id", rec.id);
+      const token = crypto.randomUUID() + "." + crypto.randomUUID();
+      const expires_at = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+      await sb.from("marketplace_guest_sessions").insert({ token, phone_norm, customer_name: name, expires_at });
+      return jr({ success: true, session_token: token, phone_norm });
+    }
+
+    async function requireSession(t: string) {
+      if (!t) return null;
+      const { data: s } = await sb.from("marketplace_guest_sessions")
+        .select("*").eq("token", t).gt("expires_at", new Date().toISOString()).maybeSingle();
+      if (s) await sb.from("marketplace_guest_sessions").update({ last_used_at: new Date().toISOString() }).eq("id", s.id);
+      return s;
+    }
+
+    if (action === "list_my_chats") {
+      const s = await requireSession(String(body?.session_token || ""));
+      if (!s) return jr({ error: "session_invalid" }, 401);
+      const { data } = await sb.from("marketplace_chats")
+        .select("id,vendor_id,product_id,last_message_at,last_message_preview,unread_for_customer,guest_token,status,vendor:marketplace_vendors(id,store_name,logo_url,vendor_type)")
+        .eq("customer_phone_norm", s.phone_norm)
+        .order("last_message_at", { ascending: false }).limit(100);
+      return jr({ chats: data || [], name: s.customer_name, phone_norm: s.phone_norm });
+    }
+
+
+
     if (action === "open_chat") {
       const { vendor_id, product_id, guest_token, name, phone } = body;
       if (!vendor_id || !name || !phone) return jr({ error: "missing_fields" }, 400);
