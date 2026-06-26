@@ -5,8 +5,9 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Loader2, MessagesSquare, Send } from "lucide-react";
+import { Loader2, MessagesSquare, Send, Paperclip } from "lucide-react";
 import { toast } from "sonner";
+import ChatAttachment from "@/components/marketplace/ChatAttachment";
 
 export default function VendorChatsTab({ vendorId }: { vendorId: string }) {
   const { user } = useAuth();
@@ -16,7 +17,9 @@ export default function VendorChatsTab({ vendorId }: { vendorId: string }) {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   const loadChats = async () => {
     setLoading(true);
@@ -53,20 +56,48 @@ export default function VendorChatsTab({ vendorId }: { vendorId: string }) {
     const ch = supabase
       .channel(`mp_msgs:${active.id}`)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "marketplace_messages", filter: `chat_id=eq.${active.id}` },
-        (p) => setMessages((prev) => [...prev, p.new]))
+        (p) => setMessages((prev) => prev.find((m) => m.id === (p.new as any).id) ? prev : [...prev, p.new]))
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, [active]);
 
   useEffect(() => { scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight }); }, [messages]);
 
+  const sendRpc = async (args: { body?: string; attachment_url?: string; attachment_type?: string; attachment_name?: string }) => {
+    const { error } = await supabase.rpc("marketplace_send_message", {
+      _chat_id: active.id,
+      _body: args.body || "",
+      _attachment_url: args.attachment_url || null,
+      _attachment_type: args.attachment_type || null,
+      _attachment_name: args.attachment_name || null,
+    } as any);
+    if (error) { toast.error(error.message); return false; }
+    return true;
+  };
+
   const send = async () => {
     if (!active || !input.trim()) return;
     setSending(true);
-    const { error } = await supabase.rpc("marketplace_send_message", { _chat_id: active.id, _body: input.trim() });
+    const ok = await sendRpc({ body: input.trim() });
     setSending(false);
-    if (error) return toast.error(error.message);
-    setInput("");
+    if (ok) setInput("");
+  };
+
+  const onPickFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    e.target.value = "";
+    if (!f || !active) return;
+    if (f.size > 10 * 1024 * 1024) return toast.error("الحد الأقصى 10MB");
+    setUploading(true);
+    try {
+      const ext = (f.name.split(".").pop() || "bin").toLowerCase().slice(0, 8);
+      const path = `chats/${active.id}/${crypto.randomUUID()}.${ext}`;
+      const up = await supabase.storage.from("marketplace-chat").upload(path, f, { contentType: f.type, upsert: false });
+      if (up.error) { toast.error(up.error.message); return; }
+      const signed = await supabase.storage.from("marketplace-chat").createSignedUrl(path, 60 * 60 * 24 * 365);
+      if (signed.error) { toast.error(signed.error.message); return; }
+      await sendRpc({ attachment_url: signed.data.signedUrl, attachment_type: f.type, attachment_name: f.name });
+    } finally { setUploading(false); }
   };
 
   if (loading) return <div className="py-8 text-center"><Loader2 className="h-6 w-6 animate-spin mx-auto" /></div>;
@@ -101,17 +132,23 @@ export default function VendorChatsTab({ vendorId }: { vendorId: string }) {
           <>
             <div ref={scrollRef} className="flex-1 overflow-y-auto p-3 space-y-2 bg-muted/20">
               {messages.map((m) => {
-                const mine = m.sender_id === user?.id;
+                const mine = m.sender_role === "vendor";
                 return (
                   <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
                     <div className={`max-w-[75%] rounded-2xl px-3 py-2 text-sm ${mine ? "bg-primary text-primary-foreground" : "bg-background border"}`}>
-                      {m.body}
+                      {m.body && <div className="whitespace-pre-wrap">{m.body}</div>}
+                      {m.attachment_url && <ChatAttachment url={m.attachment_url} type={m.attachment_type} name={m.attachment_name} />}
                     </div>
                   </div>
                 );
               })}
             </div>
             <div className="p-3 border-t flex items-center gap-2">
+              <input ref={fileRef} type="file" hidden onChange={onPickFile}
+                accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx" />
+              <Button type="button" size="icon" variant="outline" onClick={() => fileRef.current?.click()} disabled={uploading || sending}>
+                {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Paperclip className="h-4 w-4" />}
+              </Button>
               <Input value={input} onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && (e.preventDefault(), send())}
                 placeholder="اكتب ردك..." />
