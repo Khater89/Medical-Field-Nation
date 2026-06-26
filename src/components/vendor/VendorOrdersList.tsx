@@ -57,6 +57,20 @@ export default function VendorOrdersList({ vendorId }: { vendorId: string }) {
     load();
   };
 
+  const confirmAccept = async () => {
+    if (!ackOrderId) return;
+    setAccepting(true);
+    const { error } = await supabase.rpc("marketplace_vendor_accept_order", {
+      _order_id: ackOrderId,
+      _acknowledgement_text: VENDOR_ACCEPT_ACK_TEXT,
+    });
+    setAccepting(false);
+    if (error) return toast.error(error.message);
+    toast.success("تم قبول الطلب");
+    setAckOrderId(null);
+    load();
+  };
+
   if (loading) return <div className="py-8 text-center"><Loader2 className="h-6 w-6 animate-spin mx-auto" /></div>;
 
   if (orders.length === 0) return (
@@ -98,16 +112,33 @@ export default function VendorOrdersList({ vendorId }: { vendorId: string }) {
             </div>
             {STATUS_FLOW[o.status] && (
               <div className="flex flex-wrap gap-2 pt-2">
-                {STATUS_FLOW[o.status].map((a) => (
-                  <Button key={a.next} size="sm" variant={a.next === "cancelled" ? "destructive" : "default"} onClick={() => updateStatus(o.id, a.next)}>
-                    {a.label}
-                  </Button>
-                ))}
+                {STATUS_FLOW[o.status].map((a) => {
+                  const isAccept = o.status === "pending" && a.next === "confirmed";
+                  return (
+                    <Button
+                      key={a.next}
+                      size="sm"
+                      variant={a.next === "cancelled" ? "destructive" : "default"}
+                      onClick={() => isAccept ? setAckOrderId(o.id) : updateStatus(o.id, a.next)}
+                    >
+                      {a.label}
+                    </Button>
+                  );
+                })}
               </div>
             )}
           </CardContent>
         </Card>
       ))}
+      <AcknowledgementDialog
+        open={!!ackOrderId}
+        onOpenChange={(v) => !v && setAckOrderId(null)}
+        title="إقرار الجهة البائعة عند قبول الطلب"
+        text={VENDOR_ACCEPT_ACK_TEXT}
+        confirmLabel="أوافق وأقبل الطلب"
+        loading={accepting}
+        onConfirm={confirmAccept}
+      />
     </div>
   );
 }
