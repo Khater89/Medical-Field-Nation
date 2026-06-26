@@ -127,6 +127,7 @@ const App = () => {
               {/* Catch-all */}
               <Route path="*" element={<NotFound />} />
             </Routes>
+            </MarketplaceCartProvider>
           </BrowserRouter>
         </AuthProvider>
       </LanguageProvider>
