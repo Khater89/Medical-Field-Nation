@@ -78,7 +78,7 @@ export default function VendorTypePage() {
       <main className="container max-w-6xl py-6 flex-1 space-y-6">
         <BackButton to="/marketplace" label="رجوع للسوق" />
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h1 className="text-2xl font-bold">{LABELS[type || ""] || "السوق"}</h1>
+          <h1 className="text-2xl font-bold">{LABELS[type || ""] || "السوق الطبي"}</h1>
           {type && CTA_LABELS[type] && (
             <Button asChild size="lg" className="gap-2">
               <Link to={`/vendor/register?type=${type}`}>
