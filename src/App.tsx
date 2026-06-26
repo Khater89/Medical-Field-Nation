@@ -146,6 +146,8 @@ const App = () => {
               <Route path="/marketplace/vendor/:id" element={<VendorPage />} />
               <Route path="/marketplace/pharmacies" element={<VendorsListPage />} />
               <Route path="/marketplace/messages" element={<ProtectedRoute><MarketplaceMessagesPage /></ProtectedRoute>} />
+              <Route path="/marketplace/my-messages" element={<GuestMessagesPage />} />
+
 
               {/* Catch-all */}
               <Route path="*" element={<NotFound />} />
