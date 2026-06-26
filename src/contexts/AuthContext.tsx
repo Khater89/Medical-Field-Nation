@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useState, useCallback, type React
 import { supabase } from "@/integrations/supabase/client";
 import { User, Session } from "@supabase/supabase-js";
 
-type AppRole = "admin" | "provider" | "customer" | "cs";
+type AppRole = "admin" | "provider" | "customer" | "cs" | "vendor";
 
 interface Profile {
   user_id: string;
@@ -39,6 +39,7 @@ interface AuthContextType {
   isCS: boolean;
   isProvider: boolean;
   isCustomer: boolean;
+  isVendor: boolean;
   signOut: () => Promise<void>;
   refreshUserData: () => Promise<void>;
 }
@@ -142,12 +143,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isCS = roles.includes("cs");
   const isProvider = roles.includes("provider");
   const isCustomer = roles.includes("customer");
+  const isVendor = roles.includes("vendor");
 
   return (
     <AuthContext.Provider
       value={{
         user, session, profile, roles, loading, rolesLoaded,
-        isAdmin, isCS, isProvider, isCustomer,
+        isAdmin, isCS, isProvider, isCustomer, isVendor,
         signOut, refreshUserData,
       }}
     >

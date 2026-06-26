@@ -2,7 +2,7 @@ import { Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Loader2 } from "lucide-react";
 
-type DashboardRole = "admin" | "cs" | "provider";
+type DashboardRole = "admin" | "cs" | "provider" | "vendor";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -13,11 +13,12 @@ const ROLE_DASHBOARDS: Record<string, string> = {
   admin: "/admin",
   cs: "/cs",
   provider: "/provider",
+  vendor: "/vendor",
   customer: "/profile",
 };
 
 const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
-  const { user, loading, rolesLoaded, isAdmin, isCS, isProvider, profile } = useAuth();
+  const { user, loading, rolesLoaded, isAdmin, isCS, isProvider, isVendor, profile } = useAuth();
 
   // Only block on initial session check (loading). Never block on roles – treat as customer if not loaded yet.
   if (loading) {
@@ -39,6 +40,8 @@ const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) => {
     ? "cs"
     : isProvider
     ? "provider"
+    : isVendor
+    ? "vendor"
     : "customer";
 
   // Provider gatekeeper: if provider_status is not approved, redirect to review page

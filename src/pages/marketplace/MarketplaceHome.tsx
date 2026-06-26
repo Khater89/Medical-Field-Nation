@@ -64,6 +64,9 @@ export default function MarketplaceHome() {
           <p className="text-muted-foreground max-w-2xl">
             صيدليات وأجهزة طبية وأطراف صناعية من بائعين موثوقين، توصيل أو استلام من المتجر.
           </p>
+          <a href="/vendor/register" className="inline-block mt-4 text-sm font-semibold text-primary underline underline-offset-4">
+            هل أنت صيدلية أو مورّد؟ سجّل متجرك الآن →
+          </a>
         </section>
 
         {/* Vendor Types */}
