@@ -7,6 +7,7 @@ import ProductCard, { ProductCardData } from "@/components/marketplace/ProductCa
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card } from "@/components/ui/card";
+import BackButton from "@/components/ui/back-button";
 
 export default function CategoryPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -41,6 +42,7 @@ export default function CategoryPage() {
       <AppHeader />
       <MarketplaceSubNav />
       <main className="container max-w-6xl py-6 flex-1">
+        <BackButton to="/marketplace" label="رجوع للسوق" className="mb-3" />
         <h1 className="text-2xl font-bold mb-4">{title}</h1>
         {loading ? (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">

@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import BackButton from "@/components/ui/back-button";
 
 type DeliveryMethod = "VENDOR_DELIVERY" | "PICKUP" | "SHIPPING_COMPANY";
 type PaymentMethod = "CASH_ON_DELIVERY" | "ONLINE" | "CLIQ";
@@ -145,6 +146,7 @@ export default function CheckoutPage() {
       <AppHeader />
       <MarketplaceSubNav />
       <main className="container max-w-4xl py-6 flex-1">
+        <BackButton to="/marketplace/cart" label="رجوع للسلة" className="mb-3" />
         <h1 className="text-2xl font-bold mb-4">إتمام الشراء</h1>
 
         <div className="grid md:grid-cols-3 gap-4">

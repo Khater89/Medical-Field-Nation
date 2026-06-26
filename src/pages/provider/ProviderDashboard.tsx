@@ -36,6 +36,7 @@ import ProviderMessagesTab from "@/components/provider/ProviderMessagesTab";
 import LanguageToggle from "@/components/booking/LanguageToggle";
 import ProviderNotificationBell from "@/components/provider/ProviderNotificationBell";
 import ProviderSettlementCard from "@/components/provider/ProviderSettlementCard";
+import BackButton from "@/components/ui/back-button";
 
 /* ── Types ── */
 
@@ -1004,6 +1005,7 @@ const ProviderDashboard = () => {
             </div>
           </Link>
           <div className="flex items-center gap-1">
+            <BackButton to="/" label="رجوع" />
             <ProviderNotificationBell />
             <LanguageToggle />
             <Button variant="ghost" size="sm" onClick={handleSignOut} className="gap-1.5">

@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "sonner";
 import { Loader2, Store, Stethoscope, Activity } from "lucide-react";
+import BackButton from "@/components/ui/back-button";
 
 type VendorType = "pharmacy" | "medical_devices" | "prosthetics";
 
@@ -75,7 +76,8 @@ export default function VendorRegister() {
 
   return (
     <div className="min-h-screen bg-background py-8 px-4">
-      <div className="max-w-2xl mx-auto">
+      <div className="max-w-2xl mx-auto space-y-3">
+        <BackButton to="/marketplace" label="رجوع للسوق" />
         <Card>
           <CardHeader>
             <CardTitle>تسجيل متجر / مورّد جديد</CardTitle>
