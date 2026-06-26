@@ -48,13 +48,15 @@ const AuthCallback = () => {
           const isProvider = roles?.some((r) => r.role === "provider");
           const isAdmin = roles?.some((r) => r.role === "admin");
           const isCS = roles?.some((r) => r.role === "cs");
+          const isVendor = roles?.some((r) => r.role === "vendor");
 
           if (isAdmin) {
             navigate("/admin", { replace: true });
           } else if (isCS) {
             navigate("/cs", { replace: true });
+          } else if (isVendor) {
+            navigate("/vendor", { replace: true });
           } else if (isProvider) {
-            // Approved providers go straight to their dashboard
             const { data: prof } = await supabase
               .from("profiles")
               .select("provider_status, profile_completed")
@@ -71,13 +73,20 @@ const AuthCallback = () => {
               navigate("/account-review", { replace: true });
             }
           } else {
-            // Check if this user has pending provider registration (role_type set)
+            const { data: pendingVendor } = await supabase
+              .from("marketplace_vendors")
+              .select("id")
+              .eq("owner_user_id", session.user.id)
+              .maybeSingle();
+            if (pendingVendor) {
+              navigate("/vendor", { replace: true });
+              return;
+            }
             const { data: prof } = await supabase
               .from("profiles")
-              .select("role_type, provider_status")
+              .select("role_type")
               .eq("user_id", session.user.id)
               .maybeSingle();
-
             if (prof?.role_type) {
               navigate("/account-review", { replace: true });
             } else {
