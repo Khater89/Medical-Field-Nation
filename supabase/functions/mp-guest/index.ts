@@ -48,8 +48,14 @@ Deno.serve(async (req) => {
           .eq("product_id", product_id ?? null).maybeSingle();
         chat = data;
       }
-      const tokenOut = chat?.guest_token || guest_token || crypto.randomUUID();
+      let tokenOut = chat?.guest_token || guest_token || crypto.randomUUID();
       if (!chat) {
+        // Ensure unique token: guest_token has a UNIQUE constraint, so if the
+        // incoming token is already used for a different (vendor, product) chat,
+        // mint a fresh one to avoid collisions.
+        const { data: tokenTaken } = await sb.from("marketplace_chats")
+          .select("id").eq("guest_token", tokenOut).maybeSingle();
+        if (tokenTaken) tokenOut = crypto.randomUUID();
         const { data, error } = await sb.from("marketplace_chats").insert({
           vendor_id, product_id: product_id ?? null,
           customer_user_id: null,
