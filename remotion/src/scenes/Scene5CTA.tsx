@@ -18,9 +18,8 @@ export const Scene5CTA: React.FC = () => {
   // Pulsing glow on button
   const pulseScale = 1 + 0.03 * Math.sin((frame - 55) * 0.15);
 
-  // Phone number
-  const phoneOpacity = interpolate(frame, [60, 75], [0, 1], { extrapolateRight: "clamp" });
-  const phoneY = interpolate(frame, [60, 78], [20, 0], { extrapolateRight: "clamp" });
+  // (phone number removed)
+
 
   return (
     <AbsoluteFill style={{ justifyContent: "center", alignItems: "center" }}>
@@ -106,25 +105,8 @@ export const Scene5CTA: React.FC = () => {
         </div>
       </div>
 
-      {/* Phone */}
-      <div
-        style={{
-          opacity: phoneOpacity,
-          transform: `translateY(${phoneY}px)`,
-        }}
-      >
-        <p
-          style={{
-            fontFamily: "sans-serif",
-            fontSize: 28,
-            color: "hsl(26, 100%, 65%)",
-            fontWeight: 600,
-            direction: "ltr",
-          }}
-        >
-          📞 +962 790 619 770
-        </p>
-      </div>
+      {/* Phone number removed by request */}
+
 
       {/* Brand watermark */}
       <div
