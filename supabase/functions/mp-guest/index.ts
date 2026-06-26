@@ -93,7 +93,7 @@ Deno.serve(async (req) => {
         sender_name: chat.customer_name, body: text.trim(),
       }).select("*").single();
       if (error) return jr({ error: error.message }, 400);
-      await sb.from("marketplace_messages").insert; // no-op placeholder removed
+      
       const { data: cur } = await sb.from("marketplace_chats")
         .select("unread_for_vendor").eq("id", chat_id).maybeSingle();
       await sb.from("marketplace_chats").update({
