@@ -36,19 +36,16 @@ export default function CheckoutPage() {
   const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>("VENDOR_DELIVERY");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("CASH_ON_DELIVERY");
 
-  useEffect(() => {
-    if (!authLoading && !user) {
-      toast.info("يرجى تسجيل الدخول لإتمام الشراء");
-      navigate(`/auth?redirect=${encodeURIComponent("/marketplace/checkout")}`);
-    }
-  }, [authLoading, user, navigate]);
-
+  // Guests are allowed. Prefill from profile if signed in, else from localStorage.
   useEffect(() => {
     if (profile) {
-      setCustomerName(profile.full_name || "");
-      setCustomerPhone(profile.phone || "");
+      setCustomerName(profile.full_name || localStorage.getItem("mp_guest_name") || "");
+      setCustomerPhone(profile.phone || localStorage.getItem("mp_guest_phone") || "");
       setCustomerEmail(user?.email || "");
       setCity(profile.city || "");
+    } else {
+      setCustomerName(localStorage.getItem("mp_guest_name") || "");
+      setCustomerPhone(localStorage.getItem("mp_guest_phone") || "");
     }
   }, [profile, user]);
 
