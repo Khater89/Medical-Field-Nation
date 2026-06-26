@@ -581,6 +581,95 @@ export type Database = {
           },
         ]
       }
+      marketplace_chats: {
+        Row: {
+          created_at: string
+          customer_user_id: string
+          id: string
+          last_message_at: string
+          last_message_preview: string | null
+          product_id: string | null
+          unread_for_customer: number
+          unread_for_vendor: number
+          updated_at: string
+          vendor_id: string
+        }
+        Insert: {
+          created_at?: string
+          customer_user_id: string
+          id?: string
+          last_message_at?: string
+          last_message_preview?: string | null
+          product_id?: string | null
+          unread_for_customer?: number
+          unread_for_vendor?: number
+          updated_at?: string
+          vendor_id: string
+        }
+        Update: {
+          created_at?: string
+          customer_user_id?: string
+          id?: string
+          last_message_at?: string
+          last_message_preview?: string | null
+          product_id?: string | null
+          unread_for_customer?: number
+          unread_for_vendor?: number
+          updated_at?: string
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_chats_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketplace_chats_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketplace_messages: {
+        Row: {
+          body: string
+          chat_id: string
+          created_at: string
+          id: string
+          sender_id: string
+          sender_role: string
+        }
+        Insert: {
+          body: string
+          chat_id: string
+          created_at?: string
+          id?: string
+          sender_id: string
+          sender_role: string
+        }
+        Update: {
+          body?: string
+          chat_id?: string
+          created_at?: string
+          id?: string
+          sender_id?: string
+          sender_role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_messages_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_chats"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       marketplace_order_items: {
         Row: {
           created_at: string
@@ -776,6 +865,8 @@ export type Database = {
       }
       marketplace_products: {
         Row: {
+          approval_note: string | null
+          approval_status: string
           brand: string | null
           category_id: string | null
           compare_at_price: number | null
@@ -787,8 +878,10 @@ export type Database = {
           id: string
           is_active: boolean
           is_featured: boolean
+          is_sensitive: boolean
           name_ar: string
           name_en: string | null
+          original_price: number | null
           price: number
           requires_prescription: boolean
           sales_count: number
@@ -802,6 +895,8 @@ export type Database = {
           views_count: number
         }
         Insert: {
+          approval_note?: string | null
+          approval_status?: string
           brand?: string | null
           category_id?: string | null
           compare_at_price?: number | null
@@ -813,8 +908,10 @@ export type Database = {
           id?: string
           is_active?: boolean
           is_featured?: boolean
+          is_sensitive?: boolean
           name_ar: string
           name_en?: string | null
+          original_price?: number | null
           price: number
           requires_prescription?: boolean
           sales_count?: number
@@ -828,6 +925,8 @@ export type Database = {
           views_count?: number
         }
         Update: {
+          approval_note?: string | null
+          approval_status?: string
           brand?: string | null
           category_id?: string | null
           compare_at_price?: number | null
@@ -839,8 +938,10 @@ export type Database = {
           id?: string
           is_active?: boolean
           is_featured?: boolean
+          is_sensitive?: boolean
           name_ar?: string
           name_en?: string | null
+          original_price?: number | null
           price?: number
           requires_prescription?: boolean
           sales_count?: number
@@ -981,6 +1082,7 @@ export type Database = {
           address_text: string | null
           approved_at: string | null
           approved_by: string | null
+          area_text: string | null
           banner_url: string | null
           city: string | null
           commercial_registration: string | null
@@ -989,6 +1091,8 @@ export type Database = {
           description: string | null
           email: string | null
           id: string
+          is_active: boolean
+          is_open: boolean
           lat: number | null
           license_file_url: string | null
           license_number: string | null
@@ -1008,6 +1112,7 @@ export type Database = {
           vendor_number: number | null
           vendor_type: Database["public"]["Enums"]["marketplace_vendor_type"]
           whatsapp: string | null
+          working_hours: Json | null
         }
         Insert: {
           accepts_cash?: boolean
@@ -1015,6 +1120,7 @@ export type Database = {
           address_text?: string | null
           approved_at?: string | null
           approved_by?: string | null
+          area_text?: string | null
           banner_url?: string | null
           city?: string | null
           commercial_registration?: string | null
@@ -1023,6 +1129,8 @@ export type Database = {
           description?: string | null
           email?: string | null
           id?: string
+          is_active?: boolean
+          is_open?: boolean
           lat?: number | null
           license_file_url?: string | null
           license_number?: string | null
@@ -1042,6 +1150,7 @@ export type Database = {
           vendor_number?: number | null
           vendor_type: Database["public"]["Enums"]["marketplace_vendor_type"]
           whatsapp?: string | null
+          working_hours?: Json | null
         }
         Update: {
           accepts_cash?: boolean
@@ -1049,6 +1158,7 @@ export type Database = {
           address_text?: string | null
           approved_at?: string | null
           approved_by?: string | null
+          area_text?: string | null
           banner_url?: string | null
           city?: string | null
           commercial_registration?: string | null
@@ -1057,6 +1167,8 @@ export type Database = {
           description?: string | null
           email?: string | null
           id?: string
+          is_active?: boolean
+          is_open?: boolean
           lat?: number | null
           license_file_url?: string | null
           license_number?: string | null
@@ -1076,6 +1188,7 @@ export type Database = {
           vendor_number?: number | null
           vendor_type?: Database["public"]["Enums"]["marketplace_vendor_type"]
           whatsapp?: string | null
+          working_hours?: Json | null
         }
         Relationships: []
       }
@@ -1636,6 +1749,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_approve_vendor: { Args: { _id: string }; Returns: Json }
       admin_mark_settlement_paid: {
         Args: {
           _finance_note?: string
@@ -1648,7 +1762,19 @@ export type Database = {
         Args: { _finance_note?: string; _id: string }
         Returns: Json
       }
+      admin_reject_vendor: {
+        Args: { _id: string; _reason: string }
+        Returns: Json
+      }
       admin_release_gender: { Args: { _booking_id: string }; Returns: Json }
+      admin_set_product_approval: {
+        Args: { _id: string; _note?: string; _status: string }
+        Returns: Json
+      }
+      admin_toggle_vendor_active: {
+        Args: { _active: boolean; _id: string }
+        Returns: Json
+      }
       available_bookings_for_providers: {
         Args: never
         Returns: {
@@ -1856,6 +1982,18 @@ export type Database = {
       }
       mark_special_requests_seen: {
         Args: { _booking_id: string }
+        Returns: Json
+      }
+      marketplace_mark_chat_seen: {
+        Args: { _chat_id: string }
+        Returns: undefined
+      }
+      marketplace_open_or_get_chat: {
+        Args: { _product_id?: string; _vendor_id: string }
+        Returns: string
+      }
+      marketplace_send_message: {
+        Args: { _body: string; _chat_id: string }
         Returns: Json
       }
       mfn_is_staff: { Args: never; Returns: boolean }
