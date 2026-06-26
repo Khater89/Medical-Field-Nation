@@ -131,11 +131,14 @@ const App = () => {
               <Route
                 path="/vendor"
                 element={
-                  <ProtectedRoute requiredRole="vendor">
+                  <ProtectedRoute>
                     <VendorDashboard />
                   </ProtectedRoute>
                 }
               />
+              <Route path="/marketplace/vendor/:id" element={<VendorPage />} />
+              <Route path="/marketplace/pharmacies" element={<VendorsListPage />} />
+              <Route path="/marketplace/messages" element={<ProtectedRoute><MarketplaceMessagesPage /></ProtectedRoute>} />
 
               {/* Catch-all */}
               <Route path="*" element={<NotFound />} />
