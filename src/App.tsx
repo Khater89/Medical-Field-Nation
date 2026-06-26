@@ -67,6 +67,7 @@ const App = () => {
               <Route path="/track" element={<TrackOrderPage />} />
               {/* Marketplace */}
               <Route path="/marketplace" element={<MarketplaceHome />} />
+              <Route path="/marketplace/enter" element={<MarketplaceEnterPage />} />
               <Route path="/marketplace/category/:slug" element={<CategoryPage />} />
               <Route path="/marketplace/type/:type" element={<VendorTypePage />} />
               <Route path="/marketplace/product/:id" element={<ProductPage />} />
