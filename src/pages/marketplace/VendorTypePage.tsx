@@ -70,8 +70,31 @@ export default function VendorTypePage() {
     <div className="min-h-screen flex flex-col bg-background">
       <AppHeader />
       <MarketplaceSubNav />
-      <main className="container max-w-6xl py-6 flex-1">
-        <h1 className="text-2xl font-bold mb-4">{LABELS[type || ""] || "السوق"}</h1>
+      <main className="container max-w-6xl py-6 flex-1 space-y-6">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h1 className="text-2xl font-bold">{LABELS[type || ""] || "السوق"}</h1>
+          {type && CTA_LABELS[type] && (
+            <Button asChild size="lg" className="gap-2">
+              <Link to={`/vendor/register?type=${type}`}>
+                <Plus className="h-4 w-4" />
+                {CTA_LABELS[type].title}
+              </Link>
+            </Button>
+          )}
+        </div>
+
+        {type && CTA_LABELS[type] && (
+          <Card className="p-4 md:p-5 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border-primary/20 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <div className="font-semibold">{CTA_LABELS[type].title}</div>
+              <div className="text-sm text-muted-foreground">{CTA_LABELS[type].sub}</div>
+            </div>
+            <Button asChild variant="outline">
+              <Link to={`/vendor/register?type=${type}`}>ابدأ التسجيل</Link>
+            </Button>
+          </Card>
+        )}
+
         {loading ? (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {Array.from({ length: 8 }).map((_, i) => (
