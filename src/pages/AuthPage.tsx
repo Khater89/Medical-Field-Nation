@@ -15,7 +15,7 @@ import mfnLogo from "@/assets/mfn-logo.png";
 const AuthPage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { user, isAdmin, isCS, isProvider, loading: authLoading, rolesLoaded } = useAuth();
+  const { user, isAdmin, isCS, isProvider, isVendor, loading: authLoading, rolesLoaded } = useAuth();
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [appleLoading, setAppleLoading] = useState(false);
@@ -23,18 +23,20 @@ const AuthPage = () => {
   // Redirect if already logged in and roles are loaded
   useEffect(() => {
     if (!authLoading && user && rolesLoaded) {
-      // Priority: admin > cs > provider > customer
+      // Priority: admin > cs > vendor > provider > customer
       if (isAdmin) {
         navigate("/admin", { replace: true });
       } else if (isCS) {
         navigate("/cs", { replace: true });
+      } else if (isVendor) {
+        navigate("/vendor", { replace: true });
       } else if (isProvider) {
         navigate("/provider", { replace: true });
       } else {
         navigate("/", { replace: true });
       }
     }
-  }, [user, isAdmin, isCS, isProvider, authLoading, rolesLoaded, navigate]);
+  }, [user, isAdmin, isCS, isProvider, isVendor, authLoading, rolesLoaded, navigate]);
 
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
@@ -101,9 +103,11 @@ const AuthPage = () => {
             .from("user_roles").select("role").eq("user_id", authedUser.id);
           const isAdminR = roles?.some((r) => r.role === "admin");
           const isCSR = roles?.some((r) => r.role === "cs");
+          const isVendorR = roles?.some((r) => r.role === "vendor");
           const isProviderR = roles?.some((r) => r.role === "provider");
           if (isAdminR) navigate("/admin", { replace: true });
           else if (isCSR) navigate("/cs", { replace: true });
+          else if (isVendorR) navigate("/vendor", { replace: true });
           else if (isProviderR) {
             const { data: prof } = await supabase
               .from("profiles").select("provider_status, profile_completed")
@@ -113,7 +117,16 @@ const AuthPage = () => {
             } else {
               navigate("/account-review", { replace: true });
             }
-          } else navigate("/", { replace: true });
+          } else {
+            // Customer — or a vendor whose application is still pending approval
+            const { data: pendingVendor } = await supabase
+              .from("marketplace_vendors")
+              .select("id, status")
+              .eq("owner_user_id", authedUser.id)
+              .maybeSingle();
+            if (pendingVendor) navigate("/vendor", { replace: true });
+            else navigate("/", { replace: true });
+          }
         }
       }
     } catch (err: any) {
