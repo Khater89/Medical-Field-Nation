@@ -27,8 +27,16 @@ export const MainVideo: React.FC = () => {
         }}
       />
 
+      {/* Starfield (twinkling) */}
+      <Starfield frame={frame} count={160} seed={7} />
+      <Starfield frame={frame} count={60} seed={91} />
+
       {/* Floating accent orbs */}
       <FloatingOrbs frame={frame} />
+
+      {/* Shooting stars on top of everything */}
+      <ShootingStars frame={frame} />
+
 
       {/* Scenes with transitions */}
       <TransitionSeries>
