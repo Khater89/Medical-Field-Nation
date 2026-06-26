@@ -22,7 +22,11 @@ const TYPES: { value: VendorType; ar: string; en: string; icon: any; desc: strin
 export default function VendorRegister() {
   const { user, loading, isVendor } = useAuth();
   const navigate = useNavigate();
-  const [type, setType] = useState<VendorType>("pharmacy");
+  const [searchParams] = useSearchParams();
+  const initialType = (searchParams.get("type") as VendorType) || "pharmacy";
+  const [type, setType] = useState<VendorType>(
+    ["pharmacy", "medical_devices", "prosthetics"].includes(initialType) ? initialType : "pharmacy"
+  );
   const [storeName, setStoreName] = useState("");
   const [phone, setPhone] = useState("");
   const [city, setCity] = useState("");
