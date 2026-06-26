@@ -650,6 +650,66 @@ export type Database = {
           },
         ]
       }
+      marketplace_guest_otps: {
+        Row: {
+          attempts: number
+          code: string
+          created_at: string
+          expires_at: string
+          id: string
+          phone_norm: string
+          used_at: string | null
+        }
+        Insert: {
+          attempts?: number
+          code: string
+          created_at?: string
+          expires_at: string
+          id?: string
+          phone_norm: string
+          used_at?: string | null
+        }
+        Update: {
+          attempts?: number
+          code?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          phone_norm?: string
+          used_at?: string | null
+        }
+        Relationships: []
+      }
+      marketplace_guest_sessions: {
+        Row: {
+          created_at: string
+          customer_name: string | null
+          expires_at: string
+          id: string
+          last_used_at: string
+          phone_norm: string
+          token: string
+        }
+        Insert: {
+          created_at?: string
+          customer_name?: string | null
+          expires_at: string
+          id?: string
+          last_used_at?: string
+          phone_norm: string
+          token: string
+        }
+        Update: {
+          created_at?: string
+          customer_name?: string | null
+          expires_at?: string
+          id?: string
+          last_used_at?: string
+          phone_norm?: string
+          token?: string
+        }
+        Relationships: []
+      }
       marketplace_messages: {
         Row: {
           attachment_name: string | null
