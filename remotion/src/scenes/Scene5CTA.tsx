@@ -106,25 +106,8 @@ export const Scene5CTA: React.FC = () => {
         </div>
       </div>
 
-      {/* Phone */}
-      <div
-        style={{
-          opacity: phoneOpacity,
-          transform: `translateY(${phoneY}px)`,
-        }}
-      >
-        <p
-          style={{
-            fontFamily: "sans-serif",
-            fontSize: 28,
-            color: "hsl(26, 100%, 65%)",
-            fontWeight: 600,
-            direction: "ltr",
-          }}
-        >
-          📞 +962 790 619 770
-        </p>
-      </div>
+      {/* Phone number removed by request */}
+
 
       {/* Brand watermark */}
       <div
