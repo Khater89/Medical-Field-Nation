@@ -23,6 +23,14 @@ import AuthCallback from "./pages/AuthCallback";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import TrackOrderPage from "./pages/TrackOrderPage";
+import MarketplaceHome from "./pages/marketplace/MarketplaceHome";
+import CategoryPage from "./pages/marketplace/CategoryPage";
+import VendorTypePage from "./pages/marketplace/VendorTypePage";
+import ProductPage from "./pages/marketplace/ProductPage";
+import CartPage from "./pages/marketplace/CartPage";
+import CheckoutPage from "./pages/marketplace/CheckoutPage";
+import MyOrdersPage from "./pages/marketplace/MyOrdersPage";
+import { MarketplaceCartProvider } from "./contexts/MarketplaceCartContext";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -39,6 +47,7 @@ const App = () => {
           <Toaster />
           <Sonner />
           <BrowserRouter>
+            <MarketplaceCartProvider>
             <Routes>
               {/* Public */}
               <Route path="/" element={<LandingPage />} />
@@ -50,6 +59,14 @@ const App = () => {
               <Route path="/verify-email" element={<VerifyEmailPage />} />
               <Route path="/auth/callback" element={<AuthCallback />} />
               <Route path="/track" element={<TrackOrderPage />} />
+              {/* Marketplace */}
+              <Route path="/marketplace" element={<MarketplaceHome />} />
+              <Route path="/marketplace/category/:slug" element={<CategoryPage />} />
+              <Route path="/marketplace/type/:type" element={<VendorTypePage />} />
+              <Route path="/marketplace/product/:id" element={<ProductPage />} />
+              <Route path="/marketplace/cart" element={<CartPage />} />
+              <Route path="/marketplace/checkout" element={<CheckoutPage />} />
+              <Route path="/marketplace/orders" element={<ProtectedRoute><MyOrdersPage /></ProtectedRoute>} />
               <Route
                 path="/account-review"
                 element={
