@@ -15,6 +15,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import BackButton from "@/components/ui/back-button";
+import AcknowledgementDialog, { CUSTOMER_ORDER_ACK_TEXT } from "@/components/marketplace/AcknowledgementDialog";
 
 type DeliveryMethod = "VENDOR_DELIVERY" | "PICKUP" | "SHIPPING_COMPANY";
 type PaymentMethod = "CASH_ON_DELIVERY" | "ONLINE" | "CLIQ";
@@ -24,6 +25,7 @@ export default function CheckoutPage() {
   const { user, profile, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [submitting, setSubmitting] = useState(false);
+  const [ackOpen, setAckOpen] = useState(false);
 
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
