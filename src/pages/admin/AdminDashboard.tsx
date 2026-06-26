@@ -56,7 +56,7 @@ const AdminDashboard = () => {
       <main className="container py-6 px-4 space-y-6">
         <AnalyticsCards />
         <Tabs defaultValue="bookings" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-7 h-auto">
+          <TabsList className="grid w-full grid-cols-8 h-auto">
             <TabsTrigger value="services" className="flex flex-col gap-1 py-2 text-xs">
               <Package className="h-4 w-4" />
               {t("admin.tab.services")}
@@ -68,6 +68,10 @@ const AdminDashboard = () => {
             <TabsTrigger value="providers" className="flex flex-col gap-1 py-2 text-xs">
               <Users className="h-4 w-4" />
               {t("admin.tab.providers")}
+            </TabsTrigger>
+            <TabsTrigger value="vendors" className="flex flex-col gap-1 py-2 text-xs">
+              <Store className="h-4 w-4" />
+              السوق
             </TabsTrigger>
             <TabsTrigger value="finance" className="flex flex-col gap-1 py-2 text-xs">
               <Landmark className="h-4 w-4" />
@@ -90,6 +94,7 @@ const AdminDashboard = () => {
           <TabsContent value="services"><ServicesTab /></TabsContent>
           <TabsContent value="bookings"><BookingsTab /></TabsContent>
           <TabsContent value="providers"><ProvidersTab /></TabsContent>
+          <TabsContent value="vendors"><MarketplaceVendorsTab /></TabsContent>
           <TabsContent value="finance"><FinanceTab /></TabsContent>
           <TabsContent value="suspensions"><SuspensionRequestsTab /></TabsContent>
           <TabsContent value="settings"><SettingsTab /></TabsContent>
