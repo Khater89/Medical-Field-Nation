@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import AcknowledgementDialog, { VENDOR_ACCEPT_ACK_TEXT } from "@/components/marketplace/AcknowledgementDialog";
 
 const STATUS_FLOW: Record<string, { next: string; label: string }[]> = {
   pending: [{ next: "confirmed", label: "تأكيد الطلب" }, { next: "cancelled", label: "إلغاء" }],
@@ -28,6 +29,8 @@ const STATUS_LABEL: Record<string, string> = {
 export default function VendorOrdersList({ vendorId }: { vendorId: string }) {
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [ackOrderId, setAckOrderId] = useState<string | null>(null);
+  const [accepting, setAccepting] = useState(false);
 
   const load = async () => {
     setLoading(true);
