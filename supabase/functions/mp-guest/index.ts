@@ -93,14 +93,14 @@ Deno.serve(async (req) => {
         sender_name: chat.customer_name, body: text.trim(),
       }).select("*").single();
       if (error) return jr({ error: error.message }, 400);
+      await sb.from("marketplace_messages").insert; // no-op placeholder removed
+      const { data: cur } = await sb.from("marketplace_chats")
+        .select("unread_for_vendor").eq("id", chat_id).maybeSingle();
       await sb.from("marketplace_chats").update({
         last_message_at: new Date().toISOString(),
         last_message_preview: text.trim().slice(0, 120),
-        unread_for_vendor: (chat as any).unread_for_vendor != null
-          ? undefined : undefined,
+        unread_for_vendor: (cur?.unread_for_vendor || 0) + 1,
       }).eq("id", chat_id);
-      // increment vendor unread
-      await sb.rpc("mp_inc_vendor_unread", { _chat_id: chat_id }).catch(() => {});
       return jr({ message: msg });
     }
 
