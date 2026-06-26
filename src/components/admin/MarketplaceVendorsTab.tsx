@@ -49,12 +49,29 @@ export default function MarketplaceVendorsTab() {
 
   useEffect(() => { load(); }, []);
 
-  const setStatus = async (id: string, status: string) => {
-    const patch: any = { status };
-    if (status === "approved") patch.approved_at = new Date().toISOString();
-    const { error } = await supabase.from("marketplace_vendors").update(patch).eq("id", id);
+  const approve = async (id: string) => {
+    const { error } = await supabase.rpc("admin_approve_vendor", { _id: id });
     if (error) return toast.error(error.message);
-    toast.success("تم التحديث");
+    toast.success("تم اعتماد المتجر وتفعيله");
+    load();
+  };
+  const reject = async (id: string) => {
+    const reason = prompt("سبب الرفض:") || "";
+    const { error } = await supabase.rpc("admin_reject_vendor", { _id: id, _reason: reason });
+    if (error) return toast.error(error.message);
+    toast.success("تم رفض الطلب");
+    load();
+  };
+  const toggleActive = async (id: string, active: boolean) => {
+    const { error } = await supabase.rpc("admin_toggle_vendor_active", { _id: id, _active: active });
+    if (error) return toast.error(error.message);
+    toast.success(active ? "تم التفعيل" : "تم الإيقاف");
+    load();
+  };
+  const suspend = async (id: string) => {
+    const { error } = await supabase.from("marketplace_vendors").update({ status: "suspended" }).eq("id", id);
+    if (error) return toast.error(error.message);
+    toast.success("تم الإيقاف");
     load();
   };
 
