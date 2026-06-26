@@ -522,6 +522,563 @@ export type Database = {
           },
         ]
       }
+      marketplace_categories: {
+        Row: {
+          created_at: string
+          icon: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean
+          name_ar: string
+          name_en: string | null
+          parent_id: string | null
+          slug: string
+          sort_order: number
+          updated_at: string
+          vendor_type:
+            | Database["public"]["Enums"]["marketplace_vendor_type"]
+            | null
+        }
+        Insert: {
+          created_at?: string
+          icon?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          name_ar: string
+          name_en?: string | null
+          parent_id?: string | null
+          slug: string
+          sort_order?: number
+          updated_at?: string
+          vendor_type?:
+            | Database["public"]["Enums"]["marketplace_vendor_type"]
+            | null
+        }
+        Update: {
+          created_at?: string
+          icon?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          name_ar?: string
+          name_en?: string | null
+          parent_id?: string | null
+          slug?: string
+          sort_order?: number
+          updated_at?: string
+          vendor_type?:
+            | Database["public"]["Enums"]["marketplace_vendor_type"]
+            | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_categories_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketplace_order_items: {
+        Row: {
+          created_at: string
+          id: string
+          line_total: number
+          order_id: string
+          product_id: string | null
+          product_name: string
+          quantity: number
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          line_total: number
+          order_id: string
+          product_id?: string | null
+          product_name: string
+          quantity: number
+          unit_price: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          line_total?: number
+          order_id?: string
+          product_id?: string | null
+          product_name?: string
+          quantity?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketplace_order_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketplace_orders: {
+        Row: {
+          cancel_reason: string | null
+          cancelled_at: string | null
+          confirmed_at: string | null
+          created_at: string
+          currency: string
+          customer_email: string | null
+          customer_name: string | null
+          customer_phone: string | null
+          customer_user_id: string | null
+          delivered_at: string | null
+          delivery_address: string | null
+          delivery_city: string | null
+          delivery_fee: number
+          delivery_lat: number | null
+          delivery_lng: number | null
+          delivery_method: Database["public"]["Enums"]["marketplace_delivery_method"]
+          discount: number
+          id: string
+          internal_note: string | null
+          notes: string | null
+          order_number: string | null
+          payment_method: Database["public"]["Enums"]["marketplace_payment_method"]
+          payment_status: Database["public"]["Enums"]["marketplace_payment_status"]
+          platform_fee_amount: number
+          platform_fee_percent: number
+          status: Database["public"]["Enums"]["marketplace_order_status"]
+          subtotal: number
+          total: number
+          updated_at: string
+          vendor_id: string
+          vendor_payout: number
+        }
+        Insert: {
+          cancel_reason?: string | null
+          cancelled_at?: string | null
+          confirmed_at?: string | null
+          created_at?: string
+          currency?: string
+          customer_email?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          customer_user_id?: string | null
+          delivered_at?: string | null
+          delivery_address?: string | null
+          delivery_city?: string | null
+          delivery_fee?: number
+          delivery_lat?: number | null
+          delivery_lng?: number | null
+          delivery_method: Database["public"]["Enums"]["marketplace_delivery_method"]
+          discount?: number
+          id?: string
+          internal_note?: string | null
+          notes?: string | null
+          order_number?: string | null
+          payment_method: Database["public"]["Enums"]["marketplace_payment_method"]
+          payment_status?: Database["public"]["Enums"]["marketplace_payment_status"]
+          platform_fee_amount?: number
+          platform_fee_percent?: number
+          status?: Database["public"]["Enums"]["marketplace_order_status"]
+          subtotal?: number
+          total?: number
+          updated_at?: string
+          vendor_id: string
+          vendor_payout?: number
+        }
+        Update: {
+          cancel_reason?: string | null
+          cancelled_at?: string | null
+          confirmed_at?: string | null
+          created_at?: string
+          currency?: string
+          customer_email?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          customer_user_id?: string | null
+          delivered_at?: string | null
+          delivery_address?: string | null
+          delivery_city?: string | null
+          delivery_fee?: number
+          delivery_lat?: number | null
+          delivery_lng?: number | null
+          delivery_method?: Database["public"]["Enums"]["marketplace_delivery_method"]
+          discount?: number
+          id?: string
+          internal_note?: string | null
+          notes?: string | null
+          order_number?: string | null
+          payment_method?: Database["public"]["Enums"]["marketplace_payment_method"]
+          payment_status?: Database["public"]["Enums"]["marketplace_payment_status"]
+          platform_fee_amount?: number
+          platform_fee_percent?: number
+          status?: Database["public"]["Enums"]["marketplace_order_status"]
+          subtotal?: number
+          total?: number
+          updated_at?: string
+          vendor_id?: string
+          vendor_payout?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_orders_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketplace_product_images: {
+        Row: {
+          alt_text: string | null
+          created_at: string
+          id: string
+          product_id: string
+          sort_order: number
+          url: string
+        }
+        Insert: {
+          alt_text?: string | null
+          created_at?: string
+          id?: string
+          product_id: string
+          sort_order?: number
+          url: string
+        }
+        Update: {
+          alt_text?: string | null
+          created_at?: string
+          id?: string
+          product_id?: string
+          sort_order?: number
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_product_images_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketplace_products: {
+        Row: {
+          brand: string | null
+          category_id: string | null
+          compare_at_price: number | null
+          cover_image_url: string | null
+          created_at: string
+          currency: string
+          description_ar: string | null
+          description_en: string | null
+          id: string
+          is_active: boolean
+          is_featured: boolean
+          name_ar: string
+          name_en: string | null
+          price: number
+          requires_prescription: boolean
+          sales_count: number
+          sku: string | null
+          stock_quantity: number
+          tags: string[] | null
+          unit: string | null
+          unlimited_stock: boolean
+          updated_at: string
+          vendor_id: string
+          views_count: number
+        }
+        Insert: {
+          brand?: string | null
+          category_id?: string | null
+          compare_at_price?: number | null
+          cover_image_url?: string | null
+          created_at?: string
+          currency?: string
+          description_ar?: string | null
+          description_en?: string | null
+          id?: string
+          is_active?: boolean
+          is_featured?: boolean
+          name_ar: string
+          name_en?: string | null
+          price: number
+          requires_prescription?: boolean
+          sales_count?: number
+          sku?: string | null
+          stock_quantity?: number
+          tags?: string[] | null
+          unit?: string | null
+          unlimited_stock?: boolean
+          updated_at?: string
+          vendor_id: string
+          views_count?: number
+        }
+        Update: {
+          brand?: string | null
+          category_id?: string | null
+          compare_at_price?: number | null
+          cover_image_url?: string | null
+          created_at?: string
+          currency?: string
+          description_ar?: string | null
+          description_en?: string | null
+          id?: string
+          is_active?: boolean
+          is_featured?: boolean
+          name_ar?: string
+          name_en?: string | null
+          price?: number
+          requires_prescription?: boolean
+          sales_count?: number
+          sku?: string | null
+          stock_quantity?: number
+          tags?: string[] | null
+          unit?: string | null
+          unlimited_stock?: boolean
+          updated_at?: string
+          vendor_id?: string
+          views_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_products_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketplace_products_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketplace_settlement_requests: {
+        Row: {
+          amount: number
+          created_at: string
+          finance_note: string | null
+          id: string
+          paid_at: string | null
+          paid_by: string | null
+          payment_reference: string | null
+          requested_at: string
+          requested_by: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          updated_at: string
+          vendor_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          finance_note?: string | null
+          id?: string
+          paid_at?: string | null
+          paid_by?: string | null
+          payment_reference?: string | null
+          requested_at?: string
+          requested_by: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+          vendor_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          finance_note?: string | null
+          id?: string
+          paid_at?: string | null
+          paid_by?: string | null
+          payment_reference?: string | null
+          requested_at?: string
+          requested_by?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          updated_at?: string
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_settlement_requests_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketplace_vendor_ledger: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          note: string | null
+          order_id: string | null
+          reason: string
+          vendor_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          note?: string | null
+          order_id?: string | null
+          reason: string
+          vendor_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          note?: string | null
+          order_id?: string | null
+          reason?: string
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_vendor_ledger_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketplace_vendor_ledger_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketplace_vendors: {
+        Row: {
+          accepts_cash: boolean
+          accepts_online_payment: boolean
+          address_text: string | null
+          approved_at: string | null
+          approved_by: string | null
+          banner_url: string | null
+          city: string | null
+          commercial_registration: string | null
+          created_at: string
+          delivery_offered: boolean
+          description: string | null
+          email: string | null
+          id: string
+          lat: number | null
+          license_file_url: string | null
+          license_number: string | null
+          lng: number | null
+          logo_url: string | null
+          owner_user_id: string
+          phone: string | null
+          pickup_offered: boolean
+          rating: number | null
+          rejected_reason: string | null
+          slug: string | null
+          status: Database["public"]["Enums"]["marketplace_vendor_status"]
+          store_name: string
+          store_name_en: string | null
+          total_orders: number
+          updated_at: string
+          vendor_number: number | null
+          vendor_type: Database["public"]["Enums"]["marketplace_vendor_type"]
+          whatsapp: string | null
+        }
+        Insert: {
+          accepts_cash?: boolean
+          accepts_online_payment?: boolean
+          address_text?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          banner_url?: string | null
+          city?: string | null
+          commercial_registration?: string | null
+          created_at?: string
+          delivery_offered?: boolean
+          description?: string | null
+          email?: string | null
+          id?: string
+          lat?: number | null
+          license_file_url?: string | null
+          license_number?: string | null
+          lng?: number | null
+          logo_url?: string | null
+          owner_user_id: string
+          phone?: string | null
+          pickup_offered?: boolean
+          rating?: number | null
+          rejected_reason?: string | null
+          slug?: string | null
+          status?: Database["public"]["Enums"]["marketplace_vendor_status"]
+          store_name: string
+          store_name_en?: string | null
+          total_orders?: number
+          updated_at?: string
+          vendor_number?: number | null
+          vendor_type: Database["public"]["Enums"]["marketplace_vendor_type"]
+          whatsapp?: string | null
+        }
+        Update: {
+          accepts_cash?: boolean
+          accepts_online_payment?: boolean
+          address_text?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          banner_url?: string | null
+          city?: string | null
+          commercial_registration?: string | null
+          created_at?: string
+          delivery_offered?: boolean
+          description?: string | null
+          email?: string | null
+          id?: string
+          lat?: number | null
+          license_file_url?: string | null
+          license_number?: string | null
+          lng?: number | null
+          logo_url?: string | null
+          owner_user_id?: string
+          phone?: string | null
+          pickup_offered?: boolean
+          rating?: number | null
+          rejected_reason?: string | null
+          slug?: string | null
+          status?: Database["public"]["Enums"]["marketplace_vendor_status"]
+          store_name?: string
+          store_name_en?: string | null
+          total_orders?: number
+          updated_at?: string
+          vendor_number?: number | null
+          vendor_type?: Database["public"]["Enums"]["marketplace_vendor_type"]
+          whatsapp?: string | null
+        }
+        Relationships: []
+      }
       notifications_log: {
         Row: {
           booking_id: string | null
@@ -1218,6 +1775,10 @@ export type Database = {
           role: string
         }[]
       }
+      get_marketplace_vendor_balance: {
+        Args: { _vendor_id: string }
+        Returns: number
+      }
       get_platform_public_settings: {
         Args: never
         Returns: {
@@ -1278,6 +1839,7 @@ export type Database = {
       is_cs: { Args: never; Returns: boolean }
       is_customer: { Args: never; Returns: boolean }
       is_provider: { Args: never; Returns: boolean }
+      is_vendor: { Args: never; Returns: boolean }
       list_booking_messages: {
         Args: { _booking_id: string }
         Returns: {
@@ -1402,7 +1964,31 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "provider" | "customer" | "cs"
+      app_role: "admin" | "provider" | "customer" | "cs" | "vendor"
+      marketplace_delivery_method:
+        | "VENDOR_DELIVERY"
+        | "PICKUP"
+        | "SHIPPING_COMPANY"
+      marketplace_order_status:
+        | "NEW"
+        | "CONFIRMED"
+        | "PREPARING"
+        | "OUT_FOR_DELIVERY"
+        | "DELIVERED"
+        | "CANCELLED"
+        | "REFUNDED"
+      marketplace_payment_method: "CASH_ON_DELIVERY" | "ONLINE" | "CLIQ"
+      marketplace_payment_status: "UNPAID" | "PAID" | "REFUNDED" | "FAILED"
+      marketplace_vendor_status:
+        | "pending"
+        | "approved"
+        | "suspended"
+        | "rejected"
+      marketplace_vendor_type:
+        | "pharmacy"
+        | "medical_devices"
+        | "prosthetics"
+        | "other"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1530,7 +2116,35 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "provider", "customer", "cs"],
+      app_role: ["admin", "provider", "customer", "cs", "vendor"],
+      marketplace_delivery_method: [
+        "VENDOR_DELIVERY",
+        "PICKUP",
+        "SHIPPING_COMPANY",
+      ],
+      marketplace_order_status: [
+        "NEW",
+        "CONFIRMED",
+        "PREPARING",
+        "OUT_FOR_DELIVERY",
+        "DELIVERED",
+        "CANCELLED",
+        "REFUNDED",
+      ],
+      marketplace_payment_method: ["CASH_ON_DELIVERY", "ONLINE", "CLIQ"],
+      marketplace_payment_status: ["UNPAID", "PAID", "REFUNDED", "FAILED"],
+      marketplace_vendor_status: [
+        "pending",
+        "approved",
+        "suspended",
+        "rejected",
+      ],
+      marketplace_vendor_type: [
+        "pharmacy",
+        "medical_devices",
+        "prosthetics",
+        "other",
+      ],
     },
   },
 } as const
