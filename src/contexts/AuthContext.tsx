@@ -39,6 +39,7 @@ interface AuthContextType {
   isCS: boolean;
   isProvider: boolean;
   isCustomer: boolean;
+  isVendor: boolean;
   signOut: () => Promise<void>;
   refreshUserData: () => Promise<void>;
 }
