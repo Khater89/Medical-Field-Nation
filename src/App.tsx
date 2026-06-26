@@ -30,6 +30,8 @@ import ProductPage from "./pages/marketplace/ProductPage";
 import CartPage from "./pages/marketplace/CartPage";
 import CheckoutPage from "./pages/marketplace/CheckoutPage";
 import MyOrdersPage from "./pages/marketplace/MyOrdersPage";
+import VendorRegister from "./pages/vendor/VendorRegister";
+import VendorDashboard from "./pages/vendor/VendorDashboard";
 import { MarketplaceCartProvider } from "./contexts/MarketplaceCartContext";
 import NotFound from "./pages/NotFound";
 
