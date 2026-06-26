@@ -8,6 +8,7 @@ import { Scene3HowItWorks } from "./scenes/Scene3HowItWorks";
 import { Scene4Stats } from "./scenes/Scene4Stats";
 import { Scene5CTA } from "./scenes/Scene5CTA";
 import { Starfield, ShootingStars } from "./components/Starfield";
+import { ScenePhotos } from "./scenes/ScenePhotos";
 
 const TRANSITION_DURATION = 20;
 
