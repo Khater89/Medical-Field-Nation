@@ -25,10 +25,9 @@ export default function VendorPage() {
     (async () => {
       setLoading(true);
       const { data: v } = await supabase
-        .from("marketplace_vendors")
+        .from("marketplace_vendors_public" as any)
         .select("*")
         .eq("id", id)
-        .eq("status", "approved")
         .maybeSingle();
       setVendor(v);
       if (v) {
