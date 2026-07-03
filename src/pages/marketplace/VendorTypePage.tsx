@@ -47,14 +47,13 @@ export default function VendorTypePage() {
     (async () => {
       setLoading(true);
       const { data: vs } = await supabase
-        .from("marketplace_vendors")
+        .from("marketplace_vendors_public" as any)
         .select("id,store_name,logo_url,city,area_text,is_open")
-        .eq("status", "approved")
         .eq("vendor_type", type as any)
         .order("created_at", { ascending: false })
         .limit(12);
-      setVendors(vs || []);
-      const vendorIds = (vs || []).map((v: any) => v.id);
+      setVendors((vs as any[]) || []);
+      const vendorIds = ((vs as any[]) || []).map((v: any) => v.id);
       if (vendorIds.length === 0) {
         setProducts([]);
         setLoading(false);
