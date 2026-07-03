@@ -648,6 +648,13 @@ export type Database = {
             referencedRelation: "marketplace_vendors"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "marketplace_chats_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_vendors_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       marketplace_guest_otps: {
@@ -934,6 +941,13 @@ export type Database = {
             referencedRelation: "marketplace_vendors"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "marketplace_orders_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_vendors_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       marketplace_product_images: {
@@ -1077,6 +1091,13 @@ export type Database = {
             referencedRelation: "marketplace_vendors"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "marketplace_products_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_vendors_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       marketplace_settlement_requests: {
@@ -1136,6 +1157,13 @@ export type Database = {
             referencedRelation: "marketplace_vendors"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "marketplace_settlement_requests_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_vendors_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       marketplace_vendor_ledger: {
@@ -1179,6 +1207,13 @@ export type Database = {
             columns: ["vendor_id"]
             isOneToOne: false
             referencedRelation: "marketplace_vendors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketplace_vendor_ledger_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_vendors_public"
             referencedColumns: ["id"]
           },
         ]
@@ -1854,7 +1889,96 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      marketplace_vendors_public: {
+        Row: {
+          accepts_cash: boolean | null
+          accepts_online_payment: boolean | null
+          area_text: string | null
+          banner_url: string | null
+          city: string | null
+          created_at: string | null
+          delivery_offered: boolean | null
+          description: string | null
+          id: string | null
+          is_active: boolean | null
+          is_open: boolean | null
+          logo_url: string | null
+          phone: string | null
+          pickup_offered: boolean | null
+          rating: number | null
+          slug: string | null
+          status:
+            | Database["public"]["Enums"]["marketplace_vendor_status"]
+            | null
+          store_name: string | null
+          store_name_en: string | null
+          total_orders: number | null
+          vendor_type:
+            | Database["public"]["Enums"]["marketplace_vendor_type"]
+            | null
+          whatsapp: string | null
+          working_hours: Json | null
+        }
+        Insert: {
+          accepts_cash?: boolean | null
+          accepts_online_payment?: boolean | null
+          area_text?: string | null
+          banner_url?: string | null
+          city?: string | null
+          created_at?: string | null
+          delivery_offered?: boolean | null
+          description?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          is_open?: boolean | null
+          logo_url?: string | null
+          phone?: string | null
+          pickup_offered?: boolean | null
+          rating?: number | null
+          slug?: string | null
+          status?:
+            | Database["public"]["Enums"]["marketplace_vendor_status"]
+            | null
+          store_name?: string | null
+          store_name_en?: string | null
+          total_orders?: number | null
+          vendor_type?:
+            | Database["public"]["Enums"]["marketplace_vendor_type"]
+            | null
+          whatsapp?: string | null
+          working_hours?: Json | null
+        }
+        Update: {
+          accepts_cash?: boolean | null
+          accepts_online_payment?: boolean | null
+          area_text?: string | null
+          banner_url?: string | null
+          city?: string | null
+          created_at?: string | null
+          delivery_offered?: boolean | null
+          description?: string | null
+          id?: string | null
+          is_active?: boolean | null
+          is_open?: boolean | null
+          logo_url?: string | null
+          phone?: string | null
+          pickup_offered?: boolean | null
+          rating?: number | null
+          slug?: string | null
+          status?:
+            | Database["public"]["Enums"]["marketplace_vendor_status"]
+            | null
+          store_name?: string | null
+          store_name_en?: string | null
+          total_orders?: number | null
+          vendor_type?:
+            | Database["public"]["Enums"]["marketplace_vendor_type"]
+            | null
+          whatsapp?: string | null
+          working_hours?: Json | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       admin_approve_vendor: { Args: { _id: string }; Returns: Json }
