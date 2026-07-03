@@ -62,7 +62,7 @@ export default function ProductPage() {
           supabase.from("marketplace_vendors_public" as any).select("id,store_name,vendor_type,city,rating").eq("id", p.vendor_id).maybeSingle(),
           supabase.from("marketplace_product_images").select("url").eq("product_id", p.id).order("sort_order"),
         ]);
-        setVendor(v as Vendor);
+        setVendor(v as unknown as Vendor);
         setImages((imgs || []).map((i: any) => i.url));
       }
       setLoading(false);
