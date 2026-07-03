@@ -59,7 +59,7 @@ export default function ProductPage() {
       if (p) {
         setProduct(p as Product);
         const [{ data: v }, { data: imgs }] = await Promise.all([
-          supabase.from("marketplace_vendors").select("id,store_name,vendor_type,city,rating").eq("id", p.vendor_id).maybeSingle(),
+          supabase.from("marketplace_vendors_public" as any).select("id,store_name,vendor_type,city,rating").eq("id", p.vendor_id).maybeSingle(),
           supabase.from("marketplace_product_images").select("url").eq("product_id", p.id).order("sort_order"),
         ]);
         setVendor(v as Vendor);
