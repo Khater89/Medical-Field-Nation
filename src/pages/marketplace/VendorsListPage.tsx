@@ -31,13 +31,12 @@ export default function VendorsListPage() {
     (async () => {
       setLoading(true);
       const { data } = await supabase
-        .from("marketplace_vendors")
+        .from("marketplace_vendors_public" as any)
         .select("id,store_name,logo_url,city,area_text,is_open,rating,description,vendor_type")
-        .eq("status", "approved")
         .eq("vendor_type", type as any)
         .order("created_at", { ascending: false });
-      setVendors(data || []);
-      const ids = (data || []).map((v) => v.id);
+      setVendors((data as any[]) || []);
+      const ids = ((data as any[]) || []).map((v) => v.id);
       if (ids.length) {
         const { data: prods } = await supabase
           .from("marketplace_products")

@@ -25,17 +25,16 @@ export default function VendorPage() {
     (async () => {
       setLoading(true);
       const { data: v } = await supabase
-        .from("marketplace_vendors")
+        .from("marketplace_vendors_public" as any)
         .select("*")
         .eq("id", id)
-        .eq("status", "approved")
         .maybeSingle();
       setVendor(v);
       if (v) {
         const { data: prods } = await supabase
           .from("marketplace_products")
           .select("id,vendor_id,name_ar,name_en,price,compare_at_price,currency,cover_image_url,unit,requires_prescription,stock_quantity,unlimited_stock")
-          .eq("vendor_id", v.id)
+          .eq("vendor_id", (v as any).id)
           .eq("is_active", true)
           .order("created_at", { ascending: false });
         setProducts((prods as ProductCardData[]) || []);
