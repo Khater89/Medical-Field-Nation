@@ -1,0 +1,102 @@
+{
+  "version": 1,
+  "sdk_version": "0.20.0",
+  "path": "/functions/v1/mcp",
+  "auth": {
+    "type": "none"
+  },
+  "mcp": {
+    "server": {
+      "name": "mfn-mcp",
+      "version": "0.1.0",
+      "title": "MFN — Medical Field Nation"
+    },
+    "tools": [
+      {
+        "name": "track_booking",
+        "title": "Track booking",
+        "description": "Look up a booking's status, schedule, and assigned provider by booking number.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "booking_number": {
+              "type": "string",
+              "minLength": 3,
+              "description": "The public booking number (e.g. MFN-000123)."
+            }
+          },
+          "required": [
+            "booking_number"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_services",
+        "title": "List medical services",
+        "description": "List active medical home-care services offered on the platform, with optional category filter.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "category": {
+              "type": "string",
+              "description": "Optional category slug or name to filter by."
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "description": "Max rows (default 50)."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_marketplace_vendors",
+        "title": "List marketplace vendors",
+        "description": "List approved medical marketplace vendors (pharmacies, medical stores, etc.), filterable by type or city.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "vendor_type": {
+              "type": "string",
+              "description": "e.g. pharmacy, medical_store, optics."
+            },
+            "city": {
+              "type": "string",
+              "description": "Filter by city."
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}
