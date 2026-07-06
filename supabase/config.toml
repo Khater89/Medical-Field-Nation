@@ -38,3 +38,7 @@ verify_jwt = false
 
 [functions.mp-guest]
 verify_jwt = false
+
+[functions.mcp]
+verify_jwt = false
+
