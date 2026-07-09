@@ -1,0 +1,1 @@
+GRANT SELECT ON public.marketplace_vendors_public TO anon, authenticated;
