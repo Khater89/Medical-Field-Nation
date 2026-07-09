@@ -4,6 +4,7 @@ import AppFooter from "@/components/AppFooter";
 import MarketplaceSubNav from "@/components/marketplace/MarketplaceSubNav";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, MessagesSquare } from "lucide-react";
@@ -12,6 +13,7 @@ import MarketplaceChatDialog from "@/components/marketplace/MarketplaceChatDialo
 
 export default function MarketplaceMessagesPage() {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const [chats, setChats] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [active, setActive] = useState<any | null>(null);
@@ -34,12 +36,12 @@ export default function MarketplaceMessagesPage() {
     <div className="min-h-screen flex flex-col bg-background">
       <AppHeader /><MarketplaceSubNav />
       <main className="container max-w-3xl py-6 flex-1 space-y-3">
-        <BackButton to="/marketplace" label="رجوع" />
-        <h1 className="text-2xl font-bold flex items-center gap-2"><MessagesSquare className="h-5 w-5" /> رسائلي مع المتاجر</h1>
+        <BackButton to="/marketplace" label={t("mp.back")} />
+        <h1 className="text-2xl font-bold flex items-center gap-2"><MessagesSquare className="h-5 w-5" /> {t("mp.messages.title_authed")}</h1>
         {loading ? (
           <div className="py-8 text-center"><Loader2 className="h-6 w-6 animate-spin mx-auto" /></div>
         ) : chats.length === 0 ? (
-          <Card className="p-8 text-center text-muted-foreground">لا توجد محادثات بعد.</Card>
+          <Card className="p-8 text-center text-muted-foreground">{t("mp.messages.no_chats")}</Card>
         ) : (
           <div className="space-y-2">
             {chats.map((c) => (
@@ -49,7 +51,7 @@ export default function MarketplaceMessagesPage() {
                     {c.vendor?.logo_url ? <img src={c.vendor.logo_url} alt="" className="w-full h-full object-cover" /> : <MessagesSquare className="h-4 w-4 text-primary" />}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="font-semibold text-sm truncate">{c.vendor?.store_name || "متجر"}</div>
+                    <div className="font-semibold text-sm truncate">{c.vendor?.store_name || t("mp.store")}</div>
                     <div className="text-xs text-muted-foreground truncate">{c.last_message_preview || "-"}</div>
                   </div>
                   {c.unread_for_customer > 0 && <Badge>{c.unread_for_customer}</Badge>}
@@ -65,7 +67,7 @@ export default function MarketplaceMessagesPage() {
           open={!!active}
           onOpenChange={(v) => { if (!v) { setActive(null); load(); } }}
           vendorId={active.vendor_id}
-          vendorName={active.vendor?.store_name || "متجر"}
+          vendorName={active.vendor?.store_name || t("mp.store")}
           productId={active.product_id}
         />
       )}
