@@ -4,6 +4,7 @@ import AppHeader from "@/components/AppHeader";
 import AppFooter from "@/components/AppFooter";
 import MarketplaceSubNav from "@/components/marketplace/MarketplaceSubNav";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -12,18 +13,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Loader2, Package } from "lucide-react";
 import BackButton from "@/components/ui/back-button";
 
-const STATUS_LABEL: Record<string, string> = {
-  NEW: "جديد",
-  CONFIRMED: "مؤكد",
-  PREPARING: "قيد التحضير",
-  OUT_FOR_DELIVERY: "في الطريق",
-  DELIVERED: "تم التسليم",
-  CANCELLED: "ملغى",
-  REFUNDED: "مرتجع",
-};
-
 export default function MyOrdersPage() {
   const { user, loading: authLoading } = useAuth();
+  const { t, formatDateShort } = useLanguage();
   const navigate = useNavigate();
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -54,15 +46,15 @@ export default function MyOrdersPage() {
       <AppHeader />
       <MarketplaceSubNav />
       <main className="container max-w-4xl py-6 flex-1">
-        <BackButton to="/marketplace" label="رجوع للسوق" className="mb-3" />
-        <h1 className="text-2xl font-bold mb-4">طلباتي</h1>
+        <BackButton to="/marketplace" label={t("mp.back_to_market")} className="mb-3" />
+        <h1 className="text-2xl font-bold mb-4">{t("mp.orders.title")}</h1>
         {loading ? (
           <div className="space-y-3">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-24" />)}</div>
         ) : orders.length === 0 ? (
           <Card className="p-12 text-center">
             <Package className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
-            <p className="text-muted-foreground mb-4">لا توجد طلبات بعد</p>
-            <Link to="/marketplace"><Button>ابدأ التسوق</Button></Link>
+            <p className="text-muted-foreground mb-4">{t("mp.orders.empty")}</p>
+            <Link to="/marketplace"><Button>{t("mp.orders.start_shopping")}</Button></Link>
           </Card>
         ) : (
           <div className="space-y-3">
@@ -70,10 +62,10 @@ export default function MyOrdersPage() {
               <Card key={o.id} className="p-4">
                 <div className="flex items-center justify-between mb-2">
                   <div>
-                    <div className="font-semibold">طلب #{o.order_number}</div>
-                    <div className="text-xs text-muted-foreground">{new Date(o.created_at).toLocaleString("ar")}</div>
+                    <div className="font-semibold">{t("mp.orders.order_no")}{o.order_number}</div>
+                    <div className="text-xs text-muted-foreground">{formatDateShort(o.created_at)}</div>
                   </div>
-                  <Badge variant="secondary">{STATUS_LABEL[o.status] || o.status}</Badge>
+                  <Badge variant="secondary">{t(`mp.orders.status.${o.status}`) !== `mp.orders.status.${o.status}` ? t(`mp.orders.status.${o.status}`) : o.status}</Badge>
                 </div>
                 <div className="text-sm text-muted-foreground space-y-0.5">
                   {(o.marketplace_order_items || []).slice(0, 3).map((it: any, i: number) => (
@@ -81,7 +73,7 @@ export default function MyOrdersPage() {
                   ))}
                 </div>
                 <div className="flex items-center justify-between mt-3 pt-3 border-t border-border">
-                  <span className="text-sm text-muted-foreground">الإجمالي</span>
+                  <span className="text-sm text-muted-foreground">{t("mp.orders.total")}</span>
                   <span className="font-bold">{Number(o.total).toFixed(2)} {o.currency}</span>
                 </div>
               </Card>
