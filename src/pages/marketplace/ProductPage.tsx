@@ -13,12 +13,15 @@ import BackButton from "@/components/ui/back-button";
 import { useCart } from "@/contexts/MarketplaceCartContext";
 import { toast } from "sonner";
 import MarketplaceChatDialog from "@/components/marketplace/MarketplaceChatDialog";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface Product {
   id: string;
   vendor_id: string;
   name_ar: string;
+  name_en?: string | null;
   description_ar?: string | null;
+  description_en?: string | null;
   brand?: string | null;
   price: number;
   compare_at_price?: number | null;
@@ -39,6 +42,7 @@ interface Vendor {
 
 export default function ProductPage() {
   const { id } = useParams<{ id: string }>();
+  const { t, lang } = useLanguage();
   const [product, setProduct] = useState<Product | null>(null);
   const [vendor, setVendor] = useState<Vendor | null>(null);
   const [images, setImages] = useState<string[]>([]);
@@ -70,6 +74,9 @@ export default function ProductPage() {
   }, [id]);
 
   const inStock = !!product && (product.unlimited_stock || (product.stock_quantity ?? 0) > 0);
+  const displayName = product ? (lang === "en" && product.name_en ? product.name_en : product.name_ar) : "";
+  const displayDescription = product ? (lang === "en" && product.description_en ? product.description_en : product.description_ar) : null;
+  const currency = product?.currency || t("mp.currency.jod");
 
   const handleAdd = () => {
     if (!product || !inStock) return;
@@ -77,7 +84,7 @@ export default function ProductPage() {
       {
         product_id: product.id,
         vendor_id: product.vendor_id,
-        name: product.name_ar,
+        name: displayName,
         price: Number(product.price),
         cover_image_url: product.cover_image_url,
         unit: product.unit,
@@ -85,7 +92,7 @@ export default function ProductPage() {
       },
       qty
     );
-    toast.success(`أُضيف ${qty} إلى السلة`);
+    toast.success(t("mp.product.added_qty").replace("{qty}", String(qty)));
   };
 
   if (loading) {
@@ -111,8 +118,8 @@ export default function ProductPage() {
         <AppHeader />
         <MarketplaceSubNav />
         <main className="container max-w-6xl py-12 flex-1 text-center">
-          <p className="text-muted-foreground">المنتج غير موجود.</p>
-          <Link to="/marketplace"><Button variant="link">العودة للسوق</Button></Link>
+          <p className="text-muted-foreground">{t("mp.product.not_found")}</p>
+          <Link to="/marketplace"><Button variant="link">{t("mp.product.back_to_market")}</Button></Link>
         </main>
       </div>
     );
@@ -125,14 +132,14 @@ export default function ProductPage() {
       <AppHeader />
       <MarketplaceSubNav />
       <main className="container max-w-6xl py-6 flex-1">
-        <BackButton label="رجوع" className="mb-3" />
+        <BackButton label={t("mp.back")} className="mb-3" />
         <div className="grid md:grid-cols-2 gap-6">
           <div>
             <div className="aspect-square bg-muted rounded-xl overflow-hidden">
               {gallery[0] ? (
-                <img src={gallery[0]} alt={product.name_ar} className="w-full h-full object-cover" />
+                <img src={gallery[0]} alt={displayName} className="w-full h-full object-cover" />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-muted-foreground">لا توجد صورة</div>
+                <div className="w-full h-full flex items-center justify-center text-muted-foreground">{t("mp.no_image")}</div>
               )}
             </div>
             {gallery.length > 1 && (
@@ -148,15 +155,15 @@ export default function ProductPage() {
 
           <div className="space-y-4">
             {product.brand && <Badge variant="outline">{product.brand}</Badge>}
-            <h1 className="text-2xl font-bold">{product.name_ar}</h1>
+            <h1 className="text-2xl font-bold">{displayName}</h1>
             {product.requires_prescription && (
               <Badge className="gap-1 bg-amber-100 text-amber-900 hover:bg-amber-100">
-                <Pill className="h-3 w-3" /> يتطلب وصفة طبية
+                <Pill className="h-3 w-3" /> {t("mp.requires_prescription")}
               </Badge>
             )}
             <div className="flex items-end gap-3">
               <span className="text-3xl font-extrabold text-primary">
-                {Number(product.price).toFixed(2)} {product.currency || "JOD"}
+                {Number(product.price).toFixed(2)} {currency}
               </span>
               {product.compare_at_price && Number(product.compare_at_price) > Number(product.price) && (
                 <span className="text-base text-muted-foreground line-through">
@@ -164,11 +171,11 @@ export default function ProductPage() {
                 </span>
               )}
             </div>
-            {product.unit && <p className="text-sm text-muted-foreground">الوحدة: {product.unit}</p>}
-            {!inStock && <Badge variant="destructive">غير متوفر حالياً</Badge>}
+            {product.unit && <p className="text-sm text-muted-foreground">{t("mp.unit")}: {product.unit}</p>}
+            {!inStock && <Badge variant="destructive">{t("mp.out_of_stock_now")}</Badge>}
 
-            {product.description_ar && (
-              <Card className="p-4 text-sm leading-7 whitespace-pre-wrap">{product.description_ar}</Card>
+            {displayDescription && (
+              <Card className="p-4 text-sm leading-7 whitespace-pre-wrap">{displayDescription}</Card>
             )}
 
             {vendor && (
@@ -181,7 +188,7 @@ export default function ProductPage() {
                   </div>
                 </Link>
                 <Button size="sm" variant="outline" className="gap-1" onClick={() => setChatOpen(true)}>
-                  <MessageCircle className="h-3 w-3" /> اسأل عن المنتج
+                  <MessageCircle className="h-3 w-3" /> {t("mp.ask_about_product")}
                 </Button>
               </Card>
             )}
@@ -198,7 +205,7 @@ export default function ProductPage() {
               </div>
               <Button size="lg" className="flex-1 gap-2" onClick={handleAdd} disabled={!inStock}>
                 <ShoppingCart className="h-4 w-4" />
-                أضف إلى السلة
+                {t("mp.product.add_to_cart")}
               </Button>
             </div>
           </div>
@@ -210,7 +217,7 @@ export default function ProductPage() {
             vendorId={vendor.id}
             vendorName={vendor.store_name}
             productId={product.id}
-            productName={product.name_ar}
+            productName={displayName}
           />
         )}
       </main>
