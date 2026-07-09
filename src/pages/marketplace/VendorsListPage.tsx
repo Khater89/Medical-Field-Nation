@@ -11,17 +11,19 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Store, MapPin, MessageCircle, Search } from "lucide-react";
 import BackButton from "@/components/ui/back-button";
+import { useLanguage } from "@/contexts/LanguageContext";
 
-const TYPE_LABELS: Record<string, string> = {
-  pharmacy: "الصيدليات",
-  medical_devices: "الأجهزة الطبية",
-  prosthetics: "الأطراف الصناعية",
-  other: "متاجر أخرى",
+const TYPE_LABEL_KEYS: Record<string, string> = {
+  pharmacy: "mp.vendor_type.pharmacy",
+  medical_devices: "mp.vendor_type.medical_devices",
+  prosthetics: "mp.vendor_type.prosthetics",
+  other: "mp.vendor_type.other_stores",
 };
 
 export default function VendorsListPage() {
   const [params] = useSearchParams();
   const type = params.get("type") || "pharmacy";
+  const { t, isRTL } = useLanguage();
   const [vendors, setVendors] = useState<any[]>([]);
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
@@ -52,19 +54,20 @@ export default function VendorsListPage() {
   }, [type]);
 
   const filtered = vendors.filter((v) => !q || v.store_name?.toLowerCase().includes(q.toLowerCase()) || v.city?.includes(q));
+  const heading = TYPE_LABEL_KEYS[type] ? t(TYPE_LABEL_KEYS[type]) : t("mp.vendors.stores_default");
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <AppHeader /><MarketplaceSubNav />
       <main className="container max-w-6xl py-6 flex-1 space-y-4">
-        <BackButton to="/marketplace" label="رجوع للسوق" />
+        <BackButton to="/marketplace" label={t("mp.back_to_market")} />
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h1 className="text-2xl font-bold">{TYPE_LABELS[type] || "المتاجر"}</h1>
-          <Button asChild variant="outline"><Link to={`/vendor/register?type=${type}`}>سجّل متجرك</Link></Button>
+          <h1 className="text-2xl font-bold">{heading}</h1>
+          <Button asChild variant="outline"><Link to={`/vendor/register?type=${type}`}>{t("mp.vendors.register_your_store")}</Link></Button>
         </div>
         <div className="relative max-w-md">
-          <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="ابحث باسم المتجر أو المدينة" className="pr-9" />
+          <Search className={`absolute ${isRTL ? "right-3" : "left-3"} top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground`} />
+          <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("mp.vendors.search_placeholder")} className={isRTL ? "pr-9" : "pl-9"} />
         </div>
 
         {loading ? (
@@ -72,7 +75,7 @@ export default function VendorsListPage() {
             {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-36 rounded-lg" />)}
           </div>
         ) : filtered.length === 0 ? (
-          <Card className="p-8 text-center text-muted-foreground">لا توجد متاجر معتمدة في هذا القسم بعد.</Card>
+          <Card className="p-8 text-center text-muted-foreground">{t("mp.vendors.no_vendors")}</Card>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             {filtered.map((v) => (
@@ -85,18 +88,18 @@ export default function VendorsListPage() {
                     <div className="flex items-center gap-2 flex-wrap">
                       <div className="font-semibold truncate">{v.store_name}</div>
                       <Badge variant="outline" className={v.is_open ? "text-green-700 border-green-300" : "text-red-700 border-red-300"}>
-                        {v.is_open ? "مفتوحة" : "مغلقة"}
+                        {v.is_open ? t("mp.open") : t("mp.closed")}
                       </Badge>
                     </div>
                     <div className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
                       <MapPin className="h-3 w-3" /> {v.city || "-"}{v.area_text ? ` - ${v.area_text}` : ""}
                     </div>
-                    <div className="text-xs text-muted-foreground mt-1">منتجات: {counts[v.id] || 0}</div>
+                    <div className="text-xs text-muted-foreground mt-1">{t("mp.vendors.products_label")} {counts[v.id] || 0}</div>
                   </div>
                 </div>
                 {v.description && <p className="text-xs text-muted-foreground mt-2 line-clamp-2">{v.description}</p>}
                 <div className="flex gap-2 mt-3">
-                  <Button asChild size="sm" className="flex-1"><Link to={`/marketplace/vendor/${v.id}`}>عرض المتجر</Link></Button>
+                  <Button asChild size="sm" className="flex-1"><Link to={`/marketplace/vendor/${v.id}`}>{t("mp.vendors.view_store")}</Link></Button>
                   <Button asChild size="sm" variant="outline"><Link to={`/marketplace/vendor/${v.id}`}><MessageCircle className="h-3 w-3" /></Link></Button>
                 </div>
               </Card>

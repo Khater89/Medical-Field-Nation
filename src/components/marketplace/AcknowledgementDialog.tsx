@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ShieldCheck, Loader2 } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface Props {
   open: boolean;
@@ -17,9 +18,11 @@ interface Props {
 }
 
 export default function AcknowledgementDialog({
-  open, onOpenChange, title, text, confirmLabel, cancelLabel = "إلغاء", loading, onConfirm,
+  open, onOpenChange, title, text, confirmLabel, cancelLabel, loading, onConfirm,
 }: Props) {
   const [agreed, setAgreed] = useState(false);
+  const { t } = useLanguage();
+  const cancelText = cancelLabel ?? t("mp.ack.cancel");
 
   return (
     <Dialog open={open} onOpenChange={(v) => { if (!v) setAgreed(false); onOpenChange(v); }}>
@@ -34,10 +37,10 @@ export default function AcknowledgementDialog({
         </ScrollArea>
         <label className="flex items-start gap-2 cursor-pointer rounded-md border border-border bg-muted/30 p-3">
           <Checkbox checked={agreed} onCheckedChange={(v) => setAgreed(Boolean(v))} className="mt-0.5" />
-          <span className="text-sm">قرأت النص أعلاه وأوافق عليه.</span>
+          <span className="text-sm">{t("mp.ack.agree_line")}</span>
         </label>
         <DialogFooter className="gap-2">
-          <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={loading}>{cancelLabel}</Button>
+          <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={loading}>{cancelText}</Button>
           <Button onClick={() => onConfirm()} disabled={!agreed || loading}>
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : confirmLabel}
           </Button>
@@ -50,6 +53,10 @@ export default function AcknowledgementDialog({
 export const CUSTOMER_ORDER_ACK_TEXT = `أقرّ بأن هذه المنصة تعمل كوسيط إلكتروني بيني وبين الجهة البائعة (الصيدلية / المورد / المركز)، وأن مسؤولية توفر المنتج، صحة بياناته، تسليمه، جودته، صلاحيته، واستخدامه تقع على الجهة البائعة حسب القوانين والتعليمات المعمول بها.
 
 كما أقرّ بأنني قمت بمراجعة بيانات المنتج والسعر وطريقة الاستلام أو التوصيل قبل تثبيت الطلب، وأوافق على متابعة عملية الشراء من خلال المنصة.`;
+
+export const CUSTOMER_ORDER_ACK_TEXT_EN = `I acknowledge that this platform acts as an electronic intermediary between me and the selling party (pharmacy / supplier / center), and that responsibility for product availability, accuracy of information, delivery, quality, validity and usage lies with the selling party under applicable laws and regulations.
+
+I also acknowledge that I have reviewed the product details, price and delivery/pickup method before placing the order, and I agree to continue the purchase through the platform.`;
 
 export const VENDOR_ACCEPT_ACK_TEXT = `أقرّ بصفتي الجهة البائعة بأنني مسؤول مسؤولية كاملة عن صحة بيانات المنتجات المعروضة، وتوفرها، وجودتها، وسلامتها، وصلاحيتها، وتسليمها للعميل حسب البيانات المعروضة داخل المنصة.
 
