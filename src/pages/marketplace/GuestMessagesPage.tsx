@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, MessagesSquare, ShieldCheck, LogOut, KeyRound } from "lucide-react";
+import { Loader2, MessagesSquare, ShieldCheck, LogOut } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import MarketplaceChatDialog from "@/components/marketplace/MarketplaceChatDialog";
@@ -25,17 +25,16 @@ const VENDOR_TYPE_LABEL: Record<string, string> = {
 };
 
 export default function GuestMessagesPage() {
-  const [step, setStep] = useState<"phone" | "otp" | "list">("phone");
   const [name, setName] = useState(localStorage.getItem(LS_NAME) || "");
   const [phone, setPhone] = useState(localStorage.getItem(LS_PHONE) || "");
-  const [code, setCode] = useState("");
+  const [sessionToken, setSessionToken] = useState<string | null>(localStorage.getItem(LS_SESSION));
   const [loading, setLoading] = useState(false);
   const [chats, setChats] = useState<any[]>([]);
   const [active, setActive] = useState<any | null>(null);
-  const [sessionToken, setSessionToken] = useState<string | null>(localStorage.getItem(LS_SESSION));
 
   useEffect(() => {
     if (sessionToken) loadChats(sessionToken);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadChats = async (tok: string) => {
@@ -45,45 +44,29 @@ export default function GuestMessagesPage() {
     });
     setLoading(false);
     if (error || data?.error) {
-      localStorage.removeItem(LS_SESSION);
-      setSessionToken(null);
-      setStep("phone");
-      if (data?.error !== "session_invalid") toast.error(data?.error || error?.message || "خطأ");
+      if (data?.error === "session_invalid") {
+        localStorage.removeItem(LS_SESSION);
+        setSessionToken(null);
+      } else {
+        toast.error(data?.error || error?.message || "خطأ");
+      }
       return;
     }
     setChats(data.chats || []);
     if (data.name && !name) setName(data.name);
-    setStep("list");
   };
 
-  const requestOtp = async () => {
+  const login = async () => {
     if (name.trim().length < 2) return toast.error("الرجاء إدخال الاسم");
     if (phone.replace(/\D/g, "").length < 7) return toast.error("رقم هاتف غير صحيح");
     setLoading(true);
     const { data, error } = await supabase.functions.invoke("mp-guest", {
-      body: { action: "request_otp", phone },
+      body: { action: "guest_login", name: name.trim(), phone: phone.trim() },
     });
     setLoading(false);
     if (error || data?.error) return toast.error(data?.error || error?.message || "خطأ");
     localStorage.setItem(LS_NAME, name.trim());
     localStorage.setItem(LS_PHONE, phone.trim());
-    if (data.dev_otp) {
-      toast.success(`رمز التحقق (وضع تجريبي): ${data.dev_otp}`, { duration: 15000 });
-      setCode(data.dev_otp);
-    } else {
-      toast.success("تم إرسال رمز التحقق إلى هاتفك");
-    }
-    setStep("otp");
-  };
-
-  const verifyOtp = async () => {
-    if (code.trim().length < 4) return toast.error("الرجاء إدخال الرمز");
-    setLoading(true);
-    const { data, error } = await supabase.functions.invoke("mp-guest", {
-      body: { action: "verify_otp", phone, code, name },
-    });
-    setLoading(false);
-    if (error || data?.error) return toast.error(data?.error || error?.message || "رمز خاطئ");
     localStorage.setItem(LS_SESSION, data.session_token);
     localStorage.setItem(LS_PHONE_NORM, data.phone_norm);
     setSessionToken(data.session_token);
@@ -94,8 +77,6 @@ export default function GuestMessagesPage() {
     localStorage.removeItem(LS_SESSION);
     setSessionToken(null);
     setChats([]);
-    setStep("phone");
-    setCode("");
   };
 
   return (
@@ -104,14 +85,14 @@ export default function GuestMessagesPage() {
       <main className="container max-w-2xl py-6 flex-1 space-y-4">
         <BackButton to="/marketplace" label="رجوع" />
         <h1 className="text-2xl font-bold flex items-center gap-2">
-          <MessagesSquare className="h-5 w-5 text-primary" /> متابعة محادثاتي
+          <MessagesSquare className="h-5 w-5 text-primary" /> محادثاتي
         </h1>
 
-        {step === "phone" && (
+        {!sessionToken ? (
           <Card className="p-5 space-y-3">
             <div className="rounded-md border bg-muted/30 p-3 text-xs flex gap-2">
               <ShieldCheck className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-              <span>أدخل اسمك ورقم هاتفك للوصول إلى محادثاتك السابقة مع المتاجر. سيتم إرسال رمز تحقق إلى رقمك.</span>
+              <span>أدخل اسمك ورقم هاتفك للوصول إلى محادثاتك السابقة مع المتاجر والصيدليات.</span>
             </div>
             <div className="space-y-1">
               <Label>الاسم الكامل</Label>
@@ -121,33 +102,16 @@ export default function GuestMessagesPage() {
               <Label>رقم الهاتف</Label>
               <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="07XXXXXXXX" inputMode="tel" />
             </div>
-            <Button className="w-full" onClick={requestOtp} disabled={loading}>
-              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "إرسال رمز التحقق"}
+            <Button className="w-full" onClick={login} disabled={loading}>
+              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "دخول ومتابعة محادثاتي"}
             </Button>
           </Card>
-        )}
-
-        {step === "otp" && (
-          <Card className="p-5 space-y-3">
-            <div className="text-sm flex items-center gap-2">
-              <KeyRound className="h-4 w-4 text-primary" />
-              <span>أدخل الرمز المرسل إلى {phone}</span>
-            </div>
-            <Input value={code} onChange={(e) => setCode(e.target.value)} placeholder="••••••" inputMode="numeric" maxLength={6} className="text-center text-2xl tracking-widest" />
-            <div className="flex gap-2">
-              <Button className="flex-1" onClick={verifyOtp} disabled={loading}>
-                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "تحقق"}
-              </Button>
-              <Button variant="outline" onClick={() => setStep("phone")}>تغيير الرقم</Button>
-            </div>
-            <button className="text-xs text-primary underline" onClick={requestOtp} disabled={loading}>إعادة الإرسال</button>
-          </Card>
-        )}
-
-        {step === "list" && (
+        ) : (
           <>
             <div className="flex items-center justify-between">
-              <div className="text-sm text-muted-foreground">رقم الهاتف: {phone || localStorage.getItem(LS_PHONE)}</div>
+              <div className="text-sm text-muted-foreground">
+                {name || localStorage.getItem(LS_NAME)} · <span dir="ltr">{phone || localStorage.getItem(LS_PHONE)}</span>
+              </div>
               <Button size="sm" variant="ghost" onClick={signOut}>
                 <LogOut className="h-4 w-4 ms-1" /> خروج
               </Button>
@@ -155,7 +119,9 @@ export default function GuestMessagesPage() {
             {loading ? (
               <div className="py-8 text-center"><Loader2 className="h-6 w-6 animate-spin mx-auto" /></div>
             ) : chats.length === 0 ? (
-              <Card className="p-8 text-center text-muted-foreground">لا توجد محادثات بعد. ابدأ بالتواصل مع متجر من السوق الطبي.</Card>
+              <Card className="p-8 text-center text-muted-foreground">
+                لا توجد محادثات بعد. ابدأ بالتواصل مع أي متجر أو صيدلية من السوق الطبي.
+              </Card>
             ) : (
               <div className="space-y-2">
                 {chats.map((c) => (
