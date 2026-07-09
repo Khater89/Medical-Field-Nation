@@ -786,12 +786,14 @@ const ProviderDashboard = () => {
         status: "COMPLETED",
         completed_at: now,
         completed_by: user.id,
-        close_out_note: closeOutNote.trim(),
         close_out_at: now,
       } as any).eq("id", id).eq("assigned_provider_id", user.id).select().maybeSingle();
 
       if (error) throw error;
       if (!updated) throw new Error("لم يتم تحديث الطلب — تأكد أنه مقبول أولاً");
+
+      // Store the close-out note in the staff-only table via a security-definer RPC
+      await supabase.rpc("provider_set_close_out_note", { p_booking_id: id, p_note: closeOutNote.trim() });
 
       setOrders((prev) => prev.map((o) => o.id === id ? { ...o, status: "COMPLETED", completed_at: now } : o));
 

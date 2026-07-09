@@ -300,10 +300,16 @@ const OrderWorkflowPhases = ({ booking, serviceName, servicePrice, serviceCatego
         .from("bookings")
         .update({
           agreed_price: clientPrice,
-          internal_note: internalNote.trim() || null,
         } as any)
         .eq("id", booking.id);
       if (error) throw error;
+
+      if (internalNote.trim()) {
+        await supabase.rpc("admin_set_booking_staff_fields", {
+          p_booking_id: booking.id,
+          p_internal_note: internalNote.trim(),
+        });
+      }
 
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {

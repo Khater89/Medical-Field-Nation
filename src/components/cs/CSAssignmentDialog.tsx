@@ -210,11 +210,17 @@ const CSAssignmentDialog = ({ booking, open, onOpenChange, onAssigned, serviceNa
           assigned_at: new Date().toISOString(),
           assigned_by: isAdmin ? "admin" : "cs",
           agreed_price: agreedPrice,
-          internal_note: internalNote.trim() || null,
         } as any)
         .eq("id", booking.id);
 
       if (error) throw error;
+
+      if (internalNote.trim()) {
+        await supabase.rpc("admin_set_booking_staff_fields", {
+          p_booking_id: booking.id,
+          p_internal_note: internalNote.trim(),
+        });
+      }
 
       const { data: { user: authUser } } = await supabase.auth.getUser();
       if (authUser) {

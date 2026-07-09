@@ -270,7 +270,6 @@ export type Database = {
           accepted_at: string | null
           actual_duration_minutes: number | null
           agreed_price: number | null
-          ai_safety_note: string | null
           ai_service_match: string | null
           ai_summary: string | null
           ai_tools_list: string[] | null
@@ -289,7 +288,6 @@ export type Database = {
           client_lat: number | null
           client_lng: number | null
           close_out_at: string | null
-          close_out_note: string | null
           completed_at: string | null
           completed_by: string | null
           connect_charge_type: string | null
@@ -307,11 +305,9 @@ export type Database = {
           gender_released_at: string | null
           gender_released_by: string | null
           id: string
-          internal_note: string | null
           is_emergency: boolean
           last_provider_reminder_at: string | null
           notes: string | null
-          otp_code: string | null
           payment_method: string
           payment_status: string
           platform_fee: number
@@ -343,7 +339,6 @@ export type Database = {
           accepted_at?: string | null
           actual_duration_minutes?: number | null
           agreed_price?: number | null
-          ai_safety_note?: string | null
           ai_service_match?: string | null
           ai_summary?: string | null
           ai_tools_list?: string[] | null
@@ -362,7 +357,6 @@ export type Database = {
           client_lat?: number | null
           client_lng?: number | null
           close_out_at?: string | null
-          close_out_note?: string | null
           completed_at?: string | null
           completed_by?: string | null
           connect_charge_type?: string | null
@@ -380,11 +374,9 @@ export type Database = {
           gender_released_at?: string | null
           gender_released_by?: string | null
           id?: string
-          internal_note?: string | null
           is_emergency?: boolean
           last_provider_reminder_at?: string | null
           notes?: string | null
-          otp_code?: string | null
           payment_method?: string
           payment_status?: string
           platform_fee?: number
@@ -416,7 +408,6 @@ export type Database = {
           accepted_at?: string | null
           actual_duration_minutes?: number | null
           agreed_price?: number | null
-          ai_safety_note?: string | null
           ai_service_match?: string | null
           ai_summary?: string | null
           ai_tools_list?: string[] | null
@@ -435,7 +426,6 @@ export type Database = {
           client_lat?: number | null
           client_lng?: number | null
           close_out_at?: string | null
-          close_out_note?: string | null
           completed_at?: string | null
           completed_by?: string | null
           connect_charge_type?: string | null
@@ -453,11 +443,9 @@ export type Database = {
           gender_released_at?: string | null
           gender_released_by?: string | null
           id?: string
-          internal_note?: string | null
           is_emergency?: boolean
           last_provider_reminder_at?: string | null
           notes?: string | null
-          otp_code?: string | null
           payment_method?: string
           payment_status?: string
           platform_fee?: number
@@ -486,6 +474,44 @@ export type Database = {
           voice_url?: string | null
         }
         Relationships: []
+      }
+      bookings_staff: {
+        Row: {
+          ai_safety_note: string | null
+          booking_id: string
+          close_out_note: string | null
+          created_at: string
+          internal_note: string | null
+          otp_code: string | null
+          updated_at: string
+        }
+        Insert: {
+          ai_safety_note?: string | null
+          booking_id: string
+          close_out_note?: string | null
+          created_at?: string
+          internal_note?: string | null
+          otp_code?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ai_safety_note?: string | null
+          booking_id?: string
+          close_out_note?: string | null
+          created_at?: string
+          internal_note?: string | null
+          otp_code?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_staff_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: true
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       data_access_log: {
         Row: {
@@ -1982,6 +2008,16 @@ export type Database = {
     }
     Functions: {
       admin_approve_vendor: { Args: { _id: string }; Returns: Json }
+      admin_get_booking_staff_fields: {
+        Args: { p_booking_ids: string[] }
+        Returns: {
+          ai_safety_note: string
+          booking_id: string
+          close_out_note: string
+          internal_note: string
+          otp_code: string
+        }[]
+      }
       admin_mark_settlement_paid: {
         Args: {
           _finance_note?: string
@@ -1999,6 +2035,15 @@ export type Database = {
         Returns: Json
       }
       admin_release_gender: { Args: { _booking_id: string }; Returns: Json }
+      admin_set_booking_staff_fields: {
+        Args: {
+          p_ai_safety_note?: string
+          p_booking_id: string
+          p_internal_note?: string
+          p_otp_code?: string
+        }
+        Returns: undefined
+      }
       admin_set_product_approval: {
         Args: { _id: string; _note?: string; _status: string }
         Returns: Json
@@ -2302,6 +2347,10 @@ export type Database = {
         Returns: boolean
       }
       provider_self_assign: { Args: { _booking_id: string }; Returns: Json }
+      provider_set_close_out_note: {
+        Args: { p_booking_id: string; p_note: string }
+        Returns: undefined
+      }
       remove_user_role: {
         Args: {
           old_role: Database["public"]["Enums"]["app_role"]

@@ -96,13 +96,26 @@ const BookingsTab = () => {
     const contactMap: Record<string, any> = {};
     (contactsRes.data || []).forEach((c: any) => { contactMap[c.booking_id] = c; });
 
+    // Fetch staff-only fields (internal_note, otp_code, close_out_note, ai_safety_note) via RPC
+    const bookingIds = (bookingsRes.data || []).map((b: any) => b.id);
+    let staffMap: Record<string, any> = {};
+    if (bookingIds.length > 0) {
+      const staffRes = await supabase.rpc("admin_get_booking_staff_fields", { p_booking_ids: bookingIds });
+      (staffRes.data || []).forEach((s: any) => { staffMap[s.booking_id] = s; });
+    }
+
     const merged = (bookingsRes.data || []).map((b: any) => {
       const contact = contactMap[b.id];
+      const staff = staffMap[b.id] || {};
       return {
         ...b,
         customer_name: contact?.customer_name || b.customer_display_name || "",
         customer_phone: contact?.customer_phone || "",
         client_address_text: contact?.client_address_text || null,
+        internal_note: staff.internal_note ?? null,
+        otp_code: staff.otp_code ?? null,
+        close_out_note: staff.close_out_note ?? null,
+        ai_safety_note: staff.ai_safety_note ?? null,
       };
     });
     setBookings(merged as BookingRow[]);
@@ -444,11 +457,16 @@ const BookingsTab = () => {
             if (updated) {
               const contactRes = await supabase.from("booking_contacts").select("*").eq("booking_id", updated.id).single();
               const contact = contactRes.data;
+              const staffRes = await supabase.rpc("admin_get_booking_staff_fields", { p_booking_ids: [updated.id] });
+              const staff: any = (staffRes.data && staffRes.data[0]) || {};
               setSelectedBooking({
                 ...updated,
                 customer_name: contact?.customer_name || updated.customer_display_name || "",
                 customer_phone: contact?.customer_phone || "",
                 client_address_text: contact?.client_address_text || null,
+                internal_note: staff.internal_note ?? null,
+                otp_code: staff.otp_code ?? null,
+                close_out_note: staff.close_out_note ?? null,
               } as BookingRow);
             }
           }

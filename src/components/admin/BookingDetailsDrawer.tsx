@@ -39,7 +39,7 @@ export interface BookingRow {
   provider_share: number | null;
   deal_confirmed_at: string | null;
   deal_confirmed_by: string | null;
-  internal_note: string | null;
+  internal_note?: string | null;
   notes: string | null;
   assigned_provider_id: string | null;
   assigned_by: string | null;
@@ -47,7 +47,7 @@ export interface BookingRow {
   accepted_at: string | null;
   created_at: string;
   service_id: string;
-  close_out_note: string | null;
+  close_out_note?: string | null;
   close_out_at: string | null;
   completed_at: string | null;
   completed_by: string | null;
