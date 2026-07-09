@@ -75,9 +75,17 @@ Deno.serve(async (req) => {
       const { data, error } = await sb.from("marketplace_chats")
         .select("id,vendor_id,product_id,last_message_at,last_message_preview,unread_for_customer,guest_token,vendor:marketplace_vendors(id,store_name,logo_url,vendor_type)")
         .eq("customer_phone_norm", s.phone_norm)
+        .not("last_message_preview", "is", null)
         .order("last_message_at", { ascending: false }).limit(100);
       if (error) console.error("list_my_chats_error", error);
-      return jr({ chats: data || [], name: s.customer_name, phone_norm: s.phone_norm });
+      const seen = new Set<string>();
+      const chats = (data || []).filter((chat: any) => {
+        const key = `${chat.vendor_id}:${chat.product_id || "none"}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+      return jr({ chats, name: s.customer_name, phone_norm: s.phone_norm });
     }
 
 
@@ -99,7 +107,18 @@ Deno.serve(async (req) => {
       if (!chat) {
         const { data } = await sb.from("marketplace_chats")
           .select("*").eq("vendor_id", vendor_id).eq("customer_phone_norm", phone_norm)
-          .eq("product_id", product_id ?? null).maybeSingle();
+          .eq("product_id", product_id ?? null)
+          .not("last_message_preview", "is", null)
+          .order("last_message_at", { ascending: false })
+          .limit(1).maybeSingle();
+        chat = data;
+      }
+      if (!chat) {
+        const { data } = await sb.from("marketplace_chats")
+          .select("*").eq("vendor_id", vendor_id).eq("customer_phone_norm", phone_norm)
+          .eq("product_id", product_id ?? null)
+          .order("last_message_at", { ascending: false })
+          .limit(1).maybeSingle();
         chat = data;
       }
       let tokenOut = chat?.guest_token || guest_token || crypto.randomUUID();

@@ -15,6 +15,8 @@ interface Props {
   vendorName: string;
   productId?: string | null;
   productName?: string | null;
+  initialChatId?: string | null;
+  initialGuestToken?: string | null;
 }
 
 interface Msg {
@@ -45,7 +47,7 @@ const fileToBase64 = (f: File) =>
     r.readAsDataURL(f);
   });
 
-export default function MarketplaceChatDialog({ open, onOpenChange, vendorId, vendorName, productId, productName }: Props) {
+export default function MarketplaceChatDialog({ open, onOpenChange, vendorId, vendorName, productId, productName, initialChatId, initialGuestToken }: Props) {
   const [chatId, setChatId] = useState<string | null>(null);
   const [guestToken, setGuestToken] = useState<string | null>(null);
   const [messages, setMessages] = useState<Msg[]>([]);
@@ -66,6 +68,15 @@ export default function MarketplaceChatDialog({ open, onOpenChange, vendorId, ve
     if (!open) return;
     setName(localStorage.getItem(LS_NAME) || "");
     setPhone(localStorage.getItem(LS_PHONE) || "");
+    if (initialChatId && initialGuestToken) {
+      setChatId(initialChatId);
+      setGuestToken(initialGuestToken);
+      localStorage.setItem(tokenKey(vendorId, productId), initialGuestToken);
+      setIdentified(true);
+      setMessages([]);
+      loadMessages(initialChatId, initialGuestToken);
+      return;
+    }
     const tok = localStorage.getItem(tokenKey(vendorId, productId));
     setGuestToken(tok);
     setIdentified(false);
@@ -74,7 +85,21 @@ export default function MarketplaceChatDialog({ open, onOpenChange, vendorId, ve
     const savedName = localStorage.getItem(LS_NAME);
     const savedPhone = localStorage.getItem(LS_PHONE);
     if (tok && savedName && savedPhone) openChat(savedName, savedPhone, tok);
-  }, [open, vendorId, productId]);
+  }, [open, vendorId, productId, initialChatId, initialGuestToken]);
+
+  const loadMessages = async (targetChatId: string, token: string) => {
+    setLoading(true);
+    const { data, error } = await supabase.functions.invoke("mp-guest", {
+      body: { action: "list_messages", chat_id: targetChatId, guest_token: token },
+    });
+    if (error || data?.error) {
+      toast.error(data?.error || error?.message || "تعذّر تحميل الرسائل");
+      setMessages([]);
+    } else {
+      setMessages((data?.messages as Msg[]) || []);
+    }
+    setLoading(false);
+  };
 
   const openChat = async (n: string, p: string, tok: string | null) => {
     setOpening(true);
@@ -89,12 +114,7 @@ export default function MarketplaceChatDialog({ open, onOpenChange, vendorId, ve
     localStorage.setItem(LS_NAME, n);
     localStorage.setItem(LS_PHONE, p);
     setIdentified(true);
-    setLoading(true);
-    const { data: ld } = await supabase.functions.invoke("mp-guest", {
-      body: { action: "list_messages", chat_id: data.chat_id, guest_token: data.guest_token },
-    });
-    setMessages((ld?.messages as Msg[]) || []);
-    setLoading(false);
+    await loadMessages(data.chat_id, data.guest_token);
   };
 
   // Guest customers have no authenticated Supabase session, so realtime RLS

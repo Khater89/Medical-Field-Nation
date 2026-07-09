@@ -160,6 +160,8 @@ export default function GuestMessagesPage() {
           vendorId={active.vendor_id}
           vendorName={active.vendor?.store_name || "متجر"}
           productId={active.product_id}
+          initialChatId={active.id}
+          initialGuestToken={active.guest_token}
         />
       )}
     </div>
