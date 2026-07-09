@@ -100,10 +100,11 @@ Deno.serve(async (req) => {
     if (action === "list_my_chats") {
       const s = await requireSession(String(body?.session_token || ""));
       if (!s) return jr({ error: "session_invalid" }, 401);
-      const { data } = await sb.from("marketplace_chats")
-        .select("id,vendor_id,product_id,last_message_at,last_message_preview,unread_for_customer,guest_token,status,vendor:marketplace_vendors(id,store_name,logo_url,vendor_type)")
+      const { data, error } = await sb.from("marketplace_chats")
+        .select("id,vendor_id,product_id,last_message_at,last_message_preview,unread_for_customer,guest_token,vendor:marketplace_vendors(id,store_name,logo_url,vendor_type)")
         .eq("customer_phone_norm", s.phone_norm)
         .order("last_message_at", { ascending: false }).limit(100);
+      if (error) console.error("list_my_chats_error", error);
       return jr({ chats: data || [], name: s.customer_name, phone_norm: s.phone_norm });
     }
 
