@@ -2390,6 +2390,11 @@ export type Database = {
         }
         Returns: undefined
       }
+      user_has_vendor_relationship: {
+        Args: { _vendor_id: string }
+        Returns: boolean
+      }
+      user_owns_vendor: { Args: { _vendor_id: string }; Returns: boolean }
       verify_api_key: {
         Args: { _endpoint?: string; _plain_key: string }
         Returns: {
