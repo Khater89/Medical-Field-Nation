@@ -8,11 +8,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card } from "@/components/ui/card";
 import BackButton from "@/components/ui/back-button";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function CategoryPage() {
   const { slug } = useParams<{ slug: string }>();
+  const { t, lang } = useLanguage();
   const [products, setProducts] = useState<ProductCardData[]>([]);
-  const [title, setTitle] = useState("الفئة");
+  const [title, setTitle] = useState<string>("");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -20,10 +22,10 @@ export default function CategoryPage() {
       setLoading(true);
       const { data: cat } = await supabase
         .from("marketplace_categories")
-        .select("id,name_ar")
+        .select("id,name_ar,name_en")
         .eq("slug", slug!)
         .maybeSingle();
-      if (cat) setTitle(cat.name_ar);
+      if (cat) setTitle(lang === "en" && (cat as any).name_en ? (cat as any).name_en : cat.name_ar);
       if (cat?.id) {
         const { data } = await supabase
           .from("marketplace_products")
@@ -35,15 +37,15 @@ export default function CategoryPage() {
       }
       setLoading(false);
     })();
-  }, [slug]);
+  }, [slug, lang]);
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <AppHeader />
       <MarketplaceSubNav />
       <main className="container max-w-6xl py-6 flex-1">
-        <BackButton to="/marketplace" label="رجوع للسوق" className="mb-3" />
-        <h1 className="text-2xl font-bold mb-4">{title}</h1>
+        <BackButton to="/marketplace" label={t("mp.back_to_market")} className="mb-3" />
+        <h1 className="text-2xl font-bold mb-4">{title || t("mp.home.categories")}</h1>
         {loading ? (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {Array.from({ length: 8 }).map((_, i) => (
@@ -51,7 +53,7 @@ export default function CategoryPage() {
             ))}
           </div>
         ) : products.length === 0 ? (
-          <Card className="p-8 text-center text-muted-foreground">لا توجد منتجات في هذه الفئة.</Card>
+          <Card className="p-8 text-center text-muted-foreground">{t("mp.type.no_products_in_section")}</Card>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {products.map((p) => (
