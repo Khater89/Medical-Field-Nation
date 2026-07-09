@@ -25,7 +25,7 @@ import {
   ArrowLeft,
   X,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 
 const AppHeader = () => {
@@ -35,6 +35,19 @@ const AppHeader = () => {
   const effectiveRole = isAdmin ? "admin" : isCS ? "cs" : isProvider ? "provider" : "customer";
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [guest, setGuest] = useState<{ name: string; phone: string } | null>(null);
+
+  useEffect(() => {
+    const sync = () => {
+      const name = localStorage.getItem("mp_guest_name") || "";
+      const phone = localStorage.getItem("mp_guest_phone") || "";
+      const token = localStorage.getItem("mp_guest_session_token") || "";
+      setGuest(token && name ? { name, phone } : null);
+    };
+    sync();
+    window.addEventListener("storage", sync);
+    return () => window.removeEventListener("storage", sync);
+  }, [user]);
 
   const ArrowIcon = isRTL ? ArrowLeft : ArrowRight;
 
@@ -44,7 +57,17 @@ const AppHeader = () => {
     window.location.href = "/";
   };
 
+  const handleGuestSignOut = () => {
+    localStorage.removeItem("mp_guest_name");
+    localStorage.removeItem("mp_guest_phone");
+    localStorage.removeItem("mp_guest_session_token");
+    localStorage.removeItem("mp_guest_phone_norm");
+    setGuest(null);
+    window.location.href = "/marketplace/enter";
+  };
+
   const displayName = profile?.full_name || user?.email || "";
+
 
   const navLinks = [
     { label: t("nav.home"), href: "/" },
