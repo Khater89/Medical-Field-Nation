@@ -97,15 +97,34 @@ export default function MarketplaceChatDialog({ open, onOpenChange, vendorId, ve
     setLoading(false);
   };
 
+  // Guest customers have no authenticated Supabase session, so realtime RLS
+  // blocks marketplace_messages inserts from reaching them. We poll the
+  // mp-guest edge function instead so vendor replies arrive reliably.
   useEffect(() => {
-    if (!chatId) return;
-    const ch = supabase
-      .channel(`mp_chat:${chatId}`)
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "marketplace_messages", filter: `chat_id=eq.${chatId}` },
-        (p) => setMessages((prev) => prev.find((m) => m.id === (p.new as any).id) ? prev : [...prev, p.new as Msg]))
-      .subscribe();
-    return () => { supabase.removeChannel(ch); };
-  }, [chatId]);
+    if (!chatId || !guestToken || !open) return;
+    let cancelled = false;
+    const poll = async () => {
+      const { data } = await supabase.functions.invoke("mp-guest", {
+        body: { action: "list_messages", chat_id: chatId, guest_token: guestToken },
+      });
+      if (cancelled || !data?.messages) return;
+      setMessages((prev) => {
+        const incoming = data.messages as Msg[];
+        if (incoming.length === prev.length && incoming.every((m, i) => m.id === prev[i]?.id)) {
+          return prev;
+        }
+        return incoming;
+      });
+    };
+    const interval = setInterval(poll, 3500);
+    const onFocus = () => poll();
+    window.addEventListener("focus", onFocus);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+      window.removeEventListener("focus", onFocus);
+    };
+  }, [chatId, guestToken, open]);
 
   useEffect(() => { scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight }); }, [messages]);
 
