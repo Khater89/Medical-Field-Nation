@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Loader2, Send, MessagesSquare, ShieldCheck, Paperclip } from "lucide-react";
 import { toast } from "sonner";
+import { useLanguage } from "@/contexts/LanguageContext";
 import ChatAttachment from "./ChatAttachment";
 
 interface Props {
@@ -48,6 +49,7 @@ const fileToBase64 = (f: File) =>
   });
 
 export default function MarketplaceChatDialog({ open, onOpenChange, vendorId, vendorName, productId, productName, initialChatId, initialGuestToken }: Props) {
+  const { t } = useLanguage();
   const [chatId, setChatId] = useState<string | null>(null);
   const [guestToken, setGuestToken] = useState<string | null>(null);
   const [messages, setMessages] = useState<Msg[]>([]);
@@ -85,6 +87,7 @@ export default function MarketplaceChatDialog({ open, onOpenChange, vendorId, ve
     const savedName = localStorage.getItem(LS_NAME);
     const savedPhone = localStorage.getItem(LS_PHONE);
     if (tok && savedName && savedPhone) openChat(savedName, savedPhone, tok);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, vendorId, productId, initialChatId, initialGuestToken]);
 
   const loadMessages = async (targetChatId: string, token: string) => {
@@ -93,7 +96,7 @@ export default function MarketplaceChatDialog({ open, onOpenChange, vendorId, ve
       body: { action: "list_messages", chat_id: targetChatId, guest_token: token },
     });
     if (error || data?.error) {
-      toast.error(data?.error || error?.message || "تعذّر تحميل الرسائل");
+      toast.error(data?.error || error?.message || t("mp.chat.load_failed"));
       setMessages([]);
     } else {
       setMessages((data?.messages as Msg[]) || []);
@@ -107,7 +110,7 @@ export default function MarketplaceChatDialog({ open, onOpenChange, vendorId, ve
       body: { action: "open_chat", vendor_id: vendorId, product_id: productId || null, guest_token: tok, name: n, phone: p },
     });
     setOpening(false);
-    if (error || data?.error) { toast.error(data?.error || error?.message || "تعذّر فتح المحادثة"); return; }
+    if (error || data?.error) { toast.error(data?.error || error?.message || t("mp.chat.open_failed")); return; }
     setChatId(data.chat_id);
     setGuestToken(data.guest_token);
     localStorage.setItem(tokenKey(vendorId, productId), data.guest_token);
@@ -117,9 +120,6 @@ export default function MarketplaceChatDialog({ open, onOpenChange, vendorId, ve
     await loadMessages(data.chat_id, data.guest_token);
   };
 
-  // Guest customers have no authenticated Supabase session, so realtime RLS
-  // blocks marketplace_messages inserts from reaching them. We poll the
-  // mp-guest edge function instead so vendor replies arrive reliably.
   useEffect(() => {
     if (!chatId || !guestToken || !open) return;
     let cancelled = false;
@@ -149,8 +149,8 @@ export default function MarketplaceChatDialog({ open, onOpenChange, vendorId, ve
   useEffect(() => { scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight }); }, [messages]);
 
   const handleIdentify = async () => {
-    if (name.trim().length < 2) return toast.error("الرجاء إدخال الاسم الكامل");
-    if (phone.replace(/\D/g, "").length < 7) return toast.error("الرجاء إدخال رقم هاتف صحيح");
+    if (name.trim().length < 2) return toast.error(t("mp.chat.toast_name"));
+    if (phone.replace(/\D/g, "").length < 7) return toast.error(t("mp.chat.toast_phone"));
     await openChat(name.trim(), phone.trim(), guestToken);
   };
 
@@ -164,7 +164,7 @@ export default function MarketplaceChatDialog({ open, onOpenChange, vendorId, ve
         attachment_name: extra.attachment_name || null,
       },
     });
-    if (error || data?.error) { toast.error(data?.error || error?.message || "تعذّر الإرسال"); return false; }
+    if (error || data?.error) { toast.error(data?.error || error?.message || t("mp.chat.send_failed")); return false; }
     if (data?.message) setMessages((prev) => prev.find((m) => m.id === data.message.id) ? prev : [...prev, data.message]);
     return true;
   };
@@ -182,14 +182,14 @@ export default function MarketplaceChatDialog({ open, onOpenChange, vendorId, ve
     const f = e.target.files?.[0];
     e.target.value = "";
     if (!f || !chatId || !guestToken) return;
-    if (f.size > 10 * 1024 * 1024) return toast.error("الحد الأقصى 10MB");
+    if (f.size > 10 * 1024 * 1024) return toast.error(t("mp.chat.max_size"));
     setUploading(true);
     try {
       const b64 = await fileToBase64(f);
       const { data, error } = await supabase.functions.invoke("mp-guest", {
         body: { action: "upload_attachment", chat_id: chatId, guest_token: guestToken, file_base64: b64, mime: f.type, filename: f.name },
       });
-      if (error || data?.error) { toast.error(data?.error || error?.message || "فشل الرفع"); return; }
+      if (error || data?.error) { toast.error(data?.error || error?.message || t("mp.chat.upload_failed")); return; }
       await sendPayload({ attachment_url: data.url, attachment_type: data.type, attachment_name: data.name });
     } finally { setUploading(false); }
   };
@@ -201,25 +201,25 @@ export default function MarketplaceChatDialog({ open, onOpenChange, vendorId, ve
           <DialogTitle className="flex items-center gap-2">
             <MessagesSquare className="h-4 w-4 text-primary" /> {vendorName}
           </DialogTitle>
-          {productName && <div className="text-xs text-muted-foreground">حول: {productName}</div>}
+          {productName && <div className="text-xs text-muted-foreground">{t("mp.chat.about")} {productName}</div>}
         </DialogHeader>
 
         {!identified ? (
           <div className="flex-1 overflow-y-auto p-4 space-y-3">
             <div className="rounded-md border bg-muted/30 p-3 text-xs flex gap-2">
               <ShieldCheck className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-              <span>للتواصل مع المتجر، نحتاج فقط اسمك ورقم هاتفك. لا حاجة لإنشاء حساب أو تسجيل دخول.</span>
+              <span>{t("mp.chat.identify_hint")}</span>
             </div>
             <div className="space-y-1">
-              <Label>الاسم الكامل *</Label>
-              <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="مثال: أحمد محمد" />
+              <Label>{t("mp.chat.full_name")}</Label>
+              <Input value={name} onChange={(e) => setName(e.target.value)} placeholder={t("mp.gmsg.name_placeholder")} />
             </div>
             <div className="space-y-1">
-              <Label>رقم الهاتف *</Label>
-              <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="07XXXXXXXX" inputMode="tel" />
+              <Label>{t("mp.chat.phone")}</Label>
+              <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder={t("mp.gmsg.phone_placeholder")} inputMode="tel" />
             </div>
             <Button className="w-full" onClick={handleIdentify} disabled={opening}>
-              {opening ? <Loader2 className="h-4 w-4 animate-spin" /> : "متابعة وبدء الدردشة"}
+              {opening ? <Loader2 className="h-4 w-4 animate-spin" /> : t("mp.chat.continue")}
             </Button>
           </div>
         ) : loading ? (
@@ -228,7 +228,7 @@ export default function MarketplaceChatDialog({ open, onOpenChange, vendorId, ve
           <>
             <div ref={scrollRef} className="flex-1 overflow-y-auto p-3 space-y-2 bg-muted/30">
               {messages.length === 0 ? (
-                <div className="text-center text-xs text-muted-foreground pt-8">ابدأ المحادثة بكتابة رسالتك أو إرسال مرفق.</div>
+                <div className="text-center text-xs text-muted-foreground pt-8">{t("mp.chat.empty_state")}</div>
               ) : (
                 messages.map((m) => {
                   const mine = m.sender_role === "customer";
@@ -251,7 +251,7 @@ export default function MarketplaceChatDialog({ open, onOpenChange, vendorId, ve
               </Button>
               <Input value={input} onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && (e.preventDefault(), send())}
-                placeholder="اكتب رسالتك..." />
+                placeholder={t("mp.chat.compose_placeholder")} />
               <Button onClick={send} disabled={sending || !input.trim()} size="icon">
                 {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
               </Button>
