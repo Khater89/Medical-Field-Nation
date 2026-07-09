@@ -458,7 +458,7 @@ const BookingsTab = () => {
               const contactRes = await supabase.from("booking_contacts").select("*").eq("booking_id", updated.id).single();
               const contact = contactRes.data;
               const staffRes = await supabase.rpc("admin_get_booking_staff_fields", { p_booking_ids: [updated.id] });
-              const staff = (staffRes.data && staffRes.data[0]) || {};
+              const staff: any = (staffRes.data && staffRes.data[0]) || {};
               setSelectedBooking({
                 ...updated,
                 customer_name: contact?.customer_name || updated.customer_display_name || "",
