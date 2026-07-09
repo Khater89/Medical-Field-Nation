@@ -12,9 +12,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { MapPin, Phone, Store, MessageCircle, Clock } from "lucide-react";
 import BackButton from "@/components/ui/back-button";
 import MarketplaceChatDialog from "@/components/marketplace/MarketplaceChatDialog";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function VendorPage() {
   const { id } = useParams<{ id: string }>();
+  const { t } = useLanguage();
   const [vendor, setVendor] = useState<any>(null);
   const [products, setProducts] = useState<ProductCardData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -55,7 +57,7 @@ export default function VendorPage() {
     return (
       <div className="min-h-screen flex flex-col bg-background">
         <AppHeader /><MarketplaceSubNav />
-        <main className="container max-w-6xl py-12 flex-1 text-center text-muted-foreground">المتجر غير موجود أو غير متاح.</main>
+        <main className="container max-w-6xl py-12 flex-1 text-center text-muted-foreground">{t("mp.vendor.not_found")}</main>
       </div>
     );
   }
@@ -64,7 +66,7 @@ export default function VendorPage() {
     <div className="min-h-screen flex flex-col bg-background">
       <AppHeader /><MarketplaceSubNav />
       <main className="container max-w-6xl py-6 flex-1 space-y-6">
-        <BackButton label="رجوع" />
+        <BackButton label={t("mp.back")} />
 
         <Card className="overflow-hidden">
           {vendor.banner_url && (
@@ -80,7 +82,7 @@ export default function VendorPage() {
               <div className="flex items-center gap-2 flex-wrap">
                 <h1 className="text-2xl font-bold">{vendor.store_name}</h1>
                 <Badge className={vendor.is_open ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}>
-                  {vendor.is_open ? "مفتوحة الآن" : "مغلقة الآن"}
+                  {vendor.is_open ? t("mp.open_now") : t("mp.closed_now")}
                 </Badge>
               </div>
               <div className="text-sm text-muted-foreground mt-1 flex flex-wrap gap-3">
@@ -91,7 +93,7 @@ export default function VendorPage() {
               {vendor.description && <p className="text-sm mt-2 text-muted-foreground">{vendor.description}</p>}
               <div className="flex gap-2 mt-3">
                 <Button onClick={() => setChatOpen(true)} className="gap-2">
-                  <MessageCircle className="h-4 w-4" /> تواصل مع المتجر
+                  <MessageCircle className="h-4 w-4" /> {t("mp.contact_store")}
                 </Button>
               </div>
             </div>
@@ -99,9 +101,9 @@ export default function VendorPage() {
         </Card>
 
         <section>
-          <h2 className="text-lg font-bold mb-3">المنتجات ({products.length})</h2>
+          <h2 className="text-lg font-bold mb-3">{t("mp.vendor.products_count")} ({products.length})</h2>
           {products.length === 0 ? (
-            <Card className="p-8 text-center text-muted-foreground">لا توجد منتجات معروضة بعد.</Card>
+            <Card className="p-8 text-center text-muted-foreground">{t("mp.vendor.no_products")}</Card>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {products.map((p) => <ProductCard key={p.id} product={p} />)}
