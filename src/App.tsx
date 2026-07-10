@@ -146,10 +146,10 @@ const App = () => {
                   </ProtectedRoute>
                 }
               />
-              <Route path="/marketplace/vendor/:id" element={<VendorPage />} />
-              <Route path="/marketplace/pharmacies" element={<VendorsListPage />} />
-              <Route path="/marketplace/messages" element={<ProtectedRoute><MarketplaceMessagesPage /></ProtectedRoute>} />
-              <Route path="/marketplace/my-messages" element={<GuestMessagesPage />} />
+              <Route path="/marketplace/vendor/:id" element={<MarketplaceAuthGate><VendorPage /></MarketplaceAuthGate>} />
+              <Route path="/marketplace/pharmacies" element={<MarketplaceAuthGate><VendorsListPage /></MarketplaceAuthGate>} />
+              <Route path="/marketplace/messages" element={<MarketplaceAuthGate><MarketplaceMessagesPage /></MarketplaceAuthGate>} />
+              <Route path="/marketplace/my-messages" element={<MarketplaceAuthGate><MarketplaceMessagesPage /></MarketplaceAuthGate>} />
 
 
               {/* Catch-all */}
