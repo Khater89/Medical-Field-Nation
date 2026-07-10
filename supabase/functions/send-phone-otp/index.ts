@@ -22,6 +22,13 @@ async function sha256(text: string): Promise<string> {
   return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
+function jsonResponse(payload: Record<string, unknown>, status: number) {
+  return new Response(JSON.stringify(payload), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -29,9 +36,7 @@ Deno.serve(async (req) => {
     const { phone } = await req.json();
     const normalized = normalizeJoPhone(phone || "");
     if (!normalized) {
-      return new Response(JSON.stringify({ error: "invalid_phone", message: "رقم الهاتف غير صحيح. استخدم صيغة أردنية مثل 07XXXXXXXX أو +9627XXXXXXXX" }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonResponse({ error: "invalid_phone", message: "رقم الهاتف غير صحيح. استخدم صيغة أردنية مثل 07XXXXXXXX أو +9627XXXXXXXX" }, 400);
     }
 
     const admin = createClient(
@@ -43,22 +48,23 @@ Deno.serve(async (req) => {
     const sixtySecAgo = new Date(Date.now() - 60_000).toISOString();
     const hourAgo = new Date(Date.now() - 3_600_000).toISOString();
 
-    const { data: recent } = await admin
+    const { data: recent, error: recentError } = await admin
       .from("phone_otps")
       .select("id, created_at")
       .eq("phone", normalized)
       .gt("created_at", hourAgo)
       .order("created_at", { ascending: false });
 
+    if (recentError) {
+      console.error("OTP rate-limit lookup failed", recentError);
+      return jsonResponse({ error: "database_error", message: "تعذّر تجهيز رمز التحقق حالياً" }, 500);
+    }
+
     if (recent && recent.length > 0 && recent[0].created_at > sixtySecAgo) {
-      return new Response(JSON.stringify({ error: "rate_limited", message: "الرجاء الانتظار 60 ثانية قبل طلب رمز جديد" }), {
-        status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonResponse({ error: "rate_limited", message: "الرجاء الانتظار 60 ثانية قبل طلب رمز جديد" }, 429);
     }
     if (recent && recent.length >= 5) {
-      return new Response(JSON.stringify({ error: "hourly_limit", message: "تجاوزت الحد المسموح. حاول لاحقاً بعد ساعة" }), {
-        status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      return jsonResponse({ error: "hourly_limit", message: "تجاوزت الحد المسموح. حاول لاحقاً بعد ساعة" }, 429);
     }
 
     // Generate 6-digit code
@@ -66,21 +72,38 @@ Deno.serve(async (req) => {
     const codeHash = await sha256(code + normalized);
     const expiresAt = new Date(Date.now() + 5 * 60_000).toISOString();
 
-    // Store hash
-    await admin.from("phone_otps").insert({
-      phone: normalized, code_hash: codeHash, expires_at: expiresAt,
-    });
-
     // Send via Twilio gateway
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     const TWILIO_API_KEY = Deno.env.get("TWILIO_API_KEY");
-    const FROM = Deno.env.get("TWILIO_FROM_PHONE");
-    const MSID = Deno.env.get("TWILIO_MESSAGING_SERVICE_SID");
-    if (!LOVABLE_API_KEY || !TWILIO_API_KEY || (!FROM && !MSID)) {
-      console.error("Missing Twilio env", { hasLovable: !!LOVABLE_API_KEY, hasTwilio: !!TWILIO_API_KEY, hasFrom: !!FROM, hasMsid: !!MSID });
-      return new Response(JSON.stringify({ error: "server_config", message: "خدمة الرسائل غير مهيّأة" }), {
-        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    const FROM = Deno.env.get("TWILIO_FROM_PHONE")?.trim();
+    const MSID = Deno.env.get("TWILIO_MESSAGING_SERVICE_SID")?.trim();
+    const hasValidFrom = !!FROM && /^\+[1-9]\d{6,14}$/.test(FROM);
+    const hasValidMsid = !!MSID && /^MG[0-9a-fA-F]{32}$/.test(MSID);
+
+    if (MSID && !hasValidMsid) {
+      console.error("Invalid TWILIO_MESSAGING_SERVICE_SID format");
+      return jsonResponse({
+        error: "server_config",
+        message: "إعداد Messaging Service في Twilio غير صحيح. يجب أن يبدأ بـ MG وليس رقم هاتف.",
+      }, 500);
+    }
+
+    if (!LOVABLE_API_KEY || !TWILIO_API_KEY || (!hasValidMsid && !hasValidFrom)) {
+      console.error("Missing Twilio env", { hasLovable: !!LOVABLE_API_KEY, hasTwilio: !!TWILIO_API_KEY, hasFrom: hasValidFrom, hasMsid: hasValidMsid });
+      return jsonResponse({ error: "server_config", message: "خدمة الرسائل غير مهيّأة" }, 500);
+    }
+
+    // Store hash before sending so a delivered SMS always has a valid code.
+    // If Twilio rejects the send, delete this row so failed sends do not trigger resend rate limits.
+    const { data: otpRow, error: insertError } = await admin
+      .from("phone_otps")
+      .insert({ phone: normalized, code_hash: codeHash, expires_at: expiresAt })
+      .select("id")
+      .single();
+
+    if (insertError || !otpRow) {
+      console.error("OTP insert failed", insertError);
+      return jsonResponse({ error: "database_error", message: "تعذّر تجهيز رمز التحقق حالياً" }, 500);
     }
 
     const params: Record<string, string> = {
@@ -104,18 +127,23 @@ Deno.serve(async (req) => {
     if (!resp.ok) {
       const txt = await resp.text();
       console.error("Twilio send failed", resp.status, txt);
-      return new Response(JSON.stringify({ error: "sms_failed", message: "تعذّر إرسال الرسالة. تأكد من الرقم أو حاول لاحقاً.", details: txt }), {
-        status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      await admin.from("phone_otps").delete().eq("id", otpRow.id);
+
+      let message = "تعذّر إرسال الرسالة. تأكد من الرقم أو حاول لاحقاً.";
+      try {
+        const parsed = JSON.parse(txt);
+        if (parsed?.code === 21659) message = "رقم الإرسال في Twilio غير صالح لهذا الحساب. استخدم رقم Twilio فعلي أو Messaging Service SID يبدأ بـ MG.";
+        if (parsed?.code === 21705) message = "Messaging Service SID في Twilio غير صحيح أو غير تابع لهذا الحساب.";
+      } catch (_) {
+        // Keep generic Arabic message.
+      }
+
+      return jsonResponse({ error: "sms_failed", message, details: txt }, 502);
     }
 
-    return new Response(JSON.stringify({ success: true, phone: normalized, expires_in: 300 }), {
-      status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return jsonResponse({ success: true, phone: normalized, expires_in: 300 }, 200);
   } catch (e) {
     console.error("send-phone-otp error", e);
-    return new Response(JSON.stringify({ error: "internal", message: (e as Error).message }), {
-      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return jsonResponse({ error: "internal", message: (e as Error).message }, 500);
   }
 });

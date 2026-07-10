@@ -13,6 +13,8 @@ import { toast } from "sonner";
 
 type Step = "phone" | "otp" | "profile";
 
+type FunctionErrorPayload = { error?: string; message?: string; [key: string]: unknown };
+
 function normalizeJoPhone(raw: string): string | null {
   if (!raw) return null;
   let d = raw.replace(/\D/g, "").replace(/^0+/, "");
@@ -20,6 +22,23 @@ function normalizeJoPhone(raw: string): string | null {
   if (/^[7-9]\d{8}$/.test(d)) return "+962" + d;
   if (/^[1-9]\d{7,14}$/.test(d)) return "+" + d;
   return null;
+}
+
+async function readFunctionError(error: unknown): Promise<FunctionErrorPayload | null> {
+  const context = (error as { context?: Response })?.context;
+  if (!context) return null;
+
+  try {
+    const payload = await context.clone().json();
+    return payload && typeof payload === "object" ? payload as FunctionErrorPayload : null;
+  } catch {
+    try {
+      const text = await context.clone().text();
+      return text ? { message: text } : null;
+    } catch {
+      return null;
+    }
+  }
 }
 
 export default function MarketplacePhoneAuth() {
@@ -61,7 +80,8 @@ export default function MarketplacePhoneAuth() {
     try {
       const { data, error } = await supabase.functions.invoke("send-phone-otp", { body: { phone: n } });
       if (error || data?.error) {
-        toast.error(data?.message || error?.message || t("تعذّر إرسال الرمز", "Failed to send code"));
+        const payload = data?.error ? data : await readFunctionError(error);
+        toast.error(payload?.message || error?.message || t("تعذّر إرسال الرمز", "Failed to send code"));
         return;
       }
       setNormPhone(data.phone || n);
@@ -89,7 +109,8 @@ export default function MarketplacePhoneAuth() {
         },
       });
       if (error || data?.error) {
-        toast.error(data?.message || error?.message || t("فشل التحقق", "Verification failed"));
+        const payload = data?.error ? data : await readFunctionError(error);
+        toast.error(payload?.message || error?.message || t("فشل التحقق", "Verification failed"));
         return;
       }
 
