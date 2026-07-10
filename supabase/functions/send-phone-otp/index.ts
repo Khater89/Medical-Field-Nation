@@ -72,6 +72,15 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
+    // Remove stale unverified codes before rate limiting. Earlier failed Twilio
+    // attempts may have left unusable rows that should not block a real resend.
+    await admin
+      .from("phone_otps")
+      .delete()
+      .eq("phone", normalized)
+      .is("verified_at", null)
+      .lt("expires_at", new Date().toISOString());
+
     // Rate limit: max 1 send per 60s, max 5 per hour
     const sixtySecAgo = new Date(Date.now() - 60_000).toISOString();
     const hourAgo = new Date(Date.now() - 3_600_000).toISOString();
