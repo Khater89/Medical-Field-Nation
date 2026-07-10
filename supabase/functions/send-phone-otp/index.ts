@@ -29,6 +29,13 @@ function jsonResponse(payload: Record<string, unknown>, status: number) {
   });
 }
 
+function smsFailureMessage(code: unknown): string {
+  if (code === 21659) return "رقم الإرسال في Twilio غير صالح لهذا الحساب. استخدم رقم Twilio فعلي أو Messaging Service SID يبدأ بـ MG.";
+  if (code === 21704) return "Messaging Service في Twilio لا يحتوي على Sender. أضف رقم Twilio أو Alphanumeric Sender ID إلى Sender Pool.";
+  if (code === 21705) return "Messaging Service SID في Twilio غير صحيح أو غير تابع لهذا الحساب.";
+  return "تعذّر إرسال الرسالة. تأكد من الرقم أو حاول لاحقاً.";
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -124,21 +131,40 @@ Deno.serve(async (req) => {
       body,
     });
 
+    const txt = await resp.text();
+
     if (!resp.ok) {
-      const txt = await resp.text();
       console.error("Twilio send failed", resp.status, txt);
       await admin.from("phone_otps").delete().eq("id", otpRow.id);
 
-      let message = "تعذّر إرسال الرسالة. تأكد من الرقم أو حاول لاحقاً.";
+      let message = smsFailureMessage(undefined);
       try {
         const parsed = JSON.parse(txt);
-        if (parsed?.code === 21659) message = "رقم الإرسال في Twilio غير صالح لهذا الحساب. استخدم رقم Twilio فعلي أو Messaging Service SID يبدأ بـ MG.";
-        if (parsed?.code === 21705) message = "Messaging Service SID في Twilio غير صحيح أو غير تابع لهذا الحساب.";
+        message = smsFailureMessage(parsed?.code);
       } catch (_) {
         // Keep generic Arabic message.
       }
 
       return jsonResponse({ error: "sms_failed", message, details: txt }, 502);
+    }
+
+    let sentMessage: Record<string, unknown> | null = null;
+    try {
+      sentMessage = JSON.parse(txt);
+    } catch (_) {
+      console.error("Twilio returned non-JSON success body", txt);
+    }
+
+    // Twilio can accept the API request while marking the message failed immediately.
+    // In that case do not show the user "OTP sent" and do not keep an unusable code.
+    if (sentMessage?.status === "failed" || sentMessage?.status === "undelivered") {
+      console.error("Twilio message delivery failed immediately", sentMessage);
+      await admin.from("phone_otps").delete().eq("id", otpRow.id);
+      return jsonResponse({
+        error: "sms_failed",
+        message: smsFailureMessage(sentMessage.error_code),
+        details: JSON.stringify(sentMessage),
+      }, 502);
     }
 
     return jsonResponse({ success: true, phone: normalized, expires_in: 300 }, 200);
