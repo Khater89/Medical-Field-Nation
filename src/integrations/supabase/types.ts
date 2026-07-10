@@ -1397,6 +1397,7 @@ export type Database = {
         Row: {
           attempts: number
           code_hash: string
+          consumed_at: string | null
           created_at: string
           expires_at: string
           id: string
@@ -1406,6 +1407,7 @@ export type Database = {
         Insert: {
           attempts?: number
           code_hash: string
+          consumed_at?: string | null
           created_at?: string
           expires_at: string
           id?: string
@@ -1415,6 +1417,7 @@ export type Database = {
         Update: {
           attempts?: number
           code_hash?: string
+          consumed_at?: string | null
           created_at?: string
           expires_at?: string
           id?: string
@@ -1503,6 +1506,7 @@ export type Database = {
           stripe_connect_onboarding_status: string | null
           tools: string[] | null
           user_id: string
+          username: string | null
         }
         Insert: {
           academic_cert_url?: string | null
@@ -1538,6 +1542,7 @@ export type Database = {
           stripe_connect_onboarding_status?: string | null
           tools?: string[] | null
           user_id: string
+          username?: string | null
         }
         Update: {
           academic_cert_url?: string | null
@@ -1573,6 +1578,7 @@ export type Database = {
           stripe_connect_onboarding_status?: string | null
           tools?: string[] | null
           user_id?: string
+          username?: string | null
         }
         Relationships: []
       }
@@ -2426,6 +2432,7 @@ export type Database = {
         Returns: boolean
       }
       user_owns_vendor: { Args: { _vendor_id: string }; Returns: boolean }
+      username_available: { Args: { _u: string }; Returns: boolean }
       verify_api_key: {
         Args: { _endpoint?: string; _plain_key: string }
         Returns: {
