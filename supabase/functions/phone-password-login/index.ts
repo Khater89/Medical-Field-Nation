@@ -1,4 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
+import type { User } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -19,6 +20,27 @@ function json(payload: Record<string, unknown>, status: number) {
     status,
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
+}
+
+function legacyPhoneEmail(phone: string): string {
+  return `p${phone.replace(/\D/g, "")}@mfn.phone.local`;
+}
+
+async function findAuthUserByPhone(admin: ReturnType<typeof createClient>, phone: string): Promise<User | null> {
+  const legacyEmail = legacyPhoneEmail(phone).toLowerCase();
+  for (let page = 1; page <= 10; page += 1) {
+    const { data, error } = await admin.auth.admin.listUsers({ page, perPage: 1000 });
+    if (error) {
+      console.error("listUsers phone lookup failed", error);
+      return null;
+    }
+    const found = data.users.find((u) =>
+      u.email?.toLowerCase() === legacyEmail || u.user_metadata?.phone === phone
+    );
+    if (found) return found;
+    if (data.users.length < 1000) break;
+  }
+  return null;
 }
 
 Deno.serve(async (req) => {
@@ -50,13 +72,22 @@ Deno.serve(async (req) => {
       profile = data;
     }
     if (!profile?.user_id) {
-      return json({ error: "not_found", message: "الحساب غير موجود" }, 404);
+      if (normalized) {
+        const legacyUser = await findAuthUserByPhone(admin, normalized);
+        if (legacyUser?.id) {
+          return json({
+            error: "setup_required",
+            message: "أكمل إنشاء الحساب من تبويب حساب جديد لتعيين اسم المستخدم وكلمة المرور.",
+          }, 200);
+        }
+      }
+      return json({ error: "not_found", message: "الحساب غير موجود. أنشئ حساباً جديداً أولاً." }, 200);
     }
 
     // Get auth email for this user
     const { data: userRes, error: getErr } = await admin.auth.admin.getUserById(profile.user_id);
     if (getErr || !userRes?.user?.email) {
-      return json({ error: "not_found", message: "الحساب غير موجود" }, 404);
+      return json({ error: "not_found", message: "الحساب غير موجود. أنشئ حساباً جديداً أولاً." }, 200);
     }
 
     const anon = createClient(SUPABASE_URL, Deno.env.get("SUPABASE_ANON_KEY")!);
@@ -65,7 +96,7 @@ Deno.serve(async (req) => {
       password: pw,
     });
     if (signErr || !signed?.session) {
-      return json({ error: "bad_credentials", message: "كلمة المرور غير صحيحة" }, 401);
+      return json({ error: "bad_credentials", message: "كلمة المرور غير صحيحة" }, 200);
     }
 
     return json({
