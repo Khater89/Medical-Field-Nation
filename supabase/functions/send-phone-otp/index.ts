@@ -29,6 +29,34 @@ function jsonResponse(payload: Record<string, unknown>, status: number) {
   });
 }
 
+function smsFailureMessage(code: unknown): string {
+  if (code === 21659) return "رقم الإرسال في Twilio غير صالح لهذا الحساب. استخدم رقم Twilio فعلي أو Messaging Service SID يبدأ بـ MG.";
+  if (code === 21704) return "Messaging Service في Twilio لا يحتوي على Sender. أضف رقم Twilio أو Alphanumeric Sender ID إلى Sender Pool.";
+  if (code === 21705) return "Messaging Service SID في Twilio غير صحيح أو غير تابع لهذا الحساب.";
+  return "تعذّر إرسال الرسالة. تأكد من الرقم أو حاول لاحقاً.";
+}
+
+async function getFirstSmsSender(lovableKey: string, twilioKey: string): Promise<string | null> {
+  const resp = await fetch(`${GATEWAY_URL}/IncomingPhoneNumbers.json?PageSize=20`, {
+    method: "GET",
+    headers: {
+      "Authorization": `Bearer ${lovableKey}`,
+      "X-Connection-Api-Key": twilioKey,
+    },
+  });
+
+  if (!resp.ok) {
+    console.error("Twilio sender lookup failed", resp.status, await resp.text());
+    return null;
+  }
+
+  const payload = await resp.json();
+  const sender = payload?.incoming_phone_numbers?.find((n: { phone_number?: string; capabilities?: { sms?: boolean } }) =>
+    n.capabilities?.sms && n.phone_number && /^\+[1-9]\d{6,14}$/.test(n.phone_number)
+  );
+  return sender?.phone_number || null;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -77,7 +105,8 @@ Deno.serve(async (req) => {
     const TWILIO_API_KEY = Deno.env.get("TWILIO_API_KEY");
     const FROM = Deno.env.get("TWILIO_FROM_PHONE")?.trim();
     const MSID = Deno.env.get("TWILIO_MESSAGING_SERVICE_SID")?.trim();
-    const hasValidFrom = !!FROM && /^\+[1-9]\d{6,14}$/.test(FROM);
+    let effectiveFrom = FROM;
+    let hasValidFrom = !!effectiveFrom && /^\+[1-9]\d{6,14}$/.test(effectiveFrom);
     const hasValidMsid = !!MSID && /^MG[0-9a-fA-F]{32}$/.test(MSID);
 
     if (MSID && !hasValidMsid) {
@@ -88,8 +117,21 @@ Deno.serve(async (req) => {
       }, 500);
     }
 
-    if (!LOVABLE_API_KEY || !TWILIO_API_KEY || (!hasValidMsid && !hasValidFrom)) {
+    if (!LOVABLE_API_KEY || !TWILIO_API_KEY) {
       console.error("Missing Twilio env", { hasLovable: !!LOVABLE_API_KEY, hasTwilio: !!TWILIO_API_KEY, hasFrom: hasValidFrom, hasMsid: hasValidMsid });
+      return jsonResponse({ error: "server_config", message: "خدمة الرسائل غير مهيّأة" }, 500);
+    }
+
+    // Prefer a concrete Twilio SMS number when available. A Messaging Service can exist
+    // but still fail delivery immediately if its Sender Pool is empty (Twilio 21704).
+    const accountSender = await getFirstSmsSender(LOVABLE_API_KEY, TWILIO_API_KEY);
+    if (accountSender) {
+      effectiveFrom = accountSender;
+      hasValidFrom = true;
+    }
+
+    if (!hasValidFrom && !hasValidMsid) {
+      console.error("Missing Twilio sender", { hasFrom: hasValidFrom, hasMsid: hasValidMsid });
       return jsonResponse({ error: "server_config", message: "خدمة الرسائل غير مهيّأة" }, 500);
     }
 
@@ -110,8 +152,8 @@ Deno.serve(async (req) => {
       To: normalized,
       Body: `رمز الدخول إلى السوق الطبي: ${code}\nصالح لمدة 5 دقائق.`,
     };
-    if (MSID) params.MessagingServiceSid = MSID;
-    else params.From = FROM!;
+    if (hasValidFrom) params.From = effectiveFrom!;
+    else params.MessagingServiceSid = MSID!;
     const body = new URLSearchParams(params);
 
     const resp = await fetch(`${GATEWAY_URL}/Messages.json`, {
@@ -124,21 +166,40 @@ Deno.serve(async (req) => {
       body,
     });
 
+    const txt = await resp.text();
+
     if (!resp.ok) {
-      const txt = await resp.text();
       console.error("Twilio send failed", resp.status, txt);
       await admin.from("phone_otps").delete().eq("id", otpRow.id);
 
-      let message = "تعذّر إرسال الرسالة. تأكد من الرقم أو حاول لاحقاً.";
+      let message = smsFailureMessage(undefined);
       try {
         const parsed = JSON.parse(txt);
-        if (parsed?.code === 21659) message = "رقم الإرسال في Twilio غير صالح لهذا الحساب. استخدم رقم Twilio فعلي أو Messaging Service SID يبدأ بـ MG.";
-        if (parsed?.code === 21705) message = "Messaging Service SID في Twilio غير صحيح أو غير تابع لهذا الحساب.";
+        message = smsFailureMessage(parsed?.code);
       } catch (_) {
         // Keep generic Arabic message.
       }
 
       return jsonResponse({ error: "sms_failed", message, details: txt }, 502);
+    }
+
+    let sentMessage: Record<string, unknown> | null = null;
+    try {
+      sentMessage = JSON.parse(txt);
+    } catch (_) {
+      console.error("Twilio returned non-JSON success body", txt);
+    }
+
+    // Twilio can accept the API request while marking the message failed immediately.
+    // In that case do not show the user "OTP sent" and do not keep an unusable code.
+    if (sentMessage?.status === "failed" || sentMessage?.status === "undelivered") {
+      console.error("Twilio message delivery failed immediately", sentMessage);
+      await admin.from("phone_otps").delete().eq("id", otpRow.id);
+      return jsonResponse({
+        error: "sms_failed",
+        message: smsFailureMessage(sentMessage.error_code),
+        details: JSON.stringify(sentMessage),
+      }, 502);
     }
 
     return jsonResponse({ success: true, phone: normalized, expires_in: 300 }, 200);
