@@ -75,18 +75,21 @@ Deno.serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     const TWILIO_API_KEY = Deno.env.get("TWILIO_API_KEY");
     const FROM = Deno.env.get("TWILIO_FROM_PHONE");
-    if (!LOVABLE_API_KEY || !TWILIO_API_KEY || !FROM) {
-      console.error("Missing Twilio env", { hasLovable: !!LOVABLE_API_KEY, hasTwilio: !!TWILIO_API_KEY, hasFrom: !!FROM });
+    const MSID = Deno.env.get("TWILIO_MESSAGING_SERVICE_SID");
+    if (!LOVABLE_API_KEY || !TWILIO_API_KEY || (!FROM && !MSID)) {
+      console.error("Missing Twilio env", { hasLovable: !!LOVABLE_API_KEY, hasTwilio: !!TWILIO_API_KEY, hasFrom: !!FROM, hasMsid: !!MSID });
       return new Response(JSON.stringify({ error: "server_config", message: "خدمة الرسائل غير مهيّأة" }), {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const body = new URLSearchParams({
+    const params: Record<string, string> = {
       To: normalized,
-      From: FROM,
       Body: `رمز الدخول إلى السوق الطبي: ${code}\nصالح لمدة 5 دقائق.`,
-    });
+    };
+    if (MSID) params.MessagingServiceSid = MSID;
+    else params.From = FROM!;
+    const body = new URLSearchParams(params);
 
     const resp = await fetch(`${GATEWAY_URL}/Messages.json`, {
       method: "POST",
