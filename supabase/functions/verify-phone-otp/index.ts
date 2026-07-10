@@ -84,8 +84,6 @@ Deno.serve(async (req) => {
     }
 
     const otp = match;
-    // Mark verified
-    await admin.from("phone_otps").update({ verified_at: new Date().toISOString() }).eq("id", otp.id);
 
     // Find or create user by phone (via profiles table lookup)
     const { data: existingProfile } = await admin
@@ -93,6 +91,18 @@ Deno.serve(async (req) => {
       .select("user_id, full_name")
       .eq("phone", normalized)
       .maybeSingle();
+
+    // For a new phone-only account, collect the name first. Do not mark the OTP
+    // as used yet; the profile step submits the same still-valid code again.
+    if (!existingProfile?.user_id && !String(full_name || "").trim()) {
+      return new Response(JSON.stringify({
+        success: true,
+        is_new_account: true,
+        needs_profile: true,
+      }), {
+        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     // Random strong password (never returned to user)
     const password = crypto.randomUUID() + "-" + crypto.randomUUID();
@@ -123,8 +133,6 @@ Deno.serve(async (req) => {
         email,
         password,
         email_confirm: true,
-        phone: normalized,
-        phone_confirm: true,
         user_metadata: {
           full_name: (full_name || "").trim(),
           phone: normalized,
@@ -134,7 +142,8 @@ Deno.serve(async (req) => {
       });
       if (createErr || !created?.user) {
         console.error("createUser error", createErr);
-        return new Response(JSON.stringify({ error: "create_failed", message: createErr?.message || "تعذر إنشاء الحساب" }), {
+        const createMessage = createErr?.message || (createErr ? JSON.stringify(createErr) : "تعذر إنشاء الحساب");
+        return new Response(JSON.stringify({ error: "create_failed", message: createMessage }), {
           status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
@@ -156,6 +165,9 @@ Deno.serve(async (req) => {
         status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    // Mark the OTP as consumed only after account/session creation succeeded.
+    await admin.from("phone_otps").update({ verified_at: new Date().toISOString() }).eq("id", otp.id);
 
     return new Response(JSON.stringify({
       success: true,
