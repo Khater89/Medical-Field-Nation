@@ -1,4 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2";
+import type { User } from "npm:@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -35,6 +36,38 @@ function validPassword(p: string): boolean {
 }
 function usernameEmail(username: string): string {
   return `u_${username.toLowerCase()}@mfn.user.local`;
+}
+function legacyPhoneEmail(phone: string): string {
+  return `p${phone.replace(/\D/g, "")}@mfn.phone.local`;
+}
+
+async function findAuthUserByPhone(admin: ReturnType<typeof createClient>, phone: string): Promise<User | null> {
+  const legacyEmail = legacyPhoneEmail(phone).toLowerCase();
+  for (let page = 1; page <= 10; page += 1) {
+    const { data, error } = await admin.auth.admin.listUsers({ page, perPage: 1000 });
+    if (error) {
+      console.error("listUsers phone lookup failed", error);
+      return null;
+    }
+    const found = data.users.find((u) =>
+      u.email?.toLowerCase() === legacyEmail || u.user_metadata?.phone === phone
+    );
+    if (found) return found;
+    if (data.users.length < 1000) break;
+  }
+  return null;
+}
+
+async function ensureCustomerRole(admin: ReturnType<typeof createClient>, userId: string) {
+  const { error } = await admin
+    .from("user_roles")
+    .upsert({ user_id: userId, role: "customer" }, { onConflict: "user_id,role" });
+  if (error) console.error("customer role upsert failed", error);
+}
+
+async function signInWithEmail(SUPABASE_URL: string, email: string, password: string) {
+  const anon = createClient(SUPABASE_URL, Deno.env.get("SUPABASE_ANON_KEY")!);
+  return await anon.auth.signInWithPassword({ email, password });
 }
 
 Deno.serve(async (req) => {
@@ -93,7 +126,6 @@ Deno.serve(async (req) => {
       // Check if this phone already has an account (so client can show "sign in" instead)
       const { data: existing } = await admin
         .from("profiles").select("user_id").eq("phone", normalized).maybeSingle();
-
       return json({ success: true, verified: true, has_account: !!existing?.user_id }, 200);
     }
 
@@ -128,17 +160,69 @@ Deno.serve(async (req) => {
         return json({ error: "not_verified", message: "يرجى التحقق من رقم الهاتف أولاً" }, 400);
       }
 
-      // Phone must not already own an account
+      // Phone must not already own a completed account
       const { data: existing } = await admin
         .from("profiles").select("user_id").eq("phone", normalized).maybeSingle();
       if (existing?.user_id) {
         return json({ error: "phone_taken", message: "هذا الرقم مسجّل مسبقاً. سجّل الدخول." }, 409);
       }
 
+      // Recover legacy/partial phone accounts that were created before the
+      // username+password profile step existed. We reuse the verified phone
+      // account, set the chosen password, then create the missing profile.
+      const legacyUser = await findAuthUserByPhone(admin, normalized);
+
       // Username must be free
       const { data: uTaken } = await admin
         .from("profiles").select("user_id").ilike("username", username).maybeSingle();
-      if (uTaken) return json({ error: "username_taken", message: "اسم المستخدم محجوز" }, 409);
+      if (uTaken && uTaken.user_id !== legacyUser?.id) {
+        return json({ error: "username_taken", message: "اسم المستخدم محجوز" }, 409);
+      }
+
+      if (legacyUser?.id && legacyUser.email) {
+        const { error: updateErr } = await admin.auth.admin.updateUserById(legacyUser.id, {
+          password,
+          user_metadata: {
+            ...(legacyUser.user_metadata || {}),
+            full_name,
+            phone: normalized,
+            username,
+            phone_only: true,
+            address,
+          },
+        });
+        if (updateErr) {
+          console.error("legacy user update failed", updateErr);
+          return json({ error: "update_failed", message: updateErr.message || "تعذر تحديث الحساب" }, 500);
+        }
+
+        const { error: profileErr } = await admin.from("profiles").upsert({
+          user_id: legacyUser.id,
+          phone: normalized,
+          full_name,
+          username,
+          address_text: address || null,
+        }, { onConflict: "user_id" });
+        if (profileErr) {
+          console.error("legacy profile upsert failed", profileErr);
+          return json({ error: "profile_failed", message: profileErr.message || "تعذر حفظ بيانات الحساب" }, 500);
+        }
+        await ensureCustomerRole(admin, legacyUser.id);
+
+        const { data: signed, error: signErr } = await signInWithEmail(SUPABASE_URL, legacyUser.email, password);
+        if (signErr || !signed?.session) {
+          console.error("legacy signIn error", signErr);
+          return json({ error: "signin_failed", message: signErr?.message || "تعذر تسجيل الدخول" }, 500);
+        }
+
+        await admin.from("phone_otps").update({ consumed_at: new Date().toISOString() }).eq("id", otpRow.id);
+        return json({
+          success: true,
+          user_id: legacyUser.id,
+          access_token: signed.session.access_token,
+          refresh_token: signed.session.refresh_token,
+        }, 200);
+      }
 
       const email = usernameEmail(username);
       const { data: created, error: createErr } = await admin.auth.admin.createUser({
@@ -153,17 +237,22 @@ Deno.serve(async (req) => {
       }
       const userId = created.user.id;
 
-      await admin.from("profiles").upsert({
+      const { error: profileErr } = await admin.from("profiles").upsert({
         user_id: userId,
         phone: normalized,
         full_name,
         username,
         address_text: address || null,
       }, { onConflict: "user_id" });
+      if (profileErr) {
+        console.error("profile upsert failed", profileErr);
+        await admin.auth.admin.deleteUser(userId);
+        return json({ error: "profile_failed", message: profileErr.message || "تعذر حفظ بيانات الحساب" }, 500);
+      }
+      await ensureCustomerRole(admin, userId);
 
       // Sign in immediately
-      const anon = createClient(SUPABASE_URL, Deno.env.get("SUPABASE_ANON_KEY")!);
-      const { data: signed, error: signErr } = await anon.auth.signInWithPassword({ email, password });
+      const { data: signed, error: signErr } = await signInWithEmail(SUPABASE_URL, email, password);
       if (signErr || !signed?.session) {
         console.error("signIn error", signErr);
         return json({ error: "signin_failed", message: signErr?.message || "تعذر تسجيل الدخول" }, 500);
