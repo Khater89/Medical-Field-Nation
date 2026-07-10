@@ -24,7 +24,7 @@ const AppFooter = () => {
           {/* Quick Links */}
           <div className="space-y-3">
             <h4 className="font-bold text-sm text-foreground">
-              {t("landing.footer.quickLinks") || "روابط سريعة"}
+              {t("footer.quick_links")}
             </h4>
             <nav className="flex flex-col gap-2">
               <Link to="/" className="text-sm text-muted-foreground hover:text-primary transition-colors">
@@ -34,7 +34,7 @@ const AppFooter = () => {
                 {t("action.book_now")}
               </Link>
               <Link to="/provider/register" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                انضم كمزوّد
+                {t("nav.join_provider")}
               </Link>
             </nav>
           </div>
@@ -42,16 +42,16 @@ const AppFooter = () => {
           {/* Contact (no call/whatsapp icons — appear after booking only) */}
           <div className="space-y-3">
             <h4 className="font-bold text-sm text-foreground">
-              {t("landing.footer.contact") || "تواصل معنا"}
+              {t("footer.contact_us")}
             </h4>
             <div className="flex flex-col gap-2.5">
               <Link to="/track" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors">
                 <Mail className="h-3.5 w-3.5 shrink-0" />
-                <span>تتبع الطلب /التعيين الذاتي للتواصل بالمنسق</span>
+                <span>{t("footer.track_link_desc")}</span>
               </Link>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <MapPin className="h-3.5 w-3.5 shrink-0" />
-                <span>الأردن</span>
+                <span>{t("footer.country_jordan")}</span>
               </div>
             </div>
           </div>

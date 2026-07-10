@@ -71,9 +71,9 @@ const AppHeader = () => {
 
   const navLinks = [
     { label: t("nav.home"), href: "/" },
-    { label: t("nav.services") || "الخدمات", href: "/#services" },
-    { label: "السوق الطبي", href: "/marketplace/enter" },
-    { label: "تتبع الطلب /التعيين الذاتي ", href: "/track" },
+    { label: t("nav.services"), href: "/#services" },
+    { label: t("nav.marketplace"), href: "/marketplace/enter" },
+    { label: t("nav.track"), href: "/track" },
   ];
 
   return (
@@ -130,7 +130,7 @@ const AppHeader = () => {
                         className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-foreground hover:bg-accent transition-colors"
                       >
                         <UserPlus className="h-4 w-4" />
-                        انضم كمزوّد
+                        {t("nav.join_provider")}
                       </Link>
                     </>
                   )}
@@ -201,37 +201,37 @@ const AppHeader = () => {
                 {effectiveRole === "admin" && (
                   <DropdownMenuItem onClick={() => navigate("/admin")} className="gap-2 cursor-pointer">
                     <LayoutDashboard className="h-4 w-4" />
-                    لوحة الإدارة
+                    {t("nav.dashboard.admin")}
                   </DropdownMenuItem>
                 )}
                 {effectiveRole === "cs" && (
                   <DropdownMenuItem onClick={() => navigate("/cs")} className="gap-2 cursor-pointer">
                     <LayoutDashboard className="h-4 w-4" />
-                    لوحة خدمة العملاء
+                    {t("nav.dashboard.cs")}
                   </DropdownMenuItem>
                 )}
                 {effectiveRole === "provider" && (
                   <DropdownMenuItem onClick={() => navigate("/provider")} className="gap-2 cursor-pointer">
                     <LayoutDashboard className="h-4 w-4" />
-                    لوحة مقدم الخدمة
+                    {t("nav.dashboard.provider")}
                   </DropdownMenuItem>
                 )}
                 {effectiveRole === "customer" && (
                   <>
                     <DropdownMenuItem onClick={() => navigate("/profile")} className="gap-2 cursor-pointer">
                       <User className="h-4 w-4" />
-                      حسابي
+                      {t("nav.my_account")}
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => navigate("/profile?tab=bookings")} className="gap-2 cursor-pointer">
                       <CalendarCheck className="h-4 w-4" />
-                      حجوزاتي
+                      {t("nav.my_bookings")}
                     </DropdownMenuItem>
                   </>
                 )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleSignOut} className="gap-2 cursor-pointer text-destructive focus:text-destructive">
                   <LogOut className="h-4 w-4" />
-                  تسجيل الخروج
+                  {t("action.signout")}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -253,21 +253,21 @@ const AppHeader = () => {
                 <div className="px-2 py-2 text-xs">
                   <div className="font-semibold">{guest.name}</div>
                   <div className="text-muted-foreground" dir="ltr">{guest.phone}</div>
-                  <div className="text-[10px] mt-1 text-blue-600">زائر • Guest</div>
+                  <div className="text-[10px] mt-1 text-blue-600">{t("guest.label")} • Guest</div>
                 </div>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => navigate("/marketplace/messages")} className="gap-2 cursor-pointer">
                   <CalendarCheck className="h-4 w-4" />
-                  محادثاتي
+                  {t("nav.my_chats")}
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate("/marketplace")} className="gap-2 cursor-pointer">
                   <LayoutDashboard className="h-4 w-4" />
-                  السوق الطبي
+                  {t("nav.marketplace")}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleGuestSignOut} className="gap-2 cursor-pointer text-destructive focus:text-destructive">
                   <LogOut className="h-4 w-4" />
-                  خروج الزائر
+                  {t("action.guest_signout")}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

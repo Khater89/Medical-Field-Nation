@@ -193,7 +193,7 @@ const BookingPage = () => {
                         </div>
                         {categoryServices.length === 0 && (
                           <p className="text-center text-sm text-muted-foreground py-6">
-                            لا توجد خدمات متاحة في هذا التصنيف
+                            {t("booking.no_services_in_category")}
                           </p>
                         )}
                       </>
@@ -216,9 +216,7 @@ const BookingPage = () => {
                           className="mt-1"
                         />
                         <label htmlFor="disclaimer" className="text-sm leading-relaxed cursor-pointer">
-                          {isRTL
-                            ? "نحن هنا لنسهل وصولك لأفضل الرعاية! يرجى العلم بأن منصتنا هي جسر يربطك بنخبة من مزودي الخدمة المرخصين؛ حيث تقع المسؤولية المهنية والتشخيصية على عاتق المزود المباشر لضمان أعلى معايير الدقة والخدمة المتميزة لك."
-                            : "We're here to connect you with the best care! Please note that our platform serves as a bridge linking you to elite licensed service providers. Professional and diagnostic responsibility rests with the direct provider to ensure the highest standards of accuracy and outstanding service for you."}
+                          {t("booking.disclaimer")}
                         </label>
                       </div>
                     </div>
