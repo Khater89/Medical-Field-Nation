@@ -117,16 +117,22 @@ Deno.serve(async (req) => {
       }, 500);
     }
 
-    if (!LOVABLE_API_KEY || !TWILIO_API_KEY || (!hasValidMsid && !hasValidFrom)) {
+    if (!LOVABLE_API_KEY || !TWILIO_API_KEY) {
       console.error("Missing Twilio env", { hasLovable: !!LOVABLE_API_KEY, hasTwilio: !!TWILIO_API_KEY, hasFrom: hasValidFrom, hasMsid: hasValidMsid });
       return jsonResponse({ error: "server_config", message: "خدمة الرسائل غير مهيّأة" }, 500);
     }
 
     // Prefer a concrete Twilio SMS number when available. A Messaging Service can exist
     // but still fail delivery immediately if its Sender Pool is empty (Twilio 21704).
-    if (!hasValidFrom) {
-      effectiveFrom = await getFirstSmsSender(LOVABLE_API_KEY, TWILIO_API_KEY);
-      hasValidFrom = !!effectiveFrom;
+    const accountSender = await getFirstSmsSender(LOVABLE_API_KEY, TWILIO_API_KEY);
+    if (accountSender) {
+      effectiveFrom = accountSender;
+      hasValidFrom = true;
+    }
+
+    if (!hasValidFrom && !hasValidMsid) {
+      console.error("Missing Twilio sender", { hasFrom: hasValidFrom, hasMsid: hasValidMsid });
+      return jsonResponse({ error: "server_config", message: "خدمة الرسائل غير مهيّأة" }, 500);
     }
 
     // Store hash before sending so a delivered SMS always has a valid code.
