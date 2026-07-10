@@ -134,32 +134,48 @@ Deno.serve(async (req) => {
       }
     } else {
       email = syntheticEmail(normalized);
-      isNewAccount = true;
-      const { data: created, error: createErr } = await admin.auth.admin.createUser({
-        email,
-        password,
-        email_confirm: true,
-        user_metadata: {
-          full_name: (full_name || "").trim(),
-          phone: normalized,
-          phone_only: true,
-          address: (address || "").trim(),
-        },
-      });
-      if (createErr || !created?.user) {
-        console.error("createUser error", createErr);
-        const createMessage = createErr?.message || (createErr ? JSON.stringify(createErr) : "تعذر إنشاء الحساب");
-        return new Response(JSON.stringify({ error: "create_failed", message: createMessage }), {
-          status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+      // Reuse an existing auth user with this synthetic email if present (orphan from earlier attempt)
+      let existingAuthUserId: string | null = null;
+      try {
+        const { data: list } = await admin.auth.admin.listUsers({ page: 1, perPage: 200 });
+        const found = list?.users?.find((u) => (u.email || "").toLowerCase() === email.toLowerCase());
+        if (found) existingAuthUserId = found.id;
+      } catch (e) {
+        console.error("listUsers error", e);
       }
-      userId = created.user.id;
-      // Update the profile row created by handle_new_user trigger
-      await admin.from("profiles").update({
+
+      if (existingAuthUserId) {
+        userId = existingAuthUserId;
+        await admin.auth.admin.updateUserById(userId, { password, email_confirm: true });
+      } else {
+        isNewAccount = true;
+        const { data: created, error: createErr } = await admin.auth.admin.createUser({
+          email,
+          password,
+          email_confirm: true,
+          user_metadata: {
+            full_name: (full_name || "").trim(),
+            phone: normalized,
+            phone_only: true,
+            address: (address || "").trim(),
+          },
+        });
+        if (createErr || !created?.user) {
+          console.error("createUser error", createErr);
+          const createMessage = createErr?.message || (createErr ? JSON.stringify(createErr) : "تعذر إنشاء الحساب");
+          return new Response(JSON.stringify({ error: "create_failed", message: createMessage }), {
+            status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+          });
+        }
+        userId = created.user.id;
+      }
+      // Ensure a profile row exists and is linked to the phone
+      await admin.from("profiles").upsert({
+        user_id: userId,
         phone: normalized,
         full_name: (full_name || "").trim() || null,
         address_text: (address || "").trim() || null,
-      }).eq("user_id", userId);
+      }, { onConflict: "user_id" });
     }
 
     // Sign in using anon client to obtain session tokens
