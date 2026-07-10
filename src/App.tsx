@@ -24,7 +24,6 @@ import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import TrackOrderPage from "./pages/TrackOrderPage";
 import MarketplaceHome from "./pages/marketplace/MarketplaceHome";
-import MarketplaceEnterPage from "./pages/marketplace/MarketplaceEnterPage";
 import CategoryPage from "./pages/marketplace/CategoryPage";
 import VendorTypePage from "./pages/marketplace/VendorTypePage";
 import ProductPage from "./pages/marketplace/ProductPage";
@@ -36,7 +35,6 @@ import VendorDashboard from "./pages/vendor/VendorDashboard";
 import VendorPage from "./pages/marketplace/VendorPage";
 import VendorsListPage from "./pages/marketplace/VendorsListPage";
 import MarketplaceMessagesPage from "./pages/marketplace/MarketplaceMessagesPage";
-import GuestMessagesPage from "./pages/marketplace/GuestMessagesPage";
 
 import { MarketplaceCartProvider } from "./contexts/MarketplaceCartContext";
 import NotFound from "./pages/NotFound";
