@@ -1393,6 +1393,36 @@ export type Database = {
           },
         ]
       }
+      phone_otps: {
+        Row: {
+          attempts: number
+          code_hash: string
+          created_at: string
+          expires_at: string
+          id: string
+          phone: string
+          verified_at: string | null
+        }
+        Insert: {
+          attempts?: number
+          code_hash: string
+          created_at?: string
+          expires_at: string
+          id?: string
+          phone: string
+          verified_at?: string | null
+        }
+        Update: {
+          attempts?: number
+          code_hash?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          phone?: string
+          verified_at?: string | null
+        }
+        Relationships: []
+      }
       platform_settings: {
         Row: {
           bank_account_holder: string | null
@@ -2291,6 +2321,7 @@ export type Database = {
       }
       mfn_is_staff: { Args: never; Returns: boolean }
       mp_normalize_phone: { Args: { _p: string }; Returns: string }
+      normalize_jo_phone: { Args: { _raw: string }; Returns: string }
       provider_confirm_agreement: {
         Args: { _booking_id: string }
         Returns: Json
