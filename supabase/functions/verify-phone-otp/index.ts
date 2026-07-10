@@ -25,6 +25,12 @@ function syntheticEmail(phone: string): string {
   return `p${phone.slice(1)}@mfn.phone.local`;
 }
 
+function temporaryPassword(): string {
+  const bytes = new Uint8Array(32);
+  crypto.getRandomValues(bytes);
+  return btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -104,8 +110,8 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Random strong password (never returned to user)
-    const password = crypto.randomUUID() + "-" + crypto.randomUUID();
+    // Random strong password (never returned to user). Keep under bcrypt's 72-byte limit.
+    const password = temporaryPassword();
     let userId: string;
     let email: string;
     let isNewAccount = false;
