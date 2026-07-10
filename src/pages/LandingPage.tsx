@@ -257,7 +257,7 @@ const LandingPage = () => {
                     className="gap-2 text-base px-8 h-14 rounded-full shadow-sm hover:shadow-md transition-all hover:scale-[1.02] active:scale-[0.98]"
                   >
                     <ClipboardList className="h-4 w-4" />
-                    تتبع طلبك
+                    {t("landing.track_your_order")}
                   </Button>
                 </Link>
                 {/* Static "Join as Provider" CTA */}
@@ -268,7 +268,7 @@ const LandingPage = () => {
                     className="gap-2 text-base px-8 h-14 rounded-full shadow-md hover:shadow-xl transition-all hover:scale-[1.02] active:scale-[0.98] border-2 border-primary/30 bg-primary/5 text-primary hover:bg-primary/10 font-bold"
                   >
                     <Briefcase className="h-5 w-5" />
-                    انضم كمزوّد خدمة
+                    {t("nav.join_provider_service")}
                     <ArrowIcon className="h-4 w-4" />
                   </Button>
                 </Link>
@@ -305,7 +305,7 @@ const LandingPage = () => {
                 <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-primary-glow/20 rounded-3xl blur-2xl scale-105" />
                 <img
                   src={heroMedicalImg}
-                  alt="خدمات طبية منزلية - ممرضة تزور مريضاً في المنزل"
+                  alt={t("landing.hero_alt")}
                   width={500}
                   height={500}
                   className="relative rounded-3xl shadow-2xl object-cover w-full max-w-[500px] border-2 border-primary/10"
@@ -320,8 +320,8 @@ const LandingPage = () => {
                     <CheckCircle className="h-5 w-5 text-green-600" />
                   </div>
                   <div>
-                    <p className="text-xs font-bold text-foreground">أطباء معتمدون</p>
-                    <p className="text-[10px] text-muted-foreground">مرخّصون رسمياً</p>
+                    <p className="text-xs font-bold text-foreground">{t("landing.certified_doctors")}</p>
+                    <p className="text-[10px] text-muted-foreground">{t("landing.officially_licensed")}</p>
                   </div>
                 </motion.div>
               </div>
@@ -609,12 +609,12 @@ const LandingPage = () => {
               <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20">
                 <Smartphone className="h-4 w-4 text-primary" />
                 <span className="text-xs font-bold text-primary uppercase tracking-wider">
-                  امسح وابدأ
+                  {t("landing.qr.scan_and_start")}
                 </span>
               </div>
               <h2 className="text-3xl sm:text-4xl font-black text-foreground leading-tight">
-                احجز خدمتك الطبية{" "}
-                <span className="brand-text-animated">بمسحة واحدة</span>
+                {t("landing.qr.book_headline_1")}{" "}
+                <span className="brand-text-animated">{t("landing.qr.book_headline_2")}</span>
               </h2>
               <p className="text-lg text-muted-foreground leading-relaxed">
                 {"\n"}
@@ -643,7 +643,7 @@ const LandingPage = () => {
                     <MFNLogo size={32} />
                     <div className="text-start">
                       <div className="text-sm font-black text-gray-900">MFN</div>
-                      <div className="text-[10px] text-gray-500 font-medium">أمة الحقل الطبي</div>
+                      <div className="text-[10px] text-gray-500 font-medium">{t("app.brand_name")}</div>
                     </div>
                   </div>
 
