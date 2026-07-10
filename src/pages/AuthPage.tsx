@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
@@ -223,8 +224,7 @@ const AuthPage = () => {
                     required
                     dir="ltr"
                   />
-                  <Input
-                    type="password"
+                  <PasswordInput
                     placeholder="كلمة المرور"
                     value={loginPassword}
                     onChange={(e) => setLoginPassword(e.target.value)}
@@ -259,8 +259,7 @@ const AuthPage = () => {
                     required
                     dir="ltr"
                   />
-                  <Input
-                    type="password"
+                  <PasswordInput
                     placeholder="كلمة المرور (6 أحرف على الأقل)"
                     value={signupPassword}
                     onChange={(e) => setSignupPassword(e.target.value)}

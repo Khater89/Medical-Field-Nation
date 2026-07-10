@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, ShieldCheck } from "lucide-react";
@@ -77,8 +78,7 @@ const AdminSetup = () => {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSetup} className="space-y-4">
-              <Input
-                type="password"
+              <PasswordInput
                 placeholder="مفتاح الإعداد (ADMIN_SETUP_SECRET)"
                 value={secret}
                 onChange={(e) => setSecret(e.target.value)}

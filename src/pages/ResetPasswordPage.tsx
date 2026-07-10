@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Lock, CheckCircle } from "lucide-react";
@@ -104,8 +105,7 @@ const ResetPasswordPage = () => {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleReset} className="space-y-4">
-              <Input
-                type="password"
+              <PasswordInput
                 placeholder="كلمة المرور الجديدة"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -113,8 +113,7 @@ const ResetPasswordPage = () => {
                 minLength={6}
                 dir="ltr"
               />
-              <Input
-                type="password"
+              <PasswordInput
                 placeholder="تأكيد كلمة المرور"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
