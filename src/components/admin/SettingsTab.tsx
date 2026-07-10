@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
@@ -263,8 +264,7 @@ const CSAgentsSection = () => {
                 placeholder={t("settings.cs.email_placeholder")}
                 dir="ltr"
               />
-              <Input
-                type="password"
+              <PasswordInput
                 value={createPassword}
                 onChange={(e) => setCreatePassword(e.target.value)}
                 placeholder={t("settings.cs.password_placeholder")}

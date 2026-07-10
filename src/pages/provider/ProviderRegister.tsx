@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -886,8 +887,7 @@ const ProviderRegister = () => {
       </div>
       <div>
         <label className="text-sm font-medium block mb-1">{t("register.confirm_password")} <span className="text-destructive">*</span></label>
-        <Input
-          type="password"
+        <PasswordInput
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
           placeholder={t("register.confirm_password.placeholder")}
@@ -1013,7 +1013,7 @@ const ProviderRegister = () => {
                   </div>
                   <div>
                     <label className="text-sm font-medium block mb-1">{t("register.password")}</label>
-                    <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder={t("register.password")} required dir="ltr" className="h-11" />
+                    <PasswordInput value={password} onChange={(e) => setPassword(e.target.value)} placeholder={t("register.password")} required dir="ltr" className="h-11" />
                   </div>
                   <Button type="submit" className="w-full gap-2 h-11" disabled={saving}>
                     {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
