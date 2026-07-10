@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
@@ -141,8 +142,7 @@ const AnalyticsCards = () => {
               سيتم مسح جميع الحجوزات والسجلات المرتبطة بها. أدخل كلمة مرور الإدارة للمتابعة.
             </DialogDescription>
           </DialogHeader>
-          <Input
-            type="password"
+          <PasswordInput
             placeholder="كلمة مرور الإدارة"
             value={resetPass}
             onChange={(e) => setResetPass(e.target.value)}

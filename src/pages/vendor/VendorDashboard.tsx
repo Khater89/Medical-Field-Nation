@@ -6,13 +6,17 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Package, ShoppingBag, Store, LogOut, Loader2, MessagesSquare, Bell } from "lucide-react";
+import { Package, ShoppingBag, Store, LogOut, Loader2, MessagesSquare, Ban } from "lucide-react";
 import BackButton from "@/components/ui/back-button";
 import { toast } from "sonner";
 import VendorProductsManager from "@/components/vendor/VendorProductsManager";
 import VendorOrdersList from "@/components/vendor/VendorOrdersList";
 import VendorStoreInfo from "@/components/vendor/VendorStoreInfo";
 import VendorChatsTab from "@/components/vendor/VendorChatsTab";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   pending: { label: "بانتظار الموافقة", color: "bg-yellow-100 text-yellow-800" },
@@ -77,6 +81,43 @@ export default function VendorDashboard() {
           </div>
           <div className="flex items-center gap-2">
             <Badge className={status.color}>{status.label}</Badge>
+            {vendor.status !== "suspended" && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="outline" size="sm" className="gap-1 text-destructive border-destructive/40 hover:bg-destructive/10">
+                    <Ban className="h-4 w-4" /> إلغاء الحساب
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>طلب إلغاء / تعطيل حساب المتجر</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      سيتم إيقاف ظهور متجرك ومنتجاتك للعملاء فوراً وتحويل الحالة إلى "موقوف" بانتظار مراجعة الإدارة.
+                      لن يتم حذف طلباتك السابقة أو سجلاتك المالية. للتراجع، تواصل مع الإدارة لإعادة التفعيل.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>تراجع</AlertDialogCancel>
+                    <AlertDialogAction
+                      className="bg-destructive hover:bg-destructive/90"
+                      onClick={async () => {
+                        const { data, error } = await supabase
+                          .from("marketplace_vendors")
+                          .update({ status: "suspended", is_active: false })
+                          .eq("id", vendor.id)
+                          .select()
+                          .maybeSingle();
+                        if (error) return toast.error(error.message);
+                        toast.success("تم إرسال طلب الإلغاء. تم إيقاف المتجر مؤقتاً.");
+                        setVendor(data);
+                      }}
+                    >
+                      تأكيد الإلغاء
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
             <Button variant="ghost" size="icon" onClick={async () => { await signOut(); navigate("/"); }}>
               <LogOut className="h-4 w-4" />
             </Button>

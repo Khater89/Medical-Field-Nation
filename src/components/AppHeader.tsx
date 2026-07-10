@@ -63,7 +63,7 @@ const AppHeader = () => {
     localStorage.removeItem("mp_guest_session_token");
     localStorage.removeItem("mp_guest_phone_norm");
     setGuest(null);
-    window.location.href = "/marketplace/enter";
+    window.location.href = "/marketplace";
   };
 
   const displayName = profile?.full_name || user?.email || "";
@@ -72,7 +72,7 @@ const AppHeader = () => {
   const navLinks = [
     { label: t("nav.home"), href: "/" },
     { label: t("nav.services"), href: "/#services" },
-    { label: t("nav.marketplace"), href: "/marketplace/enter" },
+    { label: t("nav.marketplace"), href: "/marketplace" },
     { label: t("nav.track"), href: "/track" },
   ];
 
@@ -256,7 +256,7 @@ const AppHeader = () => {
                   <div className="text-[10px] mt-1 text-blue-600">{t("guest.label")} • Guest</div>
                 </div>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => navigate("/marketplace/messages")} className="gap-2 cursor-pointer">
+                <DropdownMenuItem onClick={() => navigate("/marketplace/my-messages")} className="gap-2 cursor-pointer">
                   <CalendarCheck className="h-4 w-4" />
                   {t("nav.my_chats")}
                 </DropdownMenuItem>
