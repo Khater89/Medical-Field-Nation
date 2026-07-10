@@ -45,44 +45,45 @@ Deno.serve(async (req) => {
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const admin = createClient(SUPABASE_URL, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
 
-    // Fetch latest unverified OTP for phone
+    // Fetch recent unverified OTPs for phone (last 10 min) — user may have received multiple SMS
+    const tenMinAgo = new Date(Date.now() - 10 * 60_000).toISOString();
     const { data: otps } = await admin
       .from("phone_otps")
-      .select("id, code_hash, expires_at, attempts, verified_at")
+      .select("id, code_hash, expires_at, attempts, verified_at, created_at")
       .eq("phone", normalized)
+      .is("verified_at", null)
+      .gt("created_at", tenMinAgo)
       .order("created_at", { ascending: false })
-      .limit(1);
+      .limit(10);
 
-    const otp = otps?.[0];
-    if (!otp) {
+    if (!otps || otps.length === 0) {
       return new Response(JSON.stringify({ error: "no_otp", message: "لم يتم إرسال رمز لهذا الرقم" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    if (otp.verified_at) {
-      return new Response(JSON.stringify({ error: "already_used", message: "الرمز مستخدم مسبقاً" }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-    if (new Date(otp.expires_at) < new Date()) {
-      return new Response(JSON.stringify({ error: "expired", message: "انتهت صلاحية الرمز. اطلب رمزاً جديداً." }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-    if (otp.attempts >= 5) {
-      return new Response(JSON.stringify({ error: "too_many_attempts", message: "تجاوزت عدد المحاولات. اطلب رمزاً جديداً." }), {
-        status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
 
     const providedHash = await sha256(String(code) + normalized);
-    if (providedHash !== otp.code_hash) {
-      await admin.from("phone_otps").update({ attempts: otp.attempts + 1 }).eq("id", otp.id);
+    const now = new Date();
+    const match = otps.find(
+      (o) => o.code_hash === providedHash && new Date(o.expires_at) >= now && o.attempts < 5,
+    );
+
+    if (!match) {
+      // Increment attempts on the latest row for rate-limiting
+      const latest = otps[0];
+      await admin.from("phone_otps").update({ attempts: latest.attempts + 1 }).eq("id", latest.id);
+      const anyValid = otps.some((o) => new Date(o.expires_at) >= now);
+      if (!anyValid) {
+        return new Response(JSON.stringify({ error: "expired", message: "انتهت صلاحية الرمز. اطلب رمزاً جديداً." }), {
+          status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
       return new Response(JSON.stringify({ error: "wrong_code", message: "الرمز غير صحيح" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
+    const otp = match;
     // Mark verified
     await admin.from("phone_otps").update({ verified_at: new Date().toISOString() }).eq("id", otp.id);
 
