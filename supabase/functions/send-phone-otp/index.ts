@@ -36,6 +36,27 @@ function smsFailureMessage(code: unknown): string {
   return "تعذّر إرسال الرسالة. تأكد من الرقم أو حاول لاحقاً.";
 }
 
+async function getFirstSmsSender(lovableKey: string, twilioKey: string): Promise<string | null> {
+  const resp = await fetch(`${GATEWAY_URL}/IncomingPhoneNumbers.json?PageSize=20`, {
+    method: "GET",
+    headers: {
+      "Authorization": `Bearer ${lovableKey}`,
+      "X-Connection-Api-Key": twilioKey,
+    },
+  });
+
+  if (!resp.ok) {
+    console.error("Twilio sender lookup failed", resp.status, await resp.text());
+    return null;
+  }
+
+  const payload = await resp.json();
+  const sender = payload?.incoming_phone_numbers?.find((n: { phone_number?: string; capabilities?: { sms?: boolean } }) =>
+    n.capabilities?.sms && n.phone_number && /^\+[1-9]\d{6,14}$/.test(n.phone_number)
+  );
+  return sender?.phone_number || null;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -84,7 +105,8 @@ Deno.serve(async (req) => {
     const TWILIO_API_KEY = Deno.env.get("TWILIO_API_KEY");
     const FROM = Deno.env.get("TWILIO_FROM_PHONE")?.trim();
     const MSID = Deno.env.get("TWILIO_MESSAGING_SERVICE_SID")?.trim();
-    const hasValidFrom = !!FROM && /^\+[1-9]\d{6,14}$/.test(FROM);
+    let effectiveFrom = FROM;
+    let hasValidFrom = !!effectiveFrom && /^\+[1-9]\d{6,14}$/.test(effectiveFrom);
     const hasValidMsid = !!MSID && /^MG[0-9a-fA-F]{32}$/.test(MSID);
 
     if (MSID && !hasValidMsid) {
@@ -98,6 +120,13 @@ Deno.serve(async (req) => {
     if (!LOVABLE_API_KEY || !TWILIO_API_KEY || (!hasValidMsid && !hasValidFrom)) {
       console.error("Missing Twilio env", { hasLovable: !!LOVABLE_API_KEY, hasTwilio: !!TWILIO_API_KEY, hasFrom: hasValidFrom, hasMsid: hasValidMsid });
       return jsonResponse({ error: "server_config", message: "خدمة الرسائل غير مهيّأة" }, 500);
+    }
+
+    // Prefer a concrete Twilio SMS number when available. A Messaging Service can exist
+    // but still fail delivery immediately if its Sender Pool is empty (Twilio 21704).
+    if (!hasValidFrom) {
+      effectiveFrom = await getFirstSmsSender(LOVABLE_API_KEY, TWILIO_API_KEY);
+      hasValidFrom = !!effectiveFrom;
     }
 
     // Store hash before sending so a delivered SMS always has a valid code.
@@ -117,8 +146,8 @@ Deno.serve(async (req) => {
       To: normalized,
       Body: `رمز الدخول إلى السوق الطبي: ${code}\nصالح لمدة 5 دقائق.`,
     };
-    if (MSID) params.MessagingServiceSid = MSID;
-    else params.From = FROM!;
+    if (hasValidFrom) params.From = effectiveFrom!;
+    else params.MessagingServiceSid = MSID!;
     const body = new URLSearchParams(params);
 
     const resp = await fetch(`${GATEWAY_URL}/Messages.json`, {
