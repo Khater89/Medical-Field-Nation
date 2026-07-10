@@ -126,9 +126,7 @@ Deno.serve(async (req) => {
       // Check if this phone already has an account (so client can show "sign in" instead)
       const { data: existing } = await admin
         .from("profiles").select("user_id").eq("phone", normalized).maybeSingle();
-      const legacyUser = existing?.user_id ? null : await findAuthUserByPhone(admin, normalized);
-
-      return json({ success: true, verified: true, has_account: !!(existing?.user_id || legacyUser?.id) }, 200);
+      return json({ success: true, verified: true, has_account: !!existing?.user_id }, 200);
     }
 
     if (mode === "signup") {
