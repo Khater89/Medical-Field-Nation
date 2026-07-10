@@ -24,7 +24,6 @@ import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import TrackOrderPage from "./pages/TrackOrderPage";
 import MarketplaceHome from "./pages/marketplace/MarketplaceHome";
-import MarketplaceEnterPage from "./pages/marketplace/MarketplaceEnterPage";
 import CategoryPage from "./pages/marketplace/CategoryPage";
 import VendorTypePage from "./pages/marketplace/VendorTypePage";
 import ProductPage from "./pages/marketplace/ProductPage";
@@ -36,10 +35,11 @@ import VendorDashboard from "./pages/vendor/VendorDashboard";
 import VendorPage from "./pages/marketplace/VendorPage";
 import VendorsListPage from "./pages/marketplace/VendorsListPage";
 import MarketplaceMessagesPage from "./pages/marketplace/MarketplaceMessagesPage";
-import GuestMessagesPage from "./pages/marketplace/GuestMessagesPage";
 
 import { MarketplaceCartProvider } from "./contexts/MarketplaceCartContext";
 import NotFound from "./pages/NotFound";
+import MarketplacePhoneAuth from "./pages/marketplace/MarketplacePhoneAuth";
+import MarketplaceAuthGate from "./components/marketplace/MarketplaceAuthGate";
 
 const queryClient = new QueryClient();
 
@@ -67,15 +67,16 @@ const App = () => {
               <Route path="/verify-email" element={<VerifyEmailPage />} />
               <Route path="/auth/callback" element={<AuthCallback />} />
               <Route path="/track" element={<TrackOrderPage />} />
-              {/* Marketplace */}
-              <Route path="/marketplace" element={<MarketplaceHome />} />
-              <Route path="/marketplace/enter" element={<MarketplaceEnterPage />} />
-              <Route path="/marketplace/category/:slug" element={<CategoryPage />} />
-              <Route path="/marketplace/type/:type" element={<VendorTypePage />} />
-              <Route path="/marketplace/product/:id" element={<ProductPage />} />
-              <Route path="/marketplace/cart" element={<CartPage />} />
-              <Route path="/marketplace/checkout" element={<CheckoutPage />} />
-              <Route path="/marketplace/orders" element={<ProtectedRoute><MyOrdersPage /></ProtectedRoute>} />
+              {/* Marketplace — phone-only auth gate */}
+              <Route path="/marketplace/login" element={<MarketplacePhoneAuth />} />
+              <Route path="/marketplace/enter" element={<MarketplacePhoneAuth />} />
+              <Route path="/marketplace" element={<MarketplaceAuthGate><MarketplaceHome /></MarketplaceAuthGate>} />
+              <Route path="/marketplace/category/:slug" element={<MarketplaceAuthGate><CategoryPage /></MarketplaceAuthGate>} />
+              <Route path="/marketplace/type/:type" element={<MarketplaceAuthGate><VendorTypePage /></MarketplaceAuthGate>} />
+              <Route path="/marketplace/product/:id" element={<MarketplaceAuthGate><ProductPage /></MarketplaceAuthGate>} />
+              <Route path="/marketplace/cart" element={<MarketplaceAuthGate><CartPage /></MarketplaceAuthGate>} />
+              <Route path="/marketplace/checkout" element={<MarketplaceAuthGate><CheckoutPage /></MarketplaceAuthGate>} />
+              <Route path="/marketplace/orders" element={<MarketplaceAuthGate><MyOrdersPage /></MarketplaceAuthGate>} />
               <Route
                 path="/account-review"
                 element={
@@ -143,10 +144,10 @@ const App = () => {
                   </ProtectedRoute>
                 }
               />
-              <Route path="/marketplace/vendor/:id" element={<VendorPage />} />
-              <Route path="/marketplace/pharmacies" element={<VendorsListPage />} />
-              <Route path="/marketplace/messages" element={<ProtectedRoute><MarketplaceMessagesPage /></ProtectedRoute>} />
-              <Route path="/marketplace/my-messages" element={<GuestMessagesPage />} />
+              <Route path="/marketplace/vendor/:id" element={<MarketplaceAuthGate><VendorPage /></MarketplaceAuthGate>} />
+              <Route path="/marketplace/pharmacies" element={<MarketplaceAuthGate><VendorsListPage /></MarketplaceAuthGate>} />
+              <Route path="/marketplace/messages" element={<MarketplaceAuthGate><MarketplaceMessagesPage /></MarketplaceAuthGate>} />
+              <Route path="/marketplace/my-messages" element={<MarketplaceAuthGate><MarketplaceMessagesPage /></MarketplaceAuthGate>} />
 
 
               {/* Catch-all */}
