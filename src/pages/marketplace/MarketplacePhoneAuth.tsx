@@ -68,9 +68,30 @@ export default function MarketplacePhoneAuth() {
   const [busy, setBusy] = useState(false);
   const [resendIn, setResendIn] = useState(0);
 
+  // Route users to the right dashboard based on their role.
+  const roleAwareRedirect = async (): Promise<string> => {
+    const { data: { user: u } } = await supabase.auth.getUser();
+    if (!u) return redirect;
+    const { data: rows } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", u.id);
+    const roles = (rows || []).map((r: any) => r.role);
+    if (roles.includes("admin")) return "/admin";
+    if (roles.includes("cs")) return "/cs";
+    if (roles.includes("vendor")) return "/vendor";
+    if (roles.includes("provider")) return "/provider";
+    return redirect;
+  };
+
   useEffect(() => {
-    if (!loading && user) navigate(redirect, { replace: true });
-  }, [loading, user, navigate, redirect]);
+    if (loading || !user) return;
+    (async () => {
+      const to = await roleAwareRedirect();
+      navigate(to, { replace: true });
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, user]);
 
   useEffect(() => {
     if (resendIn <= 0) return;
@@ -93,7 +114,8 @@ export default function MarketplacePhoneAuth() {
 
   const applySession = async (access_token: string, refresh_token: string) => {
     await supabase.auth.setSession({ access_token, refresh_token });
-    window.location.href = redirect;
+    const to = await roleAwareRedirect();
+    window.location.href = to;
   };
 
   const doSignIn = async () => {
