@@ -2401,30 +2401,18 @@ export type Database = {
         Returns: undefined
       }
       revoke_api_key: { Args: { _id: string }; Returns: undefined }
-      send_booking_message:
-        | {
-            Args: {
-              _body: string
-              _booking_id: string
-              _quoted_price?: number
-              _sender_display_name?: string
-              _sender_role: string
-              _target_provider_id?: string
-            }
-            Returns: Json
-          }
-        | {
-            Args: {
-              _body: string
-              _booking_id: string
-              _message_type?: string
-              _quoted_price?: number
-              _sender_display_name?: string
-              _sender_role: string
-              _target_provider_id?: string
-            }
-            Returns: Json
-          }
+      send_booking_message: {
+        Args: {
+          _body: string
+          _booking_id: string
+          _message_type?: string
+          _quoted_price?: number
+          _sender_display_name?: string
+          _sender_role: string
+          _target_provider_id?: string
+        }
+        Returns: Json
+      }
       set_user_role: {
         Args: {
           new_role: Database["public"]["Enums"]["app_role"]

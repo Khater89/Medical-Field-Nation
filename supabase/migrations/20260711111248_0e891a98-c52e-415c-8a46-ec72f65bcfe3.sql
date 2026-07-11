@@ -1,0 +1,1 @@
+DROP FUNCTION IF EXISTS public.send_booking_message(uuid, text, text, numeric, uuid, text);
