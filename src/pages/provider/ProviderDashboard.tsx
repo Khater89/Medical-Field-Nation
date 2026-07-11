@@ -735,11 +735,11 @@ const ProviderDashboard = () => {
       const basePrice = order.agreed_price ?? order.subtotal;
       const calculatedTotal = calculateEscalatingPrice(basePrice, durationMinutes);
 
-      const { data: updated, error } = await supabase.from("bookings").update({
-        check_out_at: now,
-        actual_duration_minutes: durationMinutes,
-        calculated_total: calculatedTotal,
-      } as any).eq("id", id).eq("assigned_provider_id", user.id).eq("status", "IN_PROGRESS").select().maybeSingle();
+      const { data: updated, error } = await (supabase as any).rpc("provider_checkout_booking", {
+        _booking_id: id,
+        _duration_minutes: durationMinutes,
+        _calculated_total: calculatedTotal,
+      });
 
       if (error) throw error;
       if (!updated) throw new Error("لم يتم تحديث الطلب");
