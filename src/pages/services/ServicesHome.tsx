@@ -1,14 +1,17 @@
 import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
 import AppHeader from "@/components/AppHeader";
 import AppFooter from "@/components/AppFooter";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import BackButton from "@/components/ui/back-button";
 import {
-  Stethoscope, HeartPulse, Activity, ClipboardList, MapPin, Truck, ArrowLeft, UserPlus,
+  Stethoscope, HeartPulse, Activity, ClipboardList, MapPin, Truck, ArrowLeft, UserPlus, Sparkles,
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
+import servicesHero from "@/assets/services-hero.jpg";
+import heroVideo from "@/assets/home-hero-video.mp4.asset.json";
 
 const CATEGORIES = [
   { key: "doctors", ar: "خدمات الأطباء", en: "Doctors", icon: Stethoscope, color: "text-sky-600 bg-sky-500/10" },
