@@ -67,17 +67,55 @@ export default function MarketplaceHome() {
 
       <main className="container max-w-6xl py-6 space-y-10 flex-1">
         <BackButton to="/" label={t("nav.home")} />
-        <section className="rounded-2xl bg-gradient-to-br from-primary/10 via-primary/5 to-transparent p-6 md:p-10 border border-border">
-          <h1 className="text-2xl md:text-4xl font-extrabold mb-2">{t("mp.home.hero_title")}</h1>
-          <p className="text-muted-foreground max-w-2xl">
-            {t("mp.home.hero_subtitle")}
-          </p>
-          <a href="/vendor/register" className="inline-block mt-4 text-sm font-semibold text-primary underline underline-offset-4">
-            {t("mp.home.vendor_cta")}
-          </a>
+
+        {/* Cinematic hero with video background + big animated brand */}
+        <section className="relative rounded-3xl overflow-hidden border border-border min-h-[60vh] flex items-center justify-center">
+          <video
+            autoPlay muted loop playsInline
+            poster={marketplaceHero}
+            className="absolute inset-0 w-full h-full object-cover"
+          >
+            <source src={heroVideo.url} type="video/mp4" />
+          </video>
+          <img src={marketplaceHero} alt="" aria-hidden className="absolute inset-0 w-full h-full object-cover mix-blend-overlay opacity-40" />
+          <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-background/40 to-background/85" />
+          <div className="absolute inset-0 bg-gradient-to-tr from-primary/25 via-transparent to-emerald-500/15" />
+
+          <div className="relative z-10 text-center px-6 py-16 md:py-24 max-w-4xl">
+            <motion.div
+              initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7 }}
+              className="inline-flex items-center gap-2 rounded-full bg-primary/15 border border-primary/30 px-4 py-1.5 mb-5 backdrop-blur-md"
+            >
+              <Sparkles className="h-3.5 w-3.5 text-primary" />
+              <span className="text-xs font-semibold text-primary">{t("mp.home.hero_title")}</span>
+            </motion.div>
+            <motion.h1
+              initial={{ opacity: 0, scale: 0.92 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.9, delay: 0.15 }}
+              className="brand-text-animated font-black tracking-tight leading-[0.95] text-[11vw] md:text-[7vw] lg:text-[6rem] drop-shadow-[0_6px_30px_hsl(var(--primary)/0.35)]"
+            >
+              MEDICAL<br />MARKETPLACE
+            </motion.h1>
+            <motion.p
+              initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.4 }}
+              className="mt-5 text-sm md:text-lg text-foreground/85 max-w-2xl mx-auto font-medium"
+            >
+              {t("mp.home.hero_subtitle")}
+            </motion.p>
+            <motion.div
+              initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.6 }}
+              className="mt-7 flex flex-wrap justify-center gap-3"
+            >
+              <Button asChild size="lg" className="rounded-full px-8 font-bold shadow-xl">
+                <a href="#shop"><ShoppingBag className="h-5 w-5" />{t("mp.home.shop_by_section")}</a>
+              </Button>
+              <Button asChild size="lg" variant="outline" className="rounded-full px-8 font-bold backdrop-blur-md bg-background/60">
+                <a href="/vendor/register">{t("mp.home.vendor_cta")}</a>
+              </Button>
+            </motion.div>
+          </div>
         </section>
 
-        <section>
+        <section id="shop">
           <h2 className="text-lg font-bold mb-3">{t("mp.home.shop_by_section")}</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {VENDOR_TYPES.map((v) => {
