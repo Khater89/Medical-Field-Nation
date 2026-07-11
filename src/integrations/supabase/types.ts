@@ -2336,6 +2336,89 @@ export type Database = {
       mfn_is_staff: { Args: never; Returns: boolean }
       mp_normalize_phone: { Args: { _p: string }; Returns: string }
       normalize_jo_phone: { Args: { _raw: string }; Returns: string }
+      provider_checkout_booking: {
+        Args: {
+          _booking_id: string
+          _calculated_total: number
+          _duration_minutes: number
+        }
+        Returns: {
+          accepted_at: string | null
+          actual_duration_minutes: number | null
+          agreed_price: number | null
+          ai_service_match: string | null
+          ai_summary: string | null
+          ai_tools_list: string[] | null
+          area_public: string | null
+          assigned_at: string | null
+          assigned_by: string | null
+          assigned_provider_id: string | null
+          booking_number: string | null
+          calculated_total: number | null
+          chat_locked: boolean
+          chat_locked_at: string | null
+          check_in_at: string | null
+          check_out_at: string | null
+          city: string
+          client_disclaimer_accepted_at: string | null
+          client_lat: number | null
+          client_lng: number | null
+          close_out_at: string | null
+          completed_at: string | null
+          completed_by: string | null
+          connect_charge_type: string | null
+          contact_revealed_at: string | null
+          created_at: string
+          customer_display_name: string | null
+          customer_user_id: string | null
+          deal_confirmed_at: string | null
+          deal_confirmed_by: string | null
+          deposit_amount: number | null
+          deposit_status: string | null
+          final_offer_id: string | null
+          final_price: number | null
+          gender_released: boolean
+          gender_released_at: string | null
+          gender_released_by: string | null
+          id: string
+          is_emergency: boolean
+          last_provider_reminder_at: string | null
+          notes: string | null
+          otp_code: string | null
+          payment_method: string
+          payment_status: string
+          platform_fee: number
+          price_locked: boolean
+          price_locked_at: string | null
+          price_locked_by: string | null
+          provider_payout: number
+          provider_share: number | null
+          reject_reason: string | null
+          rejected_at: string | null
+          rejected_by: string | null
+          remaining_cash_amount: number | null
+          required_gender: string | null
+          reserved_at: string | null
+          reserved_provider_id: string | null
+          reveal_contact_allowed: boolean | null
+          scheduled_at: string
+          service_id: string
+          status: string
+          stripe_application_fee_amount: number | null
+          stripe_payment_intent_id: string | null
+          stripe_session_id: string | null
+          stripe_transfer_id: string | null
+          subtotal: number
+          voice_transcript: string | null
+          voice_url: string | null
+        }
+        SetofOptions: {
+          from: "*"
+          to: "bookings"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       provider_confirm_agreement: {
         Args: { _booking_id: string }
         Returns: Json
