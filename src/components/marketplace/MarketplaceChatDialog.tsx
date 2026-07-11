@@ -349,9 +349,11 @@ export default function MarketplaceChatDialog({
             <div className="p-3 border-t flex items-center gap-2">
               <input ref={fileRef} type="file" hidden onChange={onPickFile}
                 accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx" />
-              <Button type="button" size="icon" variant="outline" onClick={() => fileRef.current?.click()} disabled={uploading || sending}>
-                {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Paperclip className="h-4 w-4" />}
-              </Button>
+              {!isAuthed && (
+                <Button type="button" size="icon" variant="outline" onClick={() => fileRef.current?.click()} disabled={uploading || sending}>
+                  {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Paperclip className="h-4 w-4" />}
+                </Button>
+              )}
               <Input value={input} onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && (e.preventDefault(), send())}
                 placeholder={t("mp.chat.compose_placeholder")} />
