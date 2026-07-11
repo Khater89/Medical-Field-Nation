@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
 import AppHeader from "@/components/AppHeader";
 import AppFooter from "@/components/AppFooter";
 import MarketplaceSubNav from "@/components/marketplace/MarketplaceSubNav";
@@ -7,9 +8,12 @@ import ProductCard, { ProductCardData } from "@/components/marketplace/ProductCa
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Pill, Stethoscope, HeartPulse, Package } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Pill, Stethoscope, HeartPulse, Package, Sparkles, ShoppingBag } from "lucide-react";
 import BackButton from "@/components/ui/back-button";
 import { useLanguage } from "@/contexts/LanguageContext";
+import marketplaceHero from "@/assets/marketplace-hero.jpg";
+import heroVideo from "@/assets/home-hero-video.mp4.asset.json";
 
 interface Category {
   id: string;
