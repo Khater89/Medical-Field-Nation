@@ -1,37 +1,95 @@
 
-## Goal
-Replace the current phone-only OTP marketplace auth with a full account-creation flow:
-- **Signup**: phone → OTP verify → name + username + password
-- **Login**: phone + password
-- Password rules: ≥6 chars, ≥1 uppercase, ≥1 number, ≥1 symbol
+# خطة التنفيذ — إعادة هيكلة شاملة
 
-Applies wherever marketplace auth gate appears (marketplace, order tracking, self-booking). New chats after signup are automatically tied to the account (existing behavior — no linking of legacy guest chats).
+## 1. الصفحة الرئيسية الجديدة (`/`)
+- استبدال `LandingPage` بصفحة hub بسيطة تحتوي على بطاقتين كبيرتين:
+  - **السوق الطبي** → `/marketplace`
+  - **الخدمات الطبية** → `/services`
+- تصميم نظيف بأيقونات Lucide فقط (بدون صور AI)، متجاوب، RTL.
+- Header عام + تذييل بسيط + روابط تسجيل الدخول لكل قسم.
 
-## Database (migration)
-1. Add `profiles.username TEXT UNIQUE` (case-insensitive via unique index on `lower(username)`), nullable for legacy rows.
-2. Add helper RPC `username_available(_u text) → boolean` (SECURITY DEFINER) for pre-check.
+## 2. تبويب الخدمات `/services`
+- إنشاء `ServicesHome` كصفحة هبوط لقسم الخدمات تحتوي:
+  - حجز خدمة (يوجّه لـ `/booking`)
+  - تتبع الطلب (يدمج `/track` كصفحة داخلية)
+  - التعيين الذاتي (يعيش داخل قسم الخدمات)
+  - عرض فئات الخدمات (أطباء، تمريض، علاج طبيعي…) من جدول `services`
+- شاشة دخول خاصة `/services/login` (هاتف + Google + Apple)
+- بعد الدخول: يبقى ضمن `/services/*`
+- الصفحات الحالية `/booking` و `/track` تُبقى تعمل كما هي (روابط داخلية).
 
-## Edge functions
-- **send-phone-otp** (unchanged): send OTP to phone.
-- **verify-phone-otp** — refactored into two modes:
-  - `mode: "verify_only"` → validates OTP, returns `ok:true` + short-lived `verification_token` (signed HMAC of phone+timestamp, valid 10 min). Does NOT create account.
-  - `mode: "signup"` → requires `verification_token`, `full_name`, `username`, `password`. Validates password rules server-side, checks username uniqueness, creates auth user with `email = <username>@mfn.local` + password, creates profile, marks OTP consumed, returns session tokens.
-- **New `phone-password-login`** function: takes `phone` + `password`, looks up profile by phone → resolves email → `signInWithPassword` via anon client → returns session.
+## 3. تبويب السوق الطبي `/marketplace`
+- يبقى كما هو مع إضافة أقسام إضافية (أجهزة تنفس، أسنان، عيون…) عبر `marketplace_categories`.
+- شاشة دخول `/marketplace/login` (موجودة `MarketplacePhoneAuth`) + إضافة أزرار Google/Apple.
+- بعد الدخول للعميل: يبقى ضمن `/marketplace/*`.
+- المتاجر لا ترى واجهة العميل (موجود بالفعل عبر `MarketplaceAuthGate`).
 
-## Frontend
-Rewrite `src/pages/marketplace/MarketplacePhoneAuth.tsx` with tabs:
-- **Sign in tab**: phone + password → call `phone-password-login`.
-- **Sign up tab** (3 steps): phone → OTP → profile form (name, username with live availability check, password with visible strength rules).
-- Client-side zod validation for password: `/^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{6,}$/`.
-- Username: 3–20 chars, `[a-zA-Z0-9_]`.
+## 4. توحيد الحساب
+- نفس مستخدم Supabase يعمل في التبويبين؛ لا حسابات مكررة.
+- OAuth (Google/Apple) → عند الدخول لأول مرة نطلب رقم الهاتف والتحقق عبر OTP، ثم نحدّث `profiles.phone`.
+- إضافة صفحة `/complete-profile` تُعرض تلقائيًا إذا كان `profiles.phone` فارغًا بعد OAuth.
 
-No changes to chat storage — `marketplace_chats` already keys on `customer_user_id`, so once signed in every new chat is tied to the account.
+## 5. تسجيل الدخول (لكل تبويب)
+طرق الدخول الثلاث في كلا الشاشتين:
+- **الهاتف + OTP** (موجود)
+- **Google** (عبر `lovable.auth.signInWithOAuth("google")`)
+- **Apple** (عبر `lovable.auth.signInWithOAuth("apple")`)
+- بعد الدخول: توجيه ذكي حسب الدور (vendor → `/vendor`, provider → `/provider`, admin → `/admin`) وإلا حسب `redirect` param للتبويب الأصلي.
 
-## Out of scope (per user answer)
-- Migrating old guest chats to newly created accounts.
+## 6. إصلاح الدردشة (السوق الطبي)
 
-## Files touched
-- `supabase/functions/verify-phone-otp/index.ts` (refactor)
-- `supabase/functions/phone-password-login/index.ts` (new)
-- `src/pages/marketplace/MarketplacePhoneAuth.tsx` (rewrite UI)
-- 1 migration: username column + RPC.
+### تشخيص المشكلة الحالية
+جدول `marketplace_chats` يستخدم غالبًا `session_id` للضيوف مما يمنع العميل من رؤية الردود بعد تسجيل الخروج والعودة.
+
+### الإصلاحات في قاعدة البيانات
+- التأكد من أن `marketplace_chats` يحتوي: `id`, `customer_id (uuid)`, `vendor_id`, `product_id (nullable)`, `customer_phone`, `last_message_at`, `unread_customer`, `unread_vendor`.
+- Unique constraint: `(customer_id, vendor_id, product_id)` — محادثة واحدة لكل زوج/منتج.
+- `marketplace_messages`: `chat_id`, `sender_type` ('customer'|'vendor'), `sender_id`, `content`, `attachment_url`, `read_at`, `created_at`.
+- RLS: العميل يرى محادثاته حيث `customer_id = auth.uid()`; المتجر يرى حيث `vendor_id IN (…owned by auth.uid())`.
+- Realtime على الجدولين.
+
+### الإصلاحات في الكود
+- عند إرسال رسالة من العميل: البحث/الإنشاء بـ `(customer_id=auth.uid, vendor_id, product_id)` بدل session.
+- عند فتح إشعار: التوجيه `/marketplace/messages?chat=<id>` وفتح المحادثة الصحيحة وتعليم كمقروءة.
+- فصل تام عن دردشة الحجوزات (`booking_messages`) — لا تغيير هناك.
+
+## 7. إشعارات الدردشة
+- Bell في هيدر السوق الطبي يعرض `unread_customer` من `marketplace_chats`.
+- Bell في لوحة المتجر يعرض `unread_vendor`.
+- الضغط على إشعار → فتح المحادثة الصحيحة وتصفير العداد.
+
+## 8. Routing النهائي
+```text
+/                        → HomeHub (تبويبان)
+/services                → ServicesHome
+/services/login          → ServicesAuth (phone+google+apple)
+/services/track          → TrackOrderPage
+/services/booking        → BookingPage (redirect من /booking)
+/marketplace             → MarketplaceHome (كما هو)
+/marketplace/login       → MarketplacePhoneAuth (+google+apple)
+/marketplace/messages    → MarketplaceMessagesPage (مُصلَحة)
+/vendor, /provider, /admin, /cs   → بدون تغيير
+```
+الروابط القديمة `/booking`, `/track` تبقى تعمل (redirect للمسارات الجديدة).
+
+## 9. اختبارات يدوية بعد التنفيذ
+عبر Playwright في السّاند‑بوكس:
+1. فتح `/` → رؤية التبويبين.
+2. دخول عميل بالهاتف من `/marketplace/login` → إرسال رسالة لصيدلية.
+3. دخول متجر → رؤية الرسالة والرد.
+4. خروج العميل ثم دخوله مجددًا → التأكد من رؤية الرد.
+5. اختبار أن المتجر لا يستطيع الوصول لـ `/marketplace/*`.
+6. اختبار Google/Apple OAuth (mock إن تعذّر).
+
+## ملاحظات تقنية للمستخدم
+- سيتم الحفاظ على **جميع** الميزات الحالية؛ لا حذف لأي جدول أو صفحة.
+- التوجيه القديم (`/booking`, `/track`) يبقى يعمل عبر redirects.
+- Google/Apple تحتاج تفعيل موفّري OAuth من إعدادات Cloud (Google مفعّل افتراضيًا؛ Apple يحتاج تأكيد).
+- سيتم إنشاء migration واحدة لإصلاح schema/RLS الخاص بالدردشة قبل أي تعديل كود.
+
+## نطاق العمل التقريبي
+- ملفات جديدة: `HomeHub.tsx`, `ServicesHome.tsx`, `ServicesAuth.tsx`, `CompleteProfilePage.tsx`, hook للدردشة.
+- تعديل: `App.tsx` (routing), `MarketplacePhoneAuth.tsx` (+OAuth), `MarketplaceMessagesPage`, `MarketplaceChatDialog`, `VendorChatsTab`, `LandingPage` (يصبح `/landing-old` أو يُستبدل).
+- Migration: schema+RLS للدردشة، function للحصول/إنشاء chat.
+
+هل أبدأ التنفيذ بهذا الترتيب؟ أم تريد تعديل شيء في الخطة (مثلاً تأجيل Apple OAuth، أو الإبقاء على `LandingPage` الحالية كصفحة تسويقية منفصلة)؟
