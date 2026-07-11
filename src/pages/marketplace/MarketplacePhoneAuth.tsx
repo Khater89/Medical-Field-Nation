@@ -10,6 +10,7 @@ import { Phone, ShieldCheck, Loader2, ShoppingBag, User as UserIcon, Lock, Check
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable";
 import { toast } from "sonner";
 
 type SignupStep = "phone" | "otp" | "profile";
@@ -223,7 +224,29 @@ export default function MarketplacePhoneAuth() {
           <p className="text-sm text-muted-foreground">{t("سجّل الدخول أو أنشئ حسابك", "Sign in or create your account")}</p>
         </div>
 
-        <Card className="p-6">
+        <Card className="p-6 space-y-4">
+          <div className="grid grid-cols-2 gap-2">
+            <Button variant="outline" type="button" onClick={async () => {
+              const r = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin + "/marketplace/login" });
+              if (r.error) toast.error(t("تعذّر الدخول بجوجل", "Google sign-in failed"));
+            }}>
+              <svg className="h-4 w-4 me-2" viewBox="0 0 24 24"><path fill="#EA4335" d="M12 10.2v3.9h5.5c-.24 1.5-1.72 4.4-5.5 4.4-3.31 0-6-2.74-6-6.1s2.69-6.1 6-6.1c1.88 0 3.14.8 3.86 1.5l2.63-2.53C16.9 3.7 14.7 2.8 12 2.8 6.9 2.8 2.8 6.9 2.8 12S6.9 21.2 12 21.2c6.93 0 9.2-4.86 9.2-7.35 0-.5-.05-.87-.12-1.25H12z"/></svg>
+              Google
+            </Button>
+            <Button variant="outline" type="button" onClick={async () => {
+              const r = await lovable.auth.signInWithOAuth("apple", { redirect_uri: window.location.origin + "/marketplace/login" });
+              if (r.error) toast.error(t("تعذّر الدخول بآبل", "Apple sign-in failed"));
+            }}>
+              <svg className="h-4 w-4 me-2" viewBox="0 0 24 24" fill="currentColor"><path d="M16.365 1.43c0 1.14-.42 2.24-1.13 3.05-.79.91-2.09 1.61-3.16 1.53-.14-1.09.44-2.24 1.16-3.02.8-.87 2.16-1.5 3.13-1.56zM20.9 17.34c-.5 1.15-.73 1.66-1.37 2.68-.89 1.42-2.14 3.19-3.69 3.2-1.38.01-1.74-.9-3.61-.89-1.88.01-2.27.9-3.66.89-1.55-.01-2.73-1.61-3.62-3.03C2.5 16.2 2.24 11.55 3.83 9.14c1.13-1.71 2.92-2.72 4.6-2.72 1.72 0 2.79.94 4.2.94 1.37 0 2.2-.94 4.19-.94 1.5 0 3.09.82 4.22 2.24-3.71 2.03-3.11 7.34-.14 8.68z"/></svg>
+              Apple
+            </Button>
+          </div>
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center"><span className="w-full border-t" /></div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-card px-2 text-muted-foreground">{t("أو", "OR")}</span>
+            </div>
+          </div>
           <Tabs value={tab} onValueChange={(v) => setTab(v as any)}>
             <TabsList className="grid grid-cols-2 w-full mb-4">
               <TabsTrigger value="signin">{t("تسجيل الدخول", "Sign in")}</TabsTrigger>

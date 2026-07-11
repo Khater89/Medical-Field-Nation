@@ -8,6 +8,8 @@ import { LanguageProvider } from "@/contexts/LanguageContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import LandingPage from "./pages/LandingPage";
+import HomeHub from "./pages/HomeHub";
+import ServicesHome from "./pages/services/ServicesHome";
 import BookingPage from "./pages/BookingPage";
 import AuthPage from "./pages/AuthPage";
 import ProfilePage from "./pages/ProfilePage";
@@ -58,7 +60,9 @@ const App = () => {
             <MarketplaceCartProvider>
             <Routes>
               {/* Public */}
-              <Route path="/" element={<LandingPage />} />
+              <Route path="/" element={<HomeHub />} />
+              <Route path="/landing" element={<LandingPage />} />
+              <Route path="/services" element={<ServicesHome />} />
               <Route path="/booking" element={<BookingPage />} />
               <Route path="/auth" element={<AuthPage />} />
               <Route path="/forgot-password" element={<ForgotPasswordPage />} />

@@ -2302,6 +2302,10 @@ export type Database = {
         Args: { _chat_id: string }
         Returns: undefined
       }
+      marketplace_open_authed_chat: {
+        Args: { _product_id?: string; _vendor_id: string }
+        Returns: Json
+      }
       marketplace_open_or_get_chat: {
         Args: { _product_id?: string; _vendor_id: string }
         Returns: string
