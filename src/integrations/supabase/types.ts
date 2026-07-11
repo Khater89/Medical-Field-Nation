@@ -308,6 +308,7 @@ export type Database = {
           is_emergency: boolean
           last_provider_reminder_at: string | null
           notes: string | null
+          otp_code: string | null
           payment_method: string
           payment_status: string
           platform_fee: number
@@ -377,6 +378,7 @@ export type Database = {
           is_emergency?: boolean
           last_provider_reminder_at?: string | null
           notes?: string | null
+          otp_code?: string | null
           payment_method?: string
           payment_status?: string
           platform_fee?: number
@@ -446,6 +448,7 @@ export type Database = {
           is_emergency?: boolean
           last_provider_reminder_at?: string | null
           notes?: string | null
+          otp_code?: string | null
           payment_method?: string
           payment_status?: string
           platform_fee?: number
