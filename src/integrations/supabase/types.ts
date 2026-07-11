@@ -2278,6 +2278,7 @@ export type Database = {
       is_cs: { Args: never; Returns: boolean }
       is_customer: { Args: never; Returns: boolean }
       is_provider: { Args: never; Returns: boolean }
+      is_public_vendor: { Args: { _vendor_id: string }; Returns: boolean }
       is_vendor: { Args: never; Returns: boolean }
       list_booking_messages: {
         Args: { _booking_id: string }
