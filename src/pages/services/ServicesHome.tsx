@@ -48,7 +48,7 @@ export default function ServicesHome() {
       <AppHeader hideNav />
       <main className="flex-1">
         <div className="container max-w-6xl pt-4">
-          <BackButton to="/" label={t("الرئيسية", "Home")} />
+          <BackButton to="/" label={t("رجوع", "Back")} />
         </div>
 
         {/* Warm human-centric hero */}
