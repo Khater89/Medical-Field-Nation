@@ -113,7 +113,7 @@ export default function HomeHub() {
               <Button asChild size="lg" variant="outline" className="rounded-full px-8 font-bold backdrop-blur-md bg-background/60">
                 <Link to="/services">
                   <Stethoscope className="h-5 w-5" />
-                  {t("الخدمات الطبية", "Medical Services")}
+                  {t("الخدمات الطبية المنزلية", "Home Medical Services")}
                 </Link>
               </Button>
             </motion.div>
@@ -223,7 +223,7 @@ export default function HomeHub() {
                 <div className="h-12 w-12 rounded-xl bg-sky-500/15 text-sky-600 flex items-center justify-center">
                   <Stethoscope className="h-6 w-6" />
                 </div>
-                <h2 className="text-xl md:text-2xl font-bold">{t("الخدمات الطبية", "Medical Services")}</h2>
+                <h2 className="text-xl md:text-2xl font-bold">{t("الخدمات الطبية المنزلية", "Home Medical Services")}</h2>
               </div>
               <p className="text-sm text-muted-foreground mb-4">
                 {t(
