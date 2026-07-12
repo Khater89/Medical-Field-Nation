@@ -79,7 +79,7 @@ export default function MarketplaceHome() {
 
   return (
     <div className="min-h-screen flex flex-col bg-white">
-      <AppHeader />
+      <AppHeader hideNav />
       <MarketplaceSubNav />
 
       <main className="flex-1">
