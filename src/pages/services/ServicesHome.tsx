@@ -45,7 +45,7 @@ export default function ServicesHome() {
 
   return (
     <div className="min-h-screen flex flex-col bg-[hsl(150,25%,98%)]">
-      <AppHeader />
+      <AppHeader hideNav />
       <main className="flex-1">
         <div className="container max-w-6xl pt-4">
           <BackButton to="/" label={t("الرئيسية", "Home")} />
