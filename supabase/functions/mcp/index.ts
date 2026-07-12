@@ -3,7 +3,7 @@
 // supabase function: mcp
 // Bundled from src/lib/mcp/index.ts by @lovable.dev/mcp-js.
 // src/lib/mcp/index.ts
-import { defineMcp } from "npm:@lovable.dev/mcp-js@0.20.0";
+import { defineMcp, auth } from "npm:@lovable.dev/mcp-js@0.20.0";
 
 // src/lib/mcp/tools/track-booking.ts
 import { defineTool } from "npm:@lovable.dev/mcp-js@0.20.0";
@@ -96,11 +96,19 @@ var list_vendors_default = defineTool3({
 });
 
 // src/lib/mcp/index.ts
+var SUPABASE_URL = "https://pasfkwniarukkdfdclah.supabase.co";
 var mcp_default = defineMcp({
   name: "mfn-mcp",
   title: "MFN \u2014 Medical Field Nation",
   version: "0.1.0",
-  instructions: "Public read-only tools for the MFN medical home-care platform. Use `track_booking` to check a booking's status by number, `list_services` to browse offered home-care services, and `list_marketplace_vendors` to browse pharmacies and medical stores in the Medical Marketplace.",
+  instructions: "Authenticated read-only tools for the MFN medical home-care platform. Use `track_booking` to check a booking's status by number, `list_services` to browse offered home-care services, and `list_marketplace_vendors` to browse pharmacies and medical stores in the Medical Marketplace.",
+  // Require a valid Supabase-issued OAuth access token on every MCP call so the
+  // server is not open to anonymous callers once published.
+  auth: auth.oauth.issuer({
+    issuer: `${SUPABASE_URL}/auth/v1`,
+    acceptedAudiences: "authenticated",
+    resourceName: "MFN MCP"
+  }),
   tools: [track_booking_default, list_services_default, list_vendors_default]
 });
 
