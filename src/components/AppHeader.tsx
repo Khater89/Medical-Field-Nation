@@ -101,7 +101,7 @@ const AppHeader = ({ hideNav = false }: AppHeaderProps) => {
                   </div>
                 </div>
                 <nav className="flex-1 p-4 space-y-1">
-                  {navLinks.map((link) => (
+                  {!hideNav && navLinks.map((link) => (
                     <a
                       key={link.href}
                       href={link.href}
@@ -111,13 +111,15 @@ const AppHeader = ({ hideNav = false }: AppHeaderProps) => {
                       {link.label}
                     </a>
                   ))}
-                  <Link
-                    to="/booking"
-                    onClick={() => setMobileOpen(false)}
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-primary hover:bg-primary/10 transition-colors"
-                  >
-                    {t("action.book_now")}
-                  </Link>
+                  {!hideNav && (
+                    <Link
+                      to="/booking"
+                      onClick={() => setMobileOpen(false)}
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-primary hover:bg-primary/10 transition-colors"
+                    >
+                      {t("action.book_now")}
+                    </Link>
+                  )}
                   {!user && (
                     <>
                       <Link
