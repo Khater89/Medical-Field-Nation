@@ -186,12 +186,14 @@ const AppHeader = ({ hideNav = false }: AppHeaderProps) => {
           <LanguageToggle />
 
           {/* Mobile Book Now */}
-          <Link to="/booking" className="md:hidden">
-            <Button size="sm" className="rounded-full px-4 gap-1 text-xs font-semibold">
-              {t("action.book_now")}
-              <ArrowIcon className="h-3 w-3" />
-            </Button>
-          </Link>
+          {!hideNav && (
+            <Link to="/booking" className="md:hidden">
+              <Button size="sm" className="rounded-full px-4 gap-1 text-xs font-semibold">
+                {t("action.book_now")}
+                <ArrowIcon className="h-3 w-3" />
+              </Button>
+            </Link>
+          )}
 
           {user ? (
             <DropdownMenu>
