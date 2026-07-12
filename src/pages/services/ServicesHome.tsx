@@ -16,7 +16,7 @@ import servicesHero from "@/assets/services-hero.jpg";
 const CATEGORIES = [
   { key: "doctors", ar: "خدمات الأطباء", en: "Doctors", icon: Stethoscope, tint: "from-sky-100 to-sky-50 text-sky-700" },
   { key: "nursing", ar: "خدمات التمريض", en: "Nursing", icon: HeartPulse, tint: "from-rose-100 to-rose-50 text-rose-700" },
-  { key: "physio", ar: "العلاج الطبيعي", en: "Physiotherapy", icon: Activity, tint: "from-emerald-100 to-emerald-50 text-emerald-700" },
+  { key: "physio", ar: "العلاج الطبيعي المنزلي", en: "Home Physiotherapy", icon: Activity, tint: "from-emerald-100 to-emerald-50 text-emerald-700" },
 ];
 
 const STEPS = [
