@@ -160,24 +160,26 @@ const AppHeader = ({ hideNav = false }: AppHeaderProps) => {
         </div>
 
         {/* Center: Desktop Nav */}
-        <nav className="hidden md:flex items-center gap-1">
-          {navLinks.map((link) => (
-            <a
-              key={link.href}
-              href={link.href}
-              className="px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-            >
-              {link.label}
-            </a>
-          ))}
-          <Link to="/booking">
-            <Button size="sm" className="gap-1.5 ms-2 rounded-full px-5 font-bold shadow-lg hover:shadow-xl transition-all bg-gradient-to-r from-primary to-primary/80 text-primary-foreground animate-pulse hover:animate-none">
-              <CalendarCheck className="h-3.5 w-3.5" />
-              {t("action.book_now")}
-              <ArrowIcon className="h-3.5 w-3.5" />
-            </Button>
-          </Link>
-        </nav>
+        {!hideNav && (
+          <nav className="hidden md:flex items-center gap-1">
+            {navLinks.map((link) => (
+              <a
+                key={link.href}
+                href={link.href}
+                className="px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+              >
+                {link.label}
+              </a>
+            ))}
+            <Link to="/booking">
+              <Button size="sm" className="gap-1.5 ms-2 rounded-full px-5 font-bold shadow-lg hover:shadow-xl transition-all bg-gradient-to-r from-primary to-primary/80 text-primary-foreground animate-pulse hover:animate-none">
+                <CalendarCheck className="h-3.5 w-3.5" />
+                {t("action.book_now")}
+                <ArrowIcon className="h-3.5 w-3.5" />
+              </Button>
+            </Link>
+          </nav>
+        )}
 
         {/* Right: Actions */}
         <div className="flex items-center gap-2">
