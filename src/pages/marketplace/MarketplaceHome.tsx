@@ -79,14 +79,14 @@ export default function MarketplaceHome() {
 
   return (
     <div className="min-h-screen flex flex-col bg-white">
-      <AppHeader />
+      <AppHeader hideNav />
       <MarketplaceSubNav />
 
       <main className="flex-1">
         {/* Hero: crisp e-commerce, split layout, prominent search */}
         <section className="relative overflow-hidden border-b border-slate-100 bg-gradient-to-b from-white via-sky-50/40 to-white">
           <div className="container max-w-6xl py-4">
-            <BackButton to="/" label={t("nav.home")} />
+            <BackButton to="/" label={isAr ? "رجوع" : "Back"} />
           </div>
           <div className="container max-w-6xl grid md:grid-cols-2 gap-10 items-center pb-14 pt-2">
             <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>

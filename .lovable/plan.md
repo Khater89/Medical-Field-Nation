@@ -1,95 +1,48 @@
+# خطة إعادة هيكلة التنقل والصفحات الرئيسية
 
-# خطة التنفيذ — إعادة هيكلة شاملة
+## 1. الصفحة الرئيسية (`HomeHub.tsx`)
+- حذف كل النصوص الوصفية للأقسام:
+  - "أطباء وعلاج طبيعي – زيارات منزلية…"
+  - كتلة "السوق الطبي" الوصفية بكل نقاطها
+  - كتلة "الخدمات الطبية المنزلية" الوصفية بكل نقاطها
+- الإبقاء فقط على بطاقتين رئيسيتين نظيفتين: **الخدمات** و **السوق الطبي** (عنوان + أيقونة + زر دخول).
+- تعديل زر "تسجيل الدخول" ليفتح **Modal اختيار نوع الحساب** بدلاً من التوجيه المباشر إلى `/auth`.
 
-## 1. الصفحة الرئيسية الجديدة (`/`)
-- استبدال `LandingPage` بصفحة hub بسيطة تحتوي على بطاقتين كبيرتين:
-  - **السوق الطبي** → `/marketplace`
-  - **الخدمات الطبية** → `/services`
-- تصميم نظيف بأيقونات Lucide فقط (بدون صور AI)، متجاوب، RTL.
-- Header عام + تذييل بسيط + روابط تسجيل الدخول لكل قسم.
+## 2. Modal تسجيل الدخول الجديد (`LoginTypeDialog.tsx` — مكون جديد)
+ثلاث بطاقات رئيسية:
+1. **عميل** → دخول `/auth` أو تسجيل عميل جديد
+2. **مزود خدمة** → دخول `/auth` أو `/provider/register`
+3. **متاجر / السوق الطبي** → يفتح مستوى ثانٍ يعرض أنواع المتاجر (صيدلية، أجهزة طبية، أطراف صناعية، أجهزة تنفس، أجهزة أسنان، أجهزة عيون، مستلزمات علاج طبيعي…) — كل نوع يوجّه إلى `/auth` أو `/vendor/register?type=<slug>`.
 
-## 2. تبويب الخدمات `/services`
-- إنشاء `ServicesHome` كصفحة هبوط لقسم الخدمات تحتوي:
-  - حجز خدمة (يوجّه لـ `/booking`)
-  - تتبع الطلب (يدمج `/track` كصفحة داخلية)
-  - التعيين الذاتي (يعيش داخل قسم الخدمات)
-  - عرض فئات الخدمات (أطباء، تمريض، علاج طبيعي…) من جدول `services`
-- شاشة دخول خاصة `/services/login` (هاتف + Google + Apple)
-- بعد الدخول: يبقى ضمن `/services/*`
-- الصفحات الحالية `/booking` و `/track` تُبقى تعمل كما هي (روابط داخلية).
+بعد تسجيل الدخول يبقى التوجيه الحالي حسب الدور (منطق `AuthPage` لم يتغير).
 
-## 3. تبويب السوق الطبي `/marketplace`
-- يبقى كما هو مع إضافة أقسام إضافية (أجهزة تنفس، أسنان، عيون…) عبر `marketplace_categories`.
-- شاشة دخول `/marketplace/login` (موجودة `MarketplacePhoneAuth`) + إضافة أزرار Google/Apple.
-- بعد الدخول للعميل: يبقى ضمن `/marketplace/*`.
-- المتاجر لا ترى واجهة العميل (موجود بالفعل عبر `MarketplaceAuthGate`).
+## 3. صفحة "تعرّف على المنصّة" (`LandingPage.tsx`)
+- إزالة أي شريط تنقل يحتوي: الرئيسية / الخدمات / السوق الطبي / تتبع الطلب / التعيين الذاتي (إن وُجدت داخل المحتوى).
+- تحويل الصفحة إلى **بوابة تعريفية شاملة** ذات قسمين رئيسيين متساويين بصرياً:
+  - **الخدمات** — روابط: الخدمات الطبية المنزلية، الخدمات التمريضية، العلاج الطبيعي المنزلي، الحجز، تتبع الطلب، التعيين الذاتي.
+  - **السوق الطبي** — روابط: الصيدليات، الأجهزة الطبية، الأطراف الصناعية، أجهزة التنفس، أجهزة الأسنان، أجهزة العيون، مستلزمات العلاج الطبيعي، وأي أقسام أخرى.
+- كل رابط ينقل مباشرة إلى المسار الصحيح (`/services`, `/marketplace/type/pharmacy`, `/marketplace/category/<slug>` ...).
 
-## 4. توحيد الحساب
-- نفس مستخدم Supabase يعمل في التبويبين؛ لا حسابات مكررة.
-- OAuth (Google/Apple) → عند الدخول لأول مرة نطلب رقم الهاتف والتحقق عبر OTP، ثم نحدّث `profiles.phone`.
-- إضافة صفحة `/complete-profile` تُعرض تلقائيًا إذا كان `profiles.phone` فارغًا بعد OAuth.
+## 4. صفحة السوق الطبي (`MarketplaceHome.tsx`) وصفحة الخدمات (`ServicesHome.tsx`)
+- التأكد من عدم عرض روابط: الرئيسية / الخدمات / السوق الطبي / تتبع الطلب / التعيين الذاتي داخل محتوى الصفحة أو الهيدر.
+- في السوق الطبي: إزالة أي زر "احجز خدمة" ينتمي للخدمات.
+- الإبقاء فقط على تنقّل داخلي خاص بكل قسم (فئات المتجر / خطوات الحجز).
 
-## 5. تسجيل الدخول (لكل تبويب)
-طرق الدخول الثلاث في كلا الشاشتين:
-- **الهاتف + OTP** (موجود)
-- **Google** (عبر `lovable.auth.signInWithOAuth("google")`)
-- **Apple** (عبر `lovable.auth.signInWithOAuth("apple")`)
-- بعد الدخول: توجيه ذكي حسب الدور (vendor → `/vendor`, provider → `/provider`, admin → `/admin`) وإلا حسب `redirect` param للتبويب الأصلي.
+## 5. إضافة "العلاج الطبيعي المنزلي" كقسم مستقل
+- بطاقة/تبويب مستقل داخل `ServicesHome` بجانب: الخدمات الطبية المنزلية، الخدمات التمريضية.
+- ربطها بمزودي العلاج الطبيعي فقط عبر فلترة `service_category = 'physiotherapy'` في تدفق الحجز (استخدام النظام الحالي دون تعديل قاعدة البيانات).
+- إظهار البطاقة أيضاً ضمن قائمة الخدمات في صفحة "تعرّف على المنصّة".
 
-## 6. إصلاح الدردشة (السوق الطبي)
+## 6. ضمانات
+- عدم تعديل قاعدة البيانات أو أي edge function.
+- عدم كسر مسارات موجودة: `/services`, `/marketplace/*`, `/booking`, `/track`, `/provider/*`, `/vendor/*`.
+- استخدام tokens التصميم الموجودة، بدون صور AI جديدة.
+- استجابة كاملة للموبايل.
 
-### تشخيص المشكلة الحالية
-جدول `marketplace_chats` يستخدم غالبًا `session_id` للضيوف مما يمنع العميل من رؤية الردود بعد تسجيل الخروج والعودة.
-
-### الإصلاحات في قاعدة البيانات
-- التأكد من أن `marketplace_chats` يحتوي: `id`, `customer_id (uuid)`, `vendor_id`, `product_id (nullable)`, `customer_phone`, `last_message_at`, `unread_customer`, `unread_vendor`.
-- Unique constraint: `(customer_id, vendor_id, product_id)` — محادثة واحدة لكل زوج/منتج.
-- `marketplace_messages`: `chat_id`, `sender_type` ('customer'|'vendor'), `sender_id`, `content`, `attachment_url`, `read_at`, `created_at`.
-- RLS: العميل يرى محادثاته حيث `customer_id = auth.uid()`; المتجر يرى حيث `vendor_id IN (…owned by auth.uid())`.
-- Realtime على الجدولين.
-
-### الإصلاحات في الكود
-- عند إرسال رسالة من العميل: البحث/الإنشاء بـ `(customer_id=auth.uid, vendor_id, product_id)` بدل session.
-- عند فتح إشعار: التوجيه `/marketplace/messages?chat=<id>` وفتح المحادثة الصحيحة وتعليم كمقروءة.
-- فصل تام عن دردشة الحجوزات (`booking_messages`) — لا تغيير هناك.
-
-## 7. إشعارات الدردشة
-- Bell في هيدر السوق الطبي يعرض `unread_customer` من `marketplace_chats`.
-- Bell في لوحة المتجر يعرض `unread_vendor`.
-- الضغط على إشعار → فتح المحادثة الصحيحة وتصفير العداد.
-
-## 8. Routing النهائي
-```text
-/                        → HomeHub (تبويبان)
-/services                → ServicesHome
-/services/login          → ServicesAuth (phone+google+apple)
-/services/track          → TrackOrderPage
-/services/booking        → BookingPage (redirect من /booking)
-/marketplace             → MarketplaceHome (كما هو)
-/marketplace/login       → MarketplacePhoneAuth (+google+apple)
-/marketplace/messages    → MarketplaceMessagesPage (مُصلَحة)
-/vendor, /provider, /admin, /cs   → بدون تغيير
-```
-الروابط القديمة `/booking`, `/track` تبقى تعمل (redirect للمسارات الجديدة).
-
-## 9. اختبارات يدوية بعد التنفيذ
-عبر Playwright في السّاند‑بوكس:
-1. فتح `/` → رؤية التبويبين.
-2. دخول عميل بالهاتف من `/marketplace/login` → إرسال رسالة لصيدلية.
-3. دخول متجر → رؤية الرسالة والرد.
-4. خروج العميل ثم دخوله مجددًا → التأكد من رؤية الرد.
-5. اختبار أن المتجر لا يستطيع الوصول لـ `/marketplace/*`.
-6. اختبار Google/Apple OAuth (mock إن تعذّر).
-
-## ملاحظات تقنية للمستخدم
-- سيتم الحفاظ على **جميع** الميزات الحالية؛ لا حذف لأي جدول أو صفحة.
-- التوجيه القديم (`/booking`, `/track`) يبقى يعمل عبر redirects.
-- Google/Apple تحتاج تفعيل موفّري OAuth من إعدادات Cloud (Google مفعّل افتراضيًا؛ Apple يحتاج تأكيد).
-- سيتم إنشاء migration واحدة لإصلاح schema/RLS الخاص بالدردشة قبل أي تعديل كود.
-
-## نطاق العمل التقريبي
-- ملفات جديدة: `HomeHub.tsx`, `ServicesHome.tsx`, `ServicesAuth.tsx`, `CompleteProfilePage.tsx`, hook للدردشة.
-- تعديل: `App.tsx` (routing), `MarketplacePhoneAuth.tsx` (+OAuth), `MarketplaceMessagesPage`, `MarketplaceChatDialog`, `VendorChatsTab`, `LandingPage` (يصبح `/landing-old` أو يُستبدل).
-- Migration: schema+RLS للدردشة، function للحصول/إنشاء chat.
-
-هل أبدأ التنفيذ بهذا الترتيب؟ أم تريد تعديل شيء في الخطة (مثلاً تأجيل Apple OAuth، أو الإبقاء على `LandingPage` الحالية كصفحة تسويقية منفصلة)؟
+## الملفات المتأثرة
+- `src/pages/HomeHub.tsx` — تنظيف + ربط زر الدخول بالـModal
+- `src/pages/LandingPage.tsx` — إعادة تصميم كبوابة شاملة
+- `src/pages/services/ServicesHome.tsx` — إزالة عناصر القائمة + إضافة قسم العلاج الطبيعي
+- `src/pages/marketplace/MarketplaceHome.tsx` — إزالة عناصر القائمة + إزالة زر حجز الخدمات
+- `src/components/LoginTypeDialog.tsx` — **جديد**
+- (اختياري) `src/pages/vendor/VendorRegister.tsx` — قراءة `?type=` من الـURL لتحديد نوع المتجر مسبقاً

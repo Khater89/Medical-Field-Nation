@@ -28,7 +28,11 @@ import {
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 
-const AppHeader = () => {
+interface AppHeaderProps {
+  hideNav?: boolean;
+}
+
+const AppHeader = ({ hideNav = false }: AppHeaderProps) => {
   const { t, isRTL } = useLanguage();
   const { user, profile, isAdmin, isCS, isProvider, isCustomer, signOut, loading } = useAuth();
   // Effective role prevents showing multiple dashboard links
@@ -97,7 +101,7 @@ const AppHeader = () => {
                   </div>
                 </div>
                 <nav className="flex-1 p-4 space-y-1">
-                  {navLinks.map((link) => (
+                  {!hideNav && navLinks.map((link) => (
                     <a
                       key={link.href}
                       href={link.href}
@@ -107,13 +111,15 @@ const AppHeader = () => {
                       {link.label}
                     </a>
                   ))}
-                  <Link
-                    to="/booking"
-                    onClick={() => setMobileOpen(false)}
-                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-primary hover:bg-primary/10 transition-colors"
-                  >
-                    {t("action.book_now")}
-                  </Link>
+                  {!hideNav && (
+                    <Link
+                      to="/booking"
+                      onClick={() => setMobileOpen(false)}
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-primary hover:bg-primary/10 transition-colors"
+                    >
+                      {t("action.book_now")}
+                    </Link>
+                  )}
                   {!user && (
                     <>
                       <Link
@@ -154,36 +160,40 @@ const AppHeader = () => {
         </div>
 
         {/* Center: Desktop Nav */}
-        <nav className="hidden md:flex items-center gap-1">
-          {navLinks.map((link) => (
-            <a
-              key={link.href}
-              href={link.href}
-              className="px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-            >
-              {link.label}
-            </a>
-          ))}
-          <Link to="/booking">
-            <Button size="sm" className="gap-1.5 ms-2 rounded-full px-5 font-bold shadow-lg hover:shadow-xl transition-all bg-gradient-to-r from-primary to-primary/80 text-primary-foreground animate-pulse hover:animate-none">
-              <CalendarCheck className="h-3.5 w-3.5" />
-              {t("action.book_now")}
-              <ArrowIcon className="h-3.5 w-3.5" />
-            </Button>
-          </Link>
-        </nav>
+        {!hideNav && (
+          <nav className="hidden md:flex items-center gap-1">
+            {navLinks.map((link) => (
+              <a
+                key={link.href}
+                href={link.href}
+                className="px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+              >
+                {link.label}
+              </a>
+            ))}
+            <Link to="/booking">
+              <Button size="sm" className="gap-1.5 ms-2 rounded-full px-5 font-bold shadow-lg hover:shadow-xl transition-all bg-gradient-to-r from-primary to-primary/80 text-primary-foreground animate-pulse hover:animate-none">
+                <CalendarCheck className="h-3.5 w-3.5" />
+                {t("action.book_now")}
+                <ArrowIcon className="h-3.5 w-3.5" />
+              </Button>
+            </Link>
+          </nav>
+        )}
 
         {/* Right: Actions */}
         <div className="flex items-center gap-2">
           <LanguageToggle />
 
           {/* Mobile Book Now */}
-          <Link to="/booking" className="md:hidden">
-            <Button size="sm" className="rounded-full px-4 gap-1 text-xs font-semibold">
-              {t("action.book_now")}
-              <ArrowIcon className="h-3 w-3" />
-            </Button>
-          </Link>
+          {!hideNav && (
+            <Link to="/booking" className="md:hidden">
+              <Button size="sm" className="rounded-full px-4 gap-1 text-xs font-semibold">
+                {t("action.book_now")}
+                <ArrowIcon className="h-3 w-3" />
+              </Button>
+            </Link>
+          )}
 
           {user ? (
             <DropdownMenu>
