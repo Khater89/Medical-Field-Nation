@@ -28,7 +28,11 @@ import {
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 
-const AppHeader = () => {
+interface AppHeaderProps {
+  hideNav?: boolean;
+}
+
+const AppHeader = ({ hideNav = false }: AppHeaderProps) => {
   const { t, isRTL } = useLanguage();
   const { user, profile, isAdmin, isCS, isProvider, isCustomer, signOut, loading } = useAuth();
   // Effective role prevents showing multiple dashboard links
