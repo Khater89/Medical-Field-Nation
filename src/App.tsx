@@ -58,6 +58,7 @@ const App = () => {
           <SplashWrapper />
           <Toaster />
           <Sonner />
+          <AIChatWidget />
           <BrowserRouter>
             <MarketplaceCartProvider>
             <Routes>
