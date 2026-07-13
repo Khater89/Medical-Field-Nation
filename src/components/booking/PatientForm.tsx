@@ -10,11 +10,12 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Button } from "@/components/ui/button";
 import {
   CalendarIcon, User, Phone, MapPin, Clock, Minus, Plus,
-  Navigation, Home, Users, CreditCard,
+  Navigation, Home, Users, CreditCard, Sparkles, Loader2, AlertTriangle,
 } from "lucide-react";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import { toast } from "@/hooks/use-toast";
 
 
 export interface PatientData {
