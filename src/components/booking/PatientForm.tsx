@@ -10,11 +10,12 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Button } from "@/components/ui/button";
 import {
   CalendarIcon, User, Phone, MapPin, Clock, Minus, Plus,
-  Navigation, Home, Users, CreditCard,
+  Navigation, Home, Users, CreditCard, Sparkles, Loader2, AlertTriangle,
 } from "lucide-react";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import { toast } from "@/hooks/use-toast";
 
 
 export interface PatientData {
@@ -41,6 +42,37 @@ interface PatientFormProps {
 const PatientForm = ({ data, onChange, showHours = true }: PatientFormProps) => {
   const { t, lang } = useLanguage();
   const [locating, setLocating] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiResult, setAiResult] = useState<any>(null);
+
+  const analyzeCase = async () => {
+    const text = data.case_details.trim();
+    if (text.length < 5) {
+      toast({ title: lang === "ar" ? "اكتب وصف الحالة أولاً" : "Write case description first", variant: "destructive" });
+      return;
+    }
+    setAiLoading(true);
+    setAiResult(null);
+    try {
+      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-analyze-case`;
+      const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}`, apikey: key },
+        body: JSON.stringify({ case_text: text, lang }),
+      });
+      const j = await res.json();
+      if (!res.ok) throw new Error(j.error || "AI error");
+      setAiResult(j);
+      if (j.suggested_provider_gender && j.suggested_provider_gender !== "any" && !data.provider_gender) {
+        update("provider_gender", j.suggested_provider_gender);
+      }
+    } catch (e) {
+      toast({ title: (e as Error).message, variant: "destructive" });
+    } finally {
+      setAiLoading(false);
+    }
+  };
 
   const update = (field: keyof PatientData, value: string | number | Date | undefined | null) => {
     onChange({ ...data, [field]: value });
@@ -385,8 +417,44 @@ const PatientForm = ({ data, onChange, showHours = true }: PatientFormProps) => 
           {data.case_details.trim() === "" && (
             <p className="text-xs text-destructive">{t("form.case_details.required")}</p>
           )}
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={analyzeCase}
+            disabled={aiLoading}
+            className="gap-2 border-primary/40 text-primary hover:bg-primary/5"
+          >
+            {aiLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+            {lang === "ar" ? "تحليل ذكي للحالة" : "AI analyze case"}
+          </Button>
+          {aiResult && (
+            <div className={cn(
+              "rounded-lg border p-3 text-xs space-y-1.5 mt-2",
+              aiResult.urgency === "emergency" ? "border-destructive bg-destructive/10" :
+              aiResult.urgency === "urgent" ? "border-orange-500 bg-orange-500/10" :
+              "border-primary/30 bg-primary/5"
+            )}>
+              {aiResult.urgency === "emergency" && (
+                <div className="flex items-center gap-1.5 font-bold text-destructive">
+                  <AlertTriangle className="h-4 w-4" />
+                  {lang === "ar" ? "⚠️ حالة طارئة - اتصل بالطوارئ 911 فوراً" : "⚠️ Emergency — call 911 now"}
+                </div>
+              )}
+              {aiResult.summary && <div><b>{lang === "ar" ? "الملخص:" : "Summary:"}</b> {aiResult.summary}</div>}
+              {aiResult.category && <div><b>{lang === "ar" ? "الخدمة المقترحة:" : "Suggested:"}</b> {aiResult.category}</div>}
+              {Array.isArray(aiResult.red_flags) && aiResult.red_flags.length > 0 && (
+                <div><b>{lang === "ar" ? "علامات تحذيرية:" : "Red flags:"}</b> {aiResult.red_flags.join("، ")}</div>
+              )}
+              {aiResult.recommended_action && <div className="text-muted-foreground">{aiResult.recommended_action}</div>}
+              <div className="text-[10px] text-muted-foreground pt-1 border-t border-current/20">
+                {lang === "ar" ? "تحليل معلوماتي فقط، ليس بديلاً عن استشارة الطبيب." : "Informational only — not a medical diagnosis."}
+              </div>
+            </div>
+          )}
         </div>
       </div>
+
 
       {/* Payment method is selected on the order tracking page after service completion */}
     </div>

@@ -42,6 +42,7 @@ import MarketplaceMessagesPage from "./pages/marketplace/MarketplaceMessagesPage
 import { MarketplaceCartProvider } from "./contexts/MarketplaceCartContext";
 import NotFound from "./pages/NotFound";
 import MarketplacePhoneAuth from "./pages/marketplace/MarketplacePhoneAuth";
+import AIChatWidget from "./components/ai/AIChatWidget";
 import MarketplaceAuthGate from "./components/marketplace/MarketplaceAuthGate";
 
 const queryClient = new QueryClient();
@@ -57,6 +58,7 @@ const App = () => {
           <SplashWrapper />
           <Toaster />
           <Sonner />
+          <AIChatWidget />
           <BrowserRouter>
             <MarketplaceCartProvider>
             <Routes>
