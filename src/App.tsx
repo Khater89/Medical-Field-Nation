@@ -72,6 +72,7 @@ const App = () => {
               <Route path="/verify-email" element={<VerifyEmailPage />} />
               <Route path="/auth/callback" element={<AuthCallback />} />
               <Route path="/track" element={<TrackOrderPage />} />
+              <Route path="/connect" element={<ConnectPage />} />
               {/* Marketplace — phone-only auth gate */}
               <Route path="/marketplace/login" element={<MarketplacePhoneAuth />} />
               <Route path="/marketplace/enter" element={<MarketplacePhoneAuth />} />
