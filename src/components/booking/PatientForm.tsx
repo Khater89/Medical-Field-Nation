@@ -42,6 +42,37 @@ interface PatientFormProps {
 const PatientForm = ({ data, onChange, showHours = true }: PatientFormProps) => {
   const { t, lang } = useLanguage();
   const [locating, setLocating] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiResult, setAiResult] = useState<any>(null);
+
+  const analyzeCase = async () => {
+    const text = data.case_details.trim();
+    if (text.length < 5) {
+      toast({ title: lang === "ar" ? "اكتب وصف الحالة أولاً" : "Write case description first", variant: "destructive" });
+      return;
+    }
+    setAiLoading(true);
+    setAiResult(null);
+    try {
+      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-analyze-case`;
+      const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}`, apikey: key },
+        body: JSON.stringify({ case_text: text, lang }),
+      });
+      const j = await res.json();
+      if (!res.ok) throw new Error(j.error || "AI error");
+      setAiResult(j);
+      if (j.suggested_provider_gender && j.suggested_provider_gender !== "any" && !data.provider_gender) {
+        update("provider_gender", j.suggested_provider_gender);
+      }
+    } catch (e) {
+      toast({ title: (e as Error).message, variant: "destructive" });
+    } finally {
+      setAiLoading(false);
+    }
+  };
 
   const update = (field: keyof PatientData, value: string | number | Date | undefined | null) => {
     onChange({ ...data, [field]: value });
