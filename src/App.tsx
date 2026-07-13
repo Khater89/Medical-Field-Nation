@@ -25,6 +25,7 @@ import AuthCallback from "./pages/AuthCallback";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import TrackOrderPage from "./pages/TrackOrderPage";
+import ConnectPage from "./pages/ConnectPage";
 import MarketplaceHome from "./pages/marketplace/MarketplaceHome";
 import CategoryPage from "./pages/marketplace/CategoryPage";
 import VendorTypePage from "./pages/marketplace/VendorTypePage";
@@ -71,6 +72,7 @@ const App = () => {
               <Route path="/verify-email" element={<VerifyEmailPage />} />
               <Route path="/auth/callback" element={<AuthCallback />} />
               <Route path="/track" element={<TrackOrderPage />} />
+              <Route path="/connect" element={<ConnectPage />} />
               {/* Marketplace — phone-only auth gate */}
               <Route path="/marketplace/login" element={<MarketplacePhoneAuth />} />
               <Route path="/marketplace/enter" element={<MarketplacePhoneAuth />} />
