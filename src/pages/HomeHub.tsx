@@ -165,7 +165,7 @@ export default function HomeHub() {
                 {t("الخدمات الطبية المنزلية", "Home Medical Services")}
               </h2>
               <Button asChild size="lg" className="w-full">
-                <Link to="/services">
+                <Link to="/landing">
                   {t("دخول الخدمات", "Enter Services")}{" "}
                   <ArrowLeft className={`h-4 w-4 ${isAr ? "" : "rotate-180"}`} />
                 </Link>
@@ -175,7 +175,7 @@ export default function HomeHub() {
 
           <div className="text-center mt-8">
             <Link
-              to="/landing"
+              to="/services"
               className="text-sm text-muted-foreground hover:text-primary underline underline-offset-4"
             >
               {t("تعرّف على المنصة", "About the platform")}
