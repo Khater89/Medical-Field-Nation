@@ -106,7 +106,7 @@ export default function HomeHub() {
                 </Link>
               </Button>
               <Button asChild size="lg" variant="outline" className="rounded-full px-8 font-bold backdrop-blur-md bg-background/60">
-                <Link to="/services">
+                <Link to="/landing">
                   <Stethoscope className="h-5 w-5" />
                   {t("الخدمات الطبية المنزلية", "Home Medical Services")}
                 </Link>
