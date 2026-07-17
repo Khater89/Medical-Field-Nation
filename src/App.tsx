@@ -64,8 +64,8 @@ const App = () => {
             <Routes>
               {/* Public */}
               <Route path="/" element={<HomeHub />} />
-              <Route path="/landing" element={<ServicesHome />} />
-              <Route path="/services" element={<LandingPage />} />
+              <Route path="/landing" element={<LandingPage />} />
+              <Route path="/services" element={<ServicesHome />} />
               <Route path="/booking" element={<BookingPage />} />
               <Route path="/auth" element={<AuthPage />} />
               <Route path="/forgot-password" element={<ForgotPasswordPage />} />
