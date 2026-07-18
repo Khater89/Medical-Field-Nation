@@ -310,7 +310,7 @@ export default function MarketplacePhoneAuth() {
                   <Input value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
                     placeholder="123456" inputMode="numeric" dir="ltr" maxLength={6} autoFocus
                     className="text-center text-2xl tracking-widest font-mono" />
-                  <Button className="w-full" onClick={verifyCode} disabled={busy || code.length !== 6}>
+                  <Button className="w-full h-12 text-base font-semibold bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white shadow-lg shadow-orange-500/30 border-0" onClick={verifyCode} disabled={busy || code.length !== 6}>
                     {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : t("تحقق", "Verify")}
                   </Button>
                   <div className="flex items-center justify-between text-sm">
