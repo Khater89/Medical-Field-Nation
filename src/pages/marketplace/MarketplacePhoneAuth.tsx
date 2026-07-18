@@ -292,7 +292,7 @@ export default function MarketplacePhoneAuth() {
                     <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="07XXXXXXXX" inputMode="tel" dir="ltr" autoFocus />
                     <p className="text-xs text-muted-foreground mt-1">{t("مثال: 07XXXXXXXX", "Example: +9627XXXXXXXX")}</p>
                   </div>
-                  <Button className="w-full" onClick={sendCode} disabled={busy}>
+                  <Button className="w-full h-12 text-base font-semibold bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white shadow-lg shadow-orange-500/30 border-0" onClick={sendCode} disabled={busy}>
                     {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : t("إرسال رمز التحقق", "Send OTP")}
                   </Button>
                 </>
