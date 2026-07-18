@@ -30,9 +30,10 @@ function jsonResponse(payload: Record<string, unknown>, status: number) {
 }
 
 function smsFailureMessage(code: unknown): string {
-  if (code === 21659) return "رقم الإرسال في Twilio غير صالح لهذا الحساب. استخدم رقم Twilio فعلي أو Messaging Service SID يبدأ بـ MG.";
-  if (code === 21704) return "Messaging Service في Twilio لا يحتوي على Sender. أضف رقم Twilio أو Alphanumeric Sender ID إلى Sender Pool.";
-  if (code === 21705) return "Messaging Service SID في Twilio غير صحيح أو غير تابع لهذا الحساب.";
+  if (code === 21608 || code === 21211 || code === 21614) return "خدمة الرسائل تعمل حالياً في وضع تجريبي ولا تدعم هذا الرقم. تواصل مع الدعم لتفعيل رقمك أو ترقية حساب الإرسال.";
+  if (code === 21659) return "رقم الإرسال في Twilio غير صالح لهذا الحساب.";
+  if (code === 21704) return "قائمة أرقام الإرسال فارغة. تواصل مع الدعم لتفعيل الإرسال.";
+  if (code === 21705) return "إعداد خدمة الرسائل غير صحيح.";
   return "تعذّر إرسال الرسالة. تأكد من الرقم أو حاول لاحقاً.";
 }
 

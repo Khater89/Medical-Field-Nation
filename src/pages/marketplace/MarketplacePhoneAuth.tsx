@@ -213,18 +213,25 @@ export default function MarketplacePhoneAuth() {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-muted/40">
-      <div className="container max-w-md py-8">
+    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-orange-50 via-background to-amber-50 dark:from-orange-950/20 dark:via-background dark:to-amber-950/10">
+      {/* Decorative blobs */}
+      <div className="pointer-events-none absolute -top-24 -end-24 h-72 w-72 rounded-full bg-orange-400/20 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-24 -start-24 h-72 w-72 rounded-full bg-amber-400/20 blur-3xl" />
+
+      <div className="container max-w-md py-8 relative">
         <BackButton to="/" />
         <div className="text-center mb-6 mt-4">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/10 text-primary mb-4">
-            <ShoppingBag className="w-8 h-8" />
+          <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-gradient-to-br from-orange-500 to-amber-500 text-white mb-4 shadow-lg shadow-orange-500/30 ring-4 ring-white/60 dark:ring-white/5">
+            <ShoppingBag className="w-10 h-10" />
           </div>
-          <h1 className="text-2xl font-bold mb-1">{t("الدخول إلى السوق الطبي", "Medical Marketplace")}</h1>
-          <p className="text-sm text-muted-foreground">{t("سجّل الدخول أو أنشئ حسابك", "Sign in or create your account")}</p>
+          <h1 className="text-3xl font-extrabold mb-1 bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent">
+            {t("السوق الطبي", "Medical Marketplace")}
+          </h1>
+          <p className="text-sm text-muted-foreground">{t("سجّل الدخول أو أنشئ حسابك خلال دقيقة", "Sign in or create your account in a minute")}</p>
         </div>
 
-        <Card className="p-6 space-y-4">
+        <Card className="p-6 space-y-4 border-orange-100/60 dark:border-orange-900/30 shadow-xl shadow-orange-500/5 backdrop-blur bg-card/95">
+
           <div className="grid grid-cols-2 gap-2">
             <Button variant="outline" type="button" onClick={async () => {
               const r = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin + "/marketplace/login" });
@@ -268,7 +275,7 @@ export default function MarketplacePhoneAuth() {
                   <Input type="password" value={siPw} onChange={(e) => setSiPw(e.target.value)} className="ps-9" dir="ltr" />
                 </div>
               </div>
-              <Button className="w-full" onClick={doSignIn} disabled={siBusy}>
+              <Button className="w-full h-12 text-base font-semibold bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white shadow-lg shadow-orange-500/30 border-0" onClick={doSignIn} disabled={siBusy}>
                 {siBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : t("دخول", "Sign in")}
               </Button>
             </TabsContent>
@@ -285,7 +292,7 @@ export default function MarketplacePhoneAuth() {
                     <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="07XXXXXXXX" inputMode="tel" dir="ltr" autoFocus />
                     <p className="text-xs text-muted-foreground mt-1">{t("مثال: 07XXXXXXXX", "Example: +9627XXXXXXXX")}</p>
                   </div>
-                  <Button className="w-full" onClick={sendCode} disabled={busy}>
+                  <Button className="w-full h-12 text-base font-semibold bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white shadow-lg shadow-orange-500/30 border-0" onClick={sendCode} disabled={busy}>
                     {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : t("إرسال رمز التحقق", "Send OTP")}
                   </Button>
                 </>
@@ -303,7 +310,7 @@ export default function MarketplacePhoneAuth() {
                   <Input value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
                     placeholder="123456" inputMode="numeric" dir="ltr" maxLength={6} autoFocus
                     className="text-center text-2xl tracking-widest font-mono" />
-                  <Button className="w-full" onClick={verifyCode} disabled={busy || code.length !== 6}>
+                  <Button className="w-full h-12 text-base font-semibold bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white shadow-lg shadow-orange-500/30 border-0" onClick={verifyCode} disabled={busy || code.length !== 6}>
                     {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : t("تحقق", "Verify")}
                   </Button>
                   <div className="flex items-center justify-between text-sm">
@@ -349,7 +356,7 @@ export default function MarketplacePhoneAuth() {
                       <RuleRow ok={rules.sym} label={t("رمز خاص", "A symbol")} />
                     </div>
                   </div>
-                  <Button className="w-full" onClick={submitSignup}
+                  <Button className="w-full h-12 text-base font-semibold bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white shadow-lg shadow-orange-500/30 border-0" onClick={submitSignup}
                     disabled={busy || usernameStatus === "checking" || usernameStatus === "taken"}>
                     {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : t("إنشاء الحساب", "Create account")}
                   </Button>
