@@ -275,7 +275,7 @@ export default function MarketplacePhoneAuth() {
                   <Input type="password" value={siPw} onChange={(e) => setSiPw(e.target.value)} className="ps-9" dir="ltr" />
                 </div>
               </div>
-              <Button className="w-full" onClick={doSignIn} disabled={siBusy}>
+              <Button className="w-full h-12 text-base font-semibold bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white shadow-lg shadow-orange-500/30 border-0" onClick={doSignIn} disabled={siBusy}>
                 {siBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : t("دخول", "Sign in")}
               </Button>
             </TabsContent>
