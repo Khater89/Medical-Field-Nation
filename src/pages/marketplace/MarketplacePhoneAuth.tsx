@@ -356,7 +356,7 @@ export default function MarketplacePhoneAuth() {
                       <RuleRow ok={rules.sym} label={t("رمز خاص", "A symbol")} />
                     </div>
                   </div>
-                  <Button className="w-full" onClick={submitSignup}
+                  <Button className="w-full h-12 text-base font-semibold bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white shadow-lg shadow-orange-500/30 border-0" onClick={submitSignup}
                     disabled={busy || usernameStatus === "checking" || usernameStatus === "taken"}>
                     {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : t("إنشاء الحساب", "Create account")}
                   </Button>
