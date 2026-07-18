@@ -213,18 +213,25 @@ export default function MarketplacePhoneAuth() {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-muted/40">
-      <div className="container max-w-md py-8">
+    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-orange-50 via-background to-amber-50 dark:from-orange-950/20 dark:via-background dark:to-amber-950/10">
+      {/* Decorative blobs */}
+      <div className="pointer-events-none absolute -top-24 -end-24 h-72 w-72 rounded-full bg-orange-400/20 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-24 -start-24 h-72 w-72 rounded-full bg-amber-400/20 blur-3xl" />
+
+      <div className="container max-w-md py-8 relative">
         <BackButton to="/" />
         <div className="text-center mb-6 mt-4">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/10 text-primary mb-4">
-            <ShoppingBag className="w-8 h-8" />
+          <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-gradient-to-br from-orange-500 to-amber-500 text-white mb-4 shadow-lg shadow-orange-500/30 ring-4 ring-white/60 dark:ring-white/5">
+            <ShoppingBag className="w-10 h-10" />
           </div>
-          <h1 className="text-2xl font-bold mb-1">{t("الدخول إلى السوق الطبي", "Medical Marketplace")}</h1>
-          <p className="text-sm text-muted-foreground">{t("سجّل الدخول أو أنشئ حسابك", "Sign in or create your account")}</p>
+          <h1 className="text-3xl font-extrabold mb-1 bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent">
+            {t("السوق الطبي", "Medical Marketplace")}
+          </h1>
+          <p className="text-sm text-muted-foreground">{t("سجّل الدخول أو أنشئ حسابك خلال دقيقة", "Sign in or create your account in a minute")}</p>
         </div>
 
-        <Card className="p-6 space-y-4">
+        <Card className="p-6 space-y-4 border-orange-100/60 dark:border-orange-900/30 shadow-xl shadow-orange-500/5 backdrop-blur bg-card/95">
+
           <div className="grid grid-cols-2 gap-2">
             <Button variant="outline" type="button" onClick={async () => {
               const r = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin + "/marketplace/login" });
