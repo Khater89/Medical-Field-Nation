@@ -1,11 +1,9 @@
 {
   "version": 1,
-  "asset_id": "445d561e-c026-49c3-b0fe-e570d16bcd02",
+  "asset_id": "ab2bcb83-9ae1-4f10-99ce-6921cd32fd5b",
   "project_id": "d3e03e3e-8ee5-4549-ae14-caa0081ff8da",
-  "url": "/__l5e/assets-v1/445d561e-c026-49c3-b0fe-e570d16bcd02/home-hero-animation-v3.mp4",
-  "r2_key": "a/v1/d3e03e3e-8ee5-4549-ae14-caa0081ff8da/445d561e-c026-49c3-b0fe-e570d16bcd02/home-hero-animation-v3.mp4",
-  "original_filename": "home-hero-animation-v3.mp4",
-  "size": 5600799,
-  "content_type": "video/mp4",
-  "created_at": "2026-07-19T07:55:33Z"
+  "url": "/__l5e/assets-v1/ab2bcb83-9ae1-4f10-99ce-6921cd32fd5b/home-hero-video.mp4",
+  "original_filename": "home-hero-video.mp4",
+  "size": 6728318,
+  "created_at": "2026-07-11T06:17:32Z"
 }
