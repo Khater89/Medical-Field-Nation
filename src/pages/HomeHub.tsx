@@ -45,6 +45,7 @@ export default function HomeHub() {
         {/* HERO with background video */}
         <section className="relative min-h-[92vh] flex items-center justify-center overflow-hidden">
           <video
+            key={heroVideo.asset_id}
             autoPlay
             muted
             loop
@@ -52,7 +53,7 @@ export default function HomeHub() {
             poster={heroNursing}
             className="absolute inset-0 w-full h-full object-cover"
           >
-            <source src={heroVideo.url} type="video/mp4" />
+            <source src={`${heroVideo.url}?v=${heroVideo.asset_id}`} type="video/mp4" />
           </video>
           <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-background/40 to-background" />
           <div className="absolute inset-0 bg-gradient-to-tr from-primary/25 via-transparent to-primary/10" />
