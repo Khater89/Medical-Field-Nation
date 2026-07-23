@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import heroNursing from "@/assets/home-hero-nursing.jpg";
-import heroVideo from "@/assets/home-hero-video.mp4.asset.json";
+import heroVideo from "@/assets/home-hero-animation.mp4.asset.json";
 
 export default function HomeHub() {
   const { lang } = useLanguage();
