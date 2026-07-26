@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useNavigate, useLocation } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import AppHeader from "@/components/AppHeader";
 import AppFooter from "@/components/AppFooter";
 import MarketplaceSubNav from "@/components/marketplace/MarketplaceSubNav";
@@ -50,6 +51,18 @@ export default function ProductPage() {
   const [loading, setLoading] = useState(true);
   const [chatOpen, setChatOpen] = useState(false);
   const { addItem } = useCart();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const handleChat = () => {
+    if (!user) {
+      const redirect = encodeURIComponent(location.pathname + location.search);
+      navigate(`/marketplace/login?redirect=${redirect}`);
+      return;
+    }
+    setChatOpen(true);
+  };
+
 
   useEffect(() => {
     (async () => {
@@ -187,7 +200,7 @@ export default function ProductPage() {
                     {vendor.city && <div className="text-xs text-muted-foreground">{vendor.city}</div>}
                   </div>
                 </Link>
-                <Button size="sm" variant="outline" className="gap-1" onClick={() => setChatOpen(true)}>
+                <Button size="sm" variant="outline" className="gap-1" onClick={handleChat}>
                   <MessageCircle className="h-3 w-3" /> {t("mp.ask_about_product")}
                 </Button>
               </Card>

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import AppHeader from "@/components/AppHeader";
 import AppFooter from "@/components/AppFooter";
 import MarketplaceSubNav from "@/components/marketplace/MarketplaceSubNav";
@@ -17,10 +18,22 @@ import { useLanguage } from "@/contexts/LanguageContext";
 export default function VendorPage() {
   const { id } = useParams<{ id: string }>();
   const { t } = useLanguage();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [vendor, setVendor] = useState<any>(null);
   const [products, setProducts] = useState<ProductCardData[]>([]);
   const [loading, setLoading] = useState(true);
   const [chatOpen, setChatOpen] = useState(false);
+
+  const handleChat = () => {
+    if (!user) {
+      const redirect = encodeURIComponent(location.pathname + location.search);
+      navigate(`/marketplace/login?redirect=${redirect}`);
+      return;
+    }
+    setChatOpen(true);
+  };
 
   useEffect(() => {
     if (!id) return;
@@ -92,7 +105,7 @@ export default function VendorPage() {
               </div>
               {vendor.description && <p className="text-sm mt-2 text-muted-foreground">{vendor.description}</p>}
               <div className="flex gap-2 mt-3">
-                <Button onClick={() => setChatOpen(true)} className="gap-2">
+                <Button onClick={handleChat} className="gap-2">
                   <MessageCircle className="h-4 w-4" /> {t("mp.contact_store")}
                 </Button>
               </div>

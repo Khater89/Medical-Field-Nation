@@ -78,12 +78,12 @@ const App = () => {
               {/* Marketplace — phone-only auth gate */}
               <Route path="/marketplace/login" element={<MarketplacePhoneAuth />} />
               <Route path="/marketplace/enter" element={<MarketplacePhoneAuth />} />
-              <Route path="/marketplace" element={<MarketplaceAuthGate><MarketplaceHome /></MarketplaceAuthGate>} />
-              <Route path="/marketplace/category/:slug" element={<MarketplaceAuthGate><CategoryPage /></MarketplaceAuthGate>} />
-              <Route path="/marketplace/type/:type" element={<MarketplaceAuthGate><VendorTypePage /></MarketplaceAuthGate>} />
-              <Route path="/marketplace/product/:id" element={<MarketplaceAuthGate><ProductPage /></MarketplaceAuthGate>} />
-              <Route path="/marketplace/cart" element={<MarketplaceAuthGate><CartPage /></MarketplaceAuthGate>} />
-              <Route path="/marketplace/checkout" element={<MarketplaceAuthGate><CheckoutPage /></MarketplaceAuthGate>} />
+              <Route path="/marketplace" element={<MarketplaceHome />} />
+              <Route path="/marketplace/category/:slug" element={<CategoryPage />} />
+              <Route path="/marketplace/type/:type" element={<VendorTypePage />} />
+              <Route path="/marketplace/product/:id" element={<ProductPage />} />
+              <Route path="/marketplace/cart" element={<CartPage />} />
+              <Route path="/marketplace/checkout" element={<CheckoutPage />} />
               <Route path="/marketplace/orders" element={<MarketplaceAuthGate><MyOrdersPage /></MarketplaceAuthGate>} />
               <Route
                 path="/account-review"
@@ -152,8 +152,8 @@ const App = () => {
                   </ProtectedRoute>
                 }
               />
-              <Route path="/marketplace/vendor/:id" element={<MarketplaceAuthGate><VendorPage /></MarketplaceAuthGate>} />
-              <Route path="/marketplace/pharmacies" element={<MarketplaceAuthGate><VendorsListPage /></MarketplaceAuthGate>} />
+              <Route path="/marketplace/vendor/:id" element={<VendorPage />} />
+              <Route path="/marketplace/pharmacies" element={<VendorsListPage />} />
               <Route path="/marketplace/messages" element={<MarketplaceAuthGate><MarketplaceMessagesPage /></MarketplaceAuthGate>} />
               <Route path="/marketplace/my-messages" element={<MarketplaceAuthGate><MarketplaceMessagesPage /></MarketplaceAuthGate>} />
 
