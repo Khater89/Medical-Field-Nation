@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useNavigate, useLocation } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import AppHeader from "@/components/AppHeader";
 import AppFooter from "@/components/AppFooter";
 import MarketplaceSubNav from "@/components/marketplace/MarketplaceSubNav";
