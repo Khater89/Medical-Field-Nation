@@ -51,6 +51,18 @@ export default function ProductPage() {
   const [loading, setLoading] = useState(true);
   const [chatOpen, setChatOpen] = useState(false);
   const { addItem } = useCart();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const handleChat = () => {
+    if (!user) {
+      const redirect = encodeURIComponent(location.pathname + location.search);
+      navigate(`/marketplace/login?redirect=${redirect}`);
+      return;
+    }
+    setChatOpen(true);
+  };
+
 
   useEffect(() => {
     (async () => {
