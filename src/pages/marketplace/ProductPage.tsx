@@ -200,7 +200,7 @@ export default function ProductPage() {
                     {vendor.city && <div className="text-xs text-muted-foreground">{vendor.city}</div>}
                   </div>
                 </Link>
-                <Button size="sm" variant="outline" className="gap-1" onClick={() => setChatOpen(true)}>
+                <Button size="sm" variant="outline" className="gap-1" onClick={handleChat}>
                   <MessageCircle className="h-3 w-3" /> {t("mp.ask_about_product")}
                 </Button>
               </Card>
