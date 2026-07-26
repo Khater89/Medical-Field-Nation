@@ -18,10 +18,22 @@ import { useLanguage } from "@/contexts/LanguageContext";
 export default function VendorPage() {
   const { id } = useParams<{ id: string }>();
   const { t } = useLanguage();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [vendor, setVendor] = useState<any>(null);
   const [products, setProducts] = useState<ProductCardData[]>([]);
   const [loading, setLoading] = useState(true);
   const [chatOpen, setChatOpen] = useState(false);
+
+  const handleChat = () => {
+    if (!user) {
+      const redirect = encodeURIComponent(location.pathname + location.search);
+      navigate(`/marketplace/login?redirect=${redirect}`);
+      return;
+    }
+    setChatOpen(true);
+  };
 
   useEffect(() => {
     if (!id) return;
