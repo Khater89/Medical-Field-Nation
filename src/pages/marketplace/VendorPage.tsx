@@ -105,7 +105,7 @@ export default function VendorPage() {
               </div>
               {vendor.description && <p className="text-sm mt-2 text-muted-foreground">{vendor.description}</p>}
               <div className="flex gap-2 mt-3">
-                <Button onClick={() => setChatOpen(true)} className="gap-2">
+                <Button onClick={handleChat} className="gap-2">
                   <MessageCircle className="h-4 w-4" /> {t("mp.contact_store")}
                 </Button>
               </div>
